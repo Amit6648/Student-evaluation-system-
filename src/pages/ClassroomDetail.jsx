@@ -1,22 +1,16 @@
-"use client";
-
-import { useState } from "react";
-import Link from "next/link";
+import { useState, useEffect } from "react";
+import { Link, useParams } from "react-router-dom";
 import { ChevronLeft, Plus, Users, BookOpen, Trash2, CheckCircle2, X, BarChart } from "lucide-react";
-import { enrollStudent, addEvaluation, removeStudent } from "@/app/actions";
 
 // Helper to generate initials
 function getInitials(name) {
-    return name
-        .split(' ')
-        .map(n => n[0])
-        .join('')
-        .substring(0, 2)
-        .toUpperCase();
+    if (!name) return "??";
+    return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
 }
 
 // Helper to get a consistent color based on name string
 function getAvatarColor(name) {
+    if (!name) return "bg-gray-100 text-gray-700";
     const colors = [
         "bg-blue-100 text-blue-700",
         "bg-emerald-100 text-emerald-700",
@@ -33,18 +27,79 @@ function getAvatarColor(name) {
     return colors[Math.abs(hash) % colors.length];
 }
 
-export default function ClassroomClient({ classroom, students, allStudents, stats }) {
+export default function ClassroomDetail() {
+    const { id } = useParams();
+
+    // Server state
+    const [classroom, setClassroom] = useState(null);
+    const [students, setStudents] = useState([]);
+    const [allStudents, setAllStudents] = useState([]);
+    const [stats, setStats] = useState({ totalStudents: 0, classAvg: '--', topScore: '--' });
+    const [dataLoading, setDataLoading] = useState(true);
+
+    // UI state
     const [activeTab, setActiveTab] = useState("roster");
     const [showModal, setShowModal] = useState(false);
     const [showEvalModal, setShowEvalModal] = useState(false);
     const [evalStudent, setEvalStudent] = useState(null);
+    const [evalHistoryStudent, setEvalHistoryStudent] = useState(null);
     const [loading, setLoading] = useState(false);
-    const [savedMarks, setSavedMarks] = useState({});
 
     // Filters for enrollment
     const [filterDept, setFilterDept] = useState("");
     const [filterSem, setFilterSem] = useState("");
     const [filterSec, setFilterSec] = useState("");
+
+    const fetchClassroomData = async () => {
+        try {
+            const res = await fetch(`/api/classrooms/${id}`);
+            if (res.ok) {
+                const data = await res.json();
+                setClassroom(data.classroom);
+                setStudents(data.students);
+                calculateStats(data.students);
+            }
+        } catch (err) {
+            console.error("Failed to fetch classroom data:", err);
+        }
+    };
+
+    const fetchAllStudents = async () => {
+        try {
+            const res = await fetch('/api/students');
+            if (res.ok) {
+                const data = await res.json();
+                setAllStudents(data);
+            }
+        } catch (err) {
+            console.error("Failed to fetch all students:", err);
+        }
+    };
+
+    useEffect(() => {
+        Promise.all([fetchClassroomData(), fetchAllStudents()]).then(() => {
+            setDataLoading(false);
+        });
+    }, [id]);
+
+    const calculateStats = (studentList) => {
+        let totalStudents = studentList.length;
+        let totalClassScore = 0;
+        let maxScore = 0;
+        let studentsWithScore = 0;
+
+        studentList.forEach(s => {
+            if (s.averageMarks !== null) {
+                totalClassScore += s.averageMarks;
+                maxScore = Math.max(maxScore, s.averageMarks);
+                studentsWithScore++;
+            }
+        });
+
+        const classAvg = studentsWithScore > 0 ? (totalClassScore / studentsWithScore).toFixed(1) : '--';
+        const topScore = studentsWithScore > 0 ? maxScore.toFixed(1) : '--';
+        setStats({ totalStudents, classAvg, topScore });
+    };
 
     const enrolledIds = new Set(students.map(s => s.student_id));
     const availableStudents = (allStudents || []).filter(s => {
@@ -55,48 +110,72 @@ export default function ClassroomClient({ classroom, students, allStudents, stat
         return true;
     });
 
-    // Extract unique filter options
     const departments = [...new Set((allStudents || []).map(s => s.department).filter(Boolean))];
     const semesters = [...new Set((allStudents || []).map(s => s.semester).filter(Boolean))];
     const sections = [...new Set((allStudents || []).map(s => s.section).filter(Boolean))];
 
     async function handleEnroll(studentId) {
         setLoading(true);
-        const formData = new FormData();
-        formData.append("student_id", studentId);
-        await enrollStudent(classroom.class_id, formData);
-        setLoading(false);
-        // setShowModal(false); // keeping it open to enroll multiple
+        try {
+            await fetch('/api/enrollments', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ class_id: id, student_id: studentId })
+            });
+            await fetchClassroomData();
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
     }
-
-    const [evalHistoryStudent, setEvalHistoryStudent] = useState(null);
 
     async function handleAddEval(e) {
         e.preventDefault();
         setLoading(true);
         const formData = new FormData(e.target);
 
-        const evalName = formData.get("eval_name");
-        const fundamental = formData.get("fundamental_knowledge");
-        const core = formData.get("core_skills");
-        const communication = formData.get("communication_skills");
-        const soft = formData.get("soft_skills");
-
-        await addEvaluation(evalStudent.enrollment_id, evalName, fundamental, core, communication, soft);
-        setLoading(false);
-        setShowEvalModal(false);
-        setEvalStudent(null);
+        try {
+            await fetch('/api/evaluations', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    enrollment_id: evalStudent.enrollment_id,
+                    eval_name: formData.get("eval_name"),
+                    fundamental_knowledge: formData.get("fundamental_knowledge"),
+                    core_skills: formData.get("core_skills"),
+                    communication_skills: formData.get("communication_skills"),
+                    soft_skills: formData.get("soft_skills"),
+                })
+            });
+            await fetchClassroomData();
+            setShowEvalModal(false);
+            setEvalStudent(null);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
     }
 
     async function handleRemove(enrollmentId) {
         if (confirm("Remove student? Marks will be lost.")) {
-            await removeStudent(enrollmentId);
+            try {
+                await fetch(`/api/enrollments/${enrollmentId}`, { method: 'DELETE' });
+                await fetchClassroomData();
+            } catch (err) {
+                console.error(err);
+            }
         }
     }
 
+    if (dataLoading || !classroom) {
+        return <div className="min-h-screen p-8 max-w-7xl mx-auto flex justify-center items-center font-bold text-gray-500">Loading details...</div>;
+    }
+
     return (
-        <>
-            <Link href="/" className="inline-flex items-center text-gray-500 hover:text-[#111827] mb-8 font-semibold transition-colors">
+        <div className="min-h-screen p-8 max-w-7xl mx-auto">
+            <Link to="/" className="inline-flex items-center text-gray-500 hover:text-[#111827] mb-8 font-semibold transition-colors">
                 <ChevronLeft size={20} className="mr-1" /> Back to Classrooms
             </Link>
 
@@ -499,6 +578,6 @@ export default function ClassroomClient({ classroom, students, allStudents, stat
                     </div>
                 )
             }
-        </>
+        </div>
     );
 }
