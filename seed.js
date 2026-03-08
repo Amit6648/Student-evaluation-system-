@@ -2,8 +2,29 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+const TEACHERS = [
+  "Dr. Kanwaljeet Kaur", "Ms. Sukhjeet Kaur", "Er. Lakhwinder Singh", "Kamal",
+  "Dr. Sandeep Singh", "Ms. Sonam Chhabra", "Ms. Gurjinder Kaur", "Rishamjot Kaur",
+  "Pawandeep Kaur", "Dr. Manpreet Singh", "Ms. Richa", "Er. Kaveri Narang",
+  "Dr. Jayoti Bansal", "Paramjeet Kaur", "Er. Sumeet Bharti", "Miss Sukhdeep Kaur",
+  "Ms. Simran Arora", "Dr. Harjeet Singh", "Sonia", "Er. Charandeep Singh Bedi",
+  "Nancy Mittal", "Dr. Gagandeep Singh", "Ms. Supriya", "Dr. Deepak Garg",
+  "Dr. Parivinkal", "Dr. Amandeep Kaur", "Dr. Nitika"
+];
+
+const FIRST_NAMES = ["Aarav", "Vivaan", "Aditya", "Vihaan", "Arjun", "Sai", "Reyansh", "Ayaan", "Krishna", "Ishaan", "Shaurya", "Atharva", "Kabir", "Rishi", "Darsh", "Rudra", "Dev", "Ananya", "Myra", "Aaradhya", "Diya", "Avni", "Prisha", "Pari", "Isha", "Riya", "Aadhya", "Meera", "Saanvi", "Aditi", "Kavya", "Tanya", "Neha", "Pooja", "Maya", "Rahul", "Karan", "Siddharth", "Vikram", "Rohan", "Mohit", "Ankit", "Manish", "Suresh", "Gaurav", "Amit", "Rakesh", "Vishal", "Sunil", "Prakash"];
+const LAST_NAMES = ["Sharma", "Singh", "Patel", "Kumar", "Gupta", "Verma", "Reddy", "Yadav", "Ahluwalia", "Bansal", "Das", "Jain", "Kaur", "Kaur", "Garg", "Agarwal", "Mehta", "Chopra", "Chauhan", "Nair", "Iyer", "Rao", "Menon", "Bose", "Ghosh", "Datta", "Nandi", "Saha", "Mitra", "Mukherjee", "Chatterjee", "Banerjee", "Bhattacharya", "Chakraborty", "Sengupta", "Mishra", "Tiwari", "Pandey", "Shukla", "Agnihotri", "Dixit", "Goswami", "Dubey", "Dwivedi", "Chaturvedi"];
+
+function getRandomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function getRandomItem(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
 async function main() {
-  // Clear existing data
+  console.log('Clearing old data...');
   await prisma.evaluation.deleteMany({});
   await prisma.classEnrollment.deleteMany({});
   await prisma.virtualClass.deleteMany({});
@@ -13,137 +34,161 @@ async function main() {
   await prisma.course.deleteMany({});
   await prisma.school.deleteMany({});
 
-  console.log('Cleared old data. Seeding new hierarchical data...');
+  console.log('Creating Schools and Courses...');
+  const engSchool = await prisma.school.create({ data: { name: 'School of Engineering' } });
 
-  // Create School
-  const engSchool = await prisma.school.create({
-    data: { name: 'School of Engineering' },
-  });
+  const coursesData = [
+    { name: 'Computer Science & Engineering', prefix: 'CSE' },
+    { name: 'Electronics & Communication Engineering', prefix: 'ECE' },
+    { name: 'Mechanical Engineering', prefix: 'ME' },
+    { name: 'Civil Engineering', prefix: 'CE' }
+  ];
 
-  // Create Course
-  const cseCourse = await prisma.course.create({
-    data: {
-      name: 'Computer Science & Engineering',
-      school_id: engSchool.id,
-    },
-  });
+  const courses = [];
+  for (const c of coursesData) {
+    const course = await prisma.course.create({
+      data: { name: c.name, school_id: engSchool.id },
+    });
+    courses.push({ ...course, prefix: c.prefix });
 
-  // Create Specialization
-  const aiSpec = await prisma.specialization.create({
-    data: { name: 'Artificial Intelligence & Machine Learning' },
-  });
+    // Create an Admin for each course
+    await prisma.user.create({
+      data: {
+        name: `Admin ${c.prefix}`,
+        role: 'ADMIN',
+        course_id: course.id,
+      }
+    });
+  }
 
-  // Create Subjects
-  const subjDB = await prisma.subject.create({
-    data: {
-      name: 'Database Management Systems',
-      course_id: cseCourse.id,
-      semester_number: 5,
-    },
-  });
-
-  const subjAI = await prisma.subject.create({
-    data: {
-      name: 'Introduction to AI',
-      course_id: cseCourse.id,
-      specialization_id: aiSpec.id,
-      semester_number: 6,
-    },
-  });
-
-  // Create Admin
+  // Generic Main Admin
   await prisma.user.create({
     data: {
-      name: 'Admin User',
+      name: `Main System Admin`,
       role: 'ADMIN',
-      home_school_id: engSchool.id,
-    },
+      course_id: courses[0].id,
+    }
   });
 
-  // Create Teachers
+  console.log('Creating Teachers...');
+  // Distribute teachers randomly among courses
+  for (const tName of TEACHERS) {
+    await prisma.user.create({
+      data: {
+        name: tName,
+        role: 'TEACHER',
+        course_id: getRandomItem(courses).id
+      }
+    });
+  }
+
+  // Common teacher for guaranteed scenarios
   const teacherJohn = await prisma.user.create({
-    data: {
-      name: 'Dr. John Smith',
-      role: 'TEACHER',
-      home_school_id: engSchool.id,
-    },
+    data: { name: 'Dr. John Smith', role: 'TEACHER', course_id: courses[0].id },
   });
 
-  const teacherSarah = await prisma.user.create({
-    data: {
-      name: 'Prof. Sarah Connor',
-      role: 'TEACHER',
-      home_school_id: engSchool.id,
-    },
-  });
+  console.log('Creating Subjects...');
+  const subjects = [];
+  for (const course of courses) {
+    for (let sem = 1; sem <= 8; sem++) {
+      for (let subjNum = 1; subjNum <= 4; subjNum++) {
+        const subject = await prisma.subject.create({
+          data: {
+            name: `${course.prefix} Semester ${sem} Subject ${subjNum}`,
+            course_id: course.id,
+            semester_number: sem,
+          }
+        });
+        subjects.push(subject);
+      }
+    }
+  }
 
-  // Create Students
-  const student1 = await prisma.user.create({
-    data: { name: 'Aarav Patel', roll_no: 'CSE21001', role: 'STUDENT', home_school_id: engSchool.id },
-  });
-  const student2 = await prisma.user.create({
-    data: { name: 'Emily Chen', roll_no: 'CSE21002', role: 'STUDENT', home_school_id: engSchool.id },
-  });
-  const student3 = await prisma.user.create({
-    data: { name: 'Miguel Rodriguez', roll_no: 'CSE21003', role: 'STUDENT', home_school_id: engSchool.id },
-  });
-  const student4 = await prisma.user.create({
-    data: { name: 'Priya Sharma', roll_no: 'CSE21004', role: 'STUDENT', home_school_id: engSchool.id },
-  });
+  console.log('Generating 2000 Students...');
 
-  // Create Virtual Class
-  const classDB = await prisma.virtualClass.create({
-    data: {
-      subject_id: subjDB.id,
-      teacher_id: teacherJohn.id,
-      academic_year: '2023-2024',
-    },
-  });
+  // Create varying config for section counts per semester
+  const SECTIONS = ['A', 'B', 'C', 'D'];
+  const courseSemConfig = {};
+  for (const course of courses) {
+    courseSemConfig[course.id] = {};
+    for (let sem = 1; sem <= 8; sem++) {
+      // 2, 3, or 4 sections for this specific course+semester
+      courseSemConfig[course.id][sem] = SECTIONS.slice(0, getRandomInt(2, 4));
+    }
+  }
 
-  // Enroll Students in Virtual Class (Groups A & B)
-  await prisma.classEnrollment.create({
-    data: {
+  const studentsToCreate = [];
+  let rollCounter = 1;
+  for (let i = 0; i < 2000; i++) {
+    const course = getRandomItem(courses);
+    const sem = getRandomInt(1, 8);
+
+    // Pick from the allowed sections for this specific semester
+    const allowedSections = courseSemConfig[course.id][sem];
+    const section = getRandomItem(allowedSections);
+
+    const rNo = String(rollCounter).padStart(4, '0');
+    rollCounter++;
+
+    studentsToCreate.push({
+      name: `${getRandomItem(FIRST_NAMES)} ${getRandomItem(LAST_NAMES)}`,
+      roll_no: `${course.prefix}24${rNo}`,
+      role: 'STUDENT',
+      course_id: course.id,
+      current_semester: sem,
+      section: section
+    });
+  }
+
+  // Insert students in batches to avoid Prisma payload issues
+  console.log('Batch inserting students...');
+  const BATCH_SIZE = 500;
+  for (let i = 0; i < studentsToCreate.length; i += BATCH_SIZE) {
+    const batch = studentsToCreate.slice(i, i + BATCH_SIZE);
+    await prisma.user.createMany({
+      data: batch
+    });
+  }
+
+  console.log('Creating Sample Virtual Class for Testing...');
+  const cseCourse = courses.find(c => c.prefix === 'CSE');
+  const cseSem5Subjects = subjects.filter(s => s.course_id === cseCourse.id && s.semester_number === 5);
+
+  if (cseSem5Subjects.length > 0) {
+    const classDB = await prisma.virtualClass.create({
+      data: {
+        subject_id: cseSem5Subjects[0].id,
+        teacher_id: teacherJohn.id,
+        academic_year: '2023-2024',
+        section: 'A',
+      },
+    });
+
+    // Find some students to enroll
+    const sem5StudentsSecA = await prisma.user.findMany({
+      where: {
+        course_id: cseCourse.id,
+        current_semester: 5,
+        section: 'A',
+        role: 'STUDENT'
+      },
+      take: 10
+    });
+
+    console.log(`Enrolling ${sem5StudentsSecA.length} students into the sample class.`);
+
+    const enrollmentsData = sem5StudentsSecA.map((st, idx) => ({
       virtual_class_id: classDB.id,
-      student_id: student1.id,
-      group_label: 'A',
-    },
-  });
-  await prisma.classEnrollment.create({
-    data: {
-      virtual_class_id: classDB.id,
-      student_id: student2.id,
-      group_label: 'A',
-    },
-  });
-  await prisma.classEnrollment.create({
-    data: {
-      virtual_class_id: classDB.id,
-      student_id: student3.id,
-      group_label: 'B',
-    },
-  });
+      student_id: st.id,
+      group_label: idx % 2 === 0 ? 'A' : 'B'
+    }));
 
-  const enrollment4 = await prisma.classEnrollment.create({
-    data: {
-      virtual_class_id: classDB.id,
-      student_id: student4.id,
-      group_label: 'B',
-    },
-  });
+    await prisma.classEnrollment.createMany({
+      data: enrollmentsData
+    });
+  }
 
-  // Add an evaluation for Priya
-  await prisma.evaluation.create({
-    data: {
-      enrollment_id: enrollment4.id,
-      eval_name: 'Midterm 1',
-      fundamental_knowledge: 8.5,
-      core_skills: 7.0,
-      communication_skills: 9.0,
-      soft_skills: 8.0,
-    },
-  });
-
-  console.log('Seeding completed successfully.');
+  console.log('Seeding completed successfully!');
 }
 
 main()

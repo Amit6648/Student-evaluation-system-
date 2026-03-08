@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ChevronLeft, Plus, Users, BookOpen, Trash2, CheckCircle2, BarChart, Loader2 } from "lucide-react";
+import { ChevronLeft, Plus, Users, BookOpen, Trash2, CheckCircle2, BarChart, Loader2, UserPlus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -68,9 +68,16 @@ export default function ClassroomDetail({ currentUser }) {
 
     // UI state
     const [showEvalModal, setShowEvalModal] = useState(false);
+    const [showEnrollModal, setShowEnrollModal] = useState(false);
     const [evalStudent, setEvalStudent] = useState(null);
     const [evalHistoryStudent, setEvalHistoryStudent] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [enrollmentToDelete, setEnrollmentToDelete] = useState(null);
+
+    // Eligible students state
+    const [eligibleStudents, setEligibleStudents] = useState([]);
+    const [batchGroup, setBatchGroup] = useState('A');
+    const [selectedStudentIds, setSelectedStudentIds] = useState([]);
 
     const fetchClassroomData = async () => {
         try {
@@ -98,8 +105,21 @@ export default function ClassroomDetail({ currentUser }) {
         }
     };
 
+    const fetchEligibleStudents = async () => {
+        try {
+            const res = await fetch(`/api/eligible-students/${id}`);
+            if (res.ok) {
+                const data = await res.json();
+                setEligibleStudents(data);
+            }
+        } catch (err) {
+            console.error("Failed to fetch eligible students:", err);
+        }
+    };
+
     useEffect(() => {
         fetchClassroomData();
+        fetchEligibleStudents();
     }, [id]);
 
     useEffect(() => {
@@ -151,14 +171,43 @@ export default function ClassroomDetail({ currentUser }) {
         }
     }
 
-    async function handleRemove(enrollmentId) {
-        if (confirm("Remove student enrollment? Marks will be lost.")) {
-            try {
-                await fetch(`/api/enrollments/${enrollmentId}`, { method: 'DELETE' });
-                await fetchClassroomData();
-            } catch (err) {
-                console.error(err);
-            }
+    async function executeRemoveStudent(enrollmentId) {
+        try {
+            await fetch(`/api/enrollments/${enrollmentId}`, { method: 'DELETE' });
+            await fetchClassroomData();
+            setEnrollmentToDelete(null);
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    async function handleEnrollSubmit(e) {
+        e.preventDefault();
+        if (selectedStudentIds.length === 0) {
+            alert("Please select at least one student to enroll.");
+            return;
+        }
+
+        setLoading(true);
+        try {
+            await fetch('/api/enroll-multiple', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    virtual_class_id: id,
+                    group_label: batchGroup,
+                    student_ids: selectedStudentIds
+                })
+            });
+            await fetchClassroomData();
+            await fetchEligibleStudents(); // Refresh lists
+            setShowEnrollModal(false);
+            setSelectedStudentIds([]); // Clear selection
+            // Keep batchGroup as is for convenience
+        } catch (err) {
+            console.error("Failed to batch enroll students", err);
+        } finally {
+            setLoading(false);
         }
     }
 
@@ -199,6 +248,13 @@ export default function ClassroomDetail({ currentUser }) {
                         Group B
                     </button>
                 </div>
+
+                {isAdmin && (
+                    <Button onClick={() => setShowEnrollModal(true)} className="mt-4 md:mt-0 bg-[#E8B4B8] hover:bg-[#d69f10] text-[#111827] shadow-lg rounded-xl flex items-center gap-2 font-bold px-5 h-12 transition-all hover:scale-[1.02]">
+                        <UserPlus size={18} />
+                        Enroll Students
+                    </Button>
+                )}
             </header>
 
             {/* Premium Stat Cards for Active Group */}
@@ -352,7 +408,7 @@ export default function ClassroomDetail({ currentUser }) {
                                                 <>
                                                     {isAdmin && (
                                                         <TableCell className="py-4 px-8 text-right border-b border-gray-50">
-                                                            <Button variant="ghost" size="icon" onClick={() => handleRemove(s.enrollment_id)} className="text-gray-400 hover:text-red-500 transition-colors p-2 rounded-lg hover:bg-red-50" title="Remove Student">
+                                                            <Button variant="ghost" size="icon" onClick={() => setEnrollmentToDelete(s.enrollment_id)} className="text-gray-400 hover:text-red-500 transition-colors p-2 rounded-lg hover:bg-red-50" title="Remove Student">
                                                                 <Trash2 size={18} />
                                                             </Button>
                                                         </TableCell>
@@ -505,6 +561,127 @@ export default function ClassroomDetail({ currentUser }) {
                     )}
                 </DialogContent>
             </Dialog>
+            <Dialog open={showEnrollModal} onOpenChange={(open) => {
+                setShowEnrollModal(open);
+                if (!open) setSelectedStudentIds([]);
+            }}>
+                <DialogContent className="sm:max-w-xl rounded-[24px] p-8">
+                    <DialogHeader>
+                        <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+                            <Users size={24} className="text-[#E8B4B8]" />
+                            Batch Enroll Students
+                        </DialogTitle>
+                        <DialogDescription className="pt-2">
+                            Administer student roster for Section {classroom.section}.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <form onSubmit={handleEnrollSubmit} className="space-y-6 mt-4">
+                        <div className="space-y-3">
+                            <label className="text-sm font-bold text-gray-700 uppercase tracking-wider">1. Target Enrollment Group</label>
+                            <div className="flex bg-gray-100 p-1 rounded-xl w-full shadow-inner">
+                                <button
+                                    type="button"
+                                    onClick={() => setBatchGroup('A')}
+                                    className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${batchGroup === 'A' ? 'bg-white text-blue-600 shadow-sm ring-1 ring-black/5' : 'text-gray-500 hover:text-gray-700'}`}
+                                >
+                                    Group A
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setBatchGroup('B')}
+                                    className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${batchGroup === 'B' ? 'bg-white text-purple-600 shadow-sm ring-1 ring-black/5' : 'text-gray-500 hover:text-gray-700'}`}
+                                >
+                                    Group B
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <label className="text-sm font-bold text-gray-700 uppercase tracking-wider">2. Select Students</label>
+                            <div className="bg-gray-50 border border-gray-100 rounded-xl p-4 max-h-[300px] overflow-y-auto">
+                                {eligibleStudents.length === 0 ? (
+                                    <p className="text-gray-500 text-sm text-center py-4 italic">No eligible students found in the system for this course and semester.</p>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {eligibleStudents.map((student) => {
+                                            const existingEnrollment = students.find(s => s.student_id === student.id);
+                                            const isAssigned = !!existingEnrollment;
+
+                                            // As requested, green styling for already assigned students.
+                                            const containerClasses = isAssigned
+                                                ? "bg-green-50/50 border-green-200"
+                                                : "bg-white border-gray-100 hover:border-[#E8B4B8]/40";
+
+                                            return (
+                                                <div key={student.id} className={`flex justify-between items-center p-3 rounded-xl shadow-sm border transition-colors ${containerClasses}`}>
+                                                    <div className="flex items-center gap-3">
+                                                        <input
+                                                            type="checkbox"
+                                                            className="w-4 h-4 rounded text-[#111827] border-gray-300 focus:ring-[#E8B4B8]"
+                                                            checked={selectedStudentIds.includes(student.id)}
+                                                            onChange={(e) => {
+                                                                if (e.target.checked) setSelectedStudentIds(prev => [...prev, student.id]);
+                                                                else setSelectedStudentIds(prev => prev.filter(id => id !== student.id));
+                                                            }}
+                                                        />
+                                                        <div>
+                                                            <p className={`font-semibold ${isAssigned ? 'text-green-800' : 'text-gray-800'}`}>{student.name}</p>
+                                                            <p className={`text-xs ${isAssigned ? 'text-green-600' : 'text-gray-500'}`}>{student.roll_no}</p>
+                                                        </div>
+                                                    </div>
+                                                    {isAssigned && (
+                                                        <Badge variant="secondary" className="bg-green-100/80 text-green-700 border-none font-bold shadow-sm">
+                                                            Currently: Group {existingEnrollment.group_label}
+                                                        </Badge>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <DialogFooter className="gap-2 sm:justify-end">
+                            <Button type="button" variant="ghost" className="rounded-xl px-5" onClick={() => setShowEnrollModal(false)}>
+                                Cancel
+                            </Button>
+                            <Button type="submit" disabled={loading || selectedStudentIds.length === 0} className="bg-[#111827] text-white hover:bg-gray-800 rounded-xl px-6 font-semibold">
+                                {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                                Save {selectedStudentIds.length > 0 ? `(${selectedStudentIds.length})` : ''} Enrollments
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+            <Dialog open={!!enrollmentToDelete} onOpenChange={(open) => !open && setEnrollmentToDelete(null)}>
+                <DialogContent className="sm:max-w-md rounded-[24px] p-6 text-center border-none shadow-2xl">
+                    <DialogHeader>
+                        <div className="mx-auto w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-4">
+                            <Trash2 size={24} />
+                        </div>
+                        <DialogTitle className="text-2xl font-bold text-[#111827]">Remove Student?</DialogTitle>
+                        <DialogDescription className="pt-2 text-gray-500 font-medium pb-4">
+                            Are you sure you want to remove this student from the classroom? All recorded marks and evaluation history for this class will be permanently lost.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="flex sm:justify-center gap-3">
+                        <Button type="button" variant="ghost" className="rounded-xl px-6 font-semibold" onClick={() => setEnrollmentToDelete(null)}>
+                            Cancel
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            onClick={() => executeRemoveStudent(enrollmentToDelete)}
+                            className="bg-red-600 hover:bg-red-700 rounded-xl px-8 font-semibold shadow-md"
+                        >
+                            Yes, Remove
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
         </div>
     );
 }

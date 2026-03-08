@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Plus, GraduationCap, Users, ChevronRight, Loader2, UserPlus, BookOpen } from "lucide-react";
+import { Plus, GraduationCap, Users, ChevronRight, Loader2, UserPlus, BookOpen, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,10 +35,20 @@ export default function Dashboard({ currentUser }) {
     const [students, setStudents] = useState([]);
 
     // Form state
+    const [selectedSemester, setSelectedSemester] = useState("");
     const [selectedSubject, setSelectedSubject] = useState("");
     const [selectedTeacher, setSelectedTeacher] = useState("");
     const [academicYear, setAcademicYear] = useState("2023-2024");
-    const [enrollments, setEnrollments] = useState({}); // { studentId: 'A' | 'B' | null }
+    const [classToDelete, setClassToDelete] = useState(null);
+
+    // Advanced Creation Logic States
+    const [sections, setSections] = useState([]);
+    const [selectedSection, setSelectedSection] = useState("");
+    const [showAllTeachers, setShowAllTeachers] = useState(false);
+
+    // Filter Bar States
+    const [filterTeacher, setFilterTeacher] = useState("ALL");
+    const [filterSubject, setFilterSubject] = useState("ALL");
 
     useEffect(() => {
         if (!currentUser) return;
@@ -47,6 +57,8 @@ export default function Dashboard({ currentUser }) {
         let url = '/api/virtual-classes';
         if (currentUser.role === 'TEACHER') {
             url += `?teacher_id=${currentUser.id}`;
+        } else if (currentUser.role === 'ADMIN' && currentUser.course_id) {
+            url += `?course_id=${currentUser.course_id}`;
         }
 
         fetch(url)
@@ -71,8 +83,8 @@ export default function Dashboard({ currentUser }) {
         }
     }, [currentUser]);
 
-    // Gather all subjects from the hierarchy
-    const allSubjects = hierarchy.schools?.flatMap(school =>
+    // Gather all subjects from the hierarchy, filtering by Admin's course if strictly assigned
+    const allSubjectsRaw = hierarchy.schools?.flatMap(school =>
         school.courses.flatMap(course =>
             course.subjects.map(subject => ({
                 ...subject,
@@ -82,6 +94,65 @@ export default function Dashboard({ currentUser }) {
         )
     ) || [];
 
+    const allSubjects = (currentUser?.role === 'ADMIN' && currentUser?.course_id)
+        ? allSubjectsRaw.filter(sub => sub.course_id === currentUser.course_id)
+        : allSubjectsRaw;
+
+    const availableSemesters = Array.from(new Set(allSubjects.map(s => s.semester_number))).sort((a, b) => a - b);
+    const filteredSubjectsForDropdown = selectedSemester && selectedSemester !== "ALL"
+        ? allSubjects.filter(sub => sub.semester_number.toString() === selectedSemester.toString())
+        : allSubjects;
+
+    // Fetch sections when subject changes
+    useEffect(() => {
+        if (!selectedSubject) {
+            setSections([]);
+            setSelectedSection("");
+            return;
+        }
+        const subject = allSubjects.find(s => s.id === selectedSubject);
+        if (subject) {
+            fetch(`/api/sections?course_id=${subject.course_id}&semester_number=${subject.semester_number}`)
+                .then(res => res.json())
+                .then(data => {
+                    setSections(Array.isArray(data) ? data : []);
+                })
+                .catch(err => console.error("Failed to fetch sections:", err));
+        }
+    }, [selectedSubject, hierarchy]);
+
+    // Derived filtering for creation dialog
+    const selectedSubjectObj = allSubjects.find(s => s.id === selectedSubject);
+
+    const eligibleTeachers = showAllTeachers ? teachers : teachers.filter(t => {
+        if (!selectedSubjectObj) return true;
+        return t.course_id === selectedSubjectObj.course_id;
+    });
+
+    // Dashboard Grid Filtering
+    const uniqueClassTeachers = Array.from(new Set(classes.map(c => c.teacher_id)))
+        .map(id => teachers.find(t => t.id === id))
+        .filter(Boolean);
+    const uniqueClassSubjects = Array.from(new Set(classes.map(c => c.subject_id)))
+        .map(id => allSubjects.find(s => s.id === id) || classes.find(c => c.id === id)?.subject)
+        .filter(Boolean);
+
+    const displayedClasses = classes.filter(c => {
+        const matchTeacher = filterTeacher === "ALL" || c.teacher_id === filterTeacher;
+        const matchSubject = filterSubject === "ALL" || c.subject_id === filterSubject;
+        return matchTeacher && matchSubject;
+    });
+
+    async function executeDeleteClass(classId) {
+        try {
+            await fetch(`/api/virtual-classes/${classId}`, { method: 'DELETE' });
+            setClasses(classes.filter(c => c.id !== classId));
+            setClassToDelete(null);
+        } catch (err) {
+            console.error("Failed to delete class:", err);
+        }
+    }
+
     async function handleSubmit(e) {
         e.preventDefault();
         if (!selectedSubject || !selectedTeacher) {
@@ -90,9 +161,6 @@ export default function Dashboard({ currentUser }) {
         }
 
         setLoading(true);
-        const finalEnrollments = Object.entries(enrollments)
-            .filter(([_, group]) => group !== null)
-            .map(([student_id, group_label]) => ({ student_id, group_label }));
 
         try {
             await fetch('/api/virtual-classes', {
@@ -102,7 +170,8 @@ export default function Dashboard({ currentUser }) {
                     subject_id: selectedSubject,
                     teacher_id: selectedTeacher,
                     academic_year: academicYear,
-                    enrollments: finalEnrollments
+                    section: selectedSection,
+                    enrollments: []
                 })
             });
 
@@ -143,44 +212,72 @@ export default function Dashboard({ currentUser }) {
 
                     {isAdmin && (
                         <Dialog open={showModal} onOpenChange={setShowModal}>
-                            <DialogTrigger asChild>
-                                <Button size="lg" className="bg-[#111827] text-white hover:bg-gray-800 transition-all shadow-md hover:shadow-lg rounded-xl h-12 px-6 gap-2 group shrink-0">
-                                    <Plus size={20} className="group-hover:rotate-90 transition-transform duration-300" /> New Virtual Class
-                                </Button>
-                            </DialogTrigger>
                             <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto rounded-[24px] p-8 border-none shadow-2xl">
                                 <DialogHeader className="mb-6">
                                     <DialogTitle className="text-2xl font-bold text-[#111827]">Create Virtual Class</DialogTitle>
                                     <DialogDescription className="text-gray-500">Assign a subject, teacher, and students to groups A and B.</DialogDescription>
                                 </DialogHeader>
                                 <form onSubmit={handleSubmit} className="space-y-6">
-                                    <div className="grid grid-cols-2 gap-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="space-y-2">
-                                            <label className="text-sm font-semibold text-gray-700">Subject</label>
-                                            <Select value={selectedSubject} onValueChange={setSelectedSubject}>
+                                            <label className="text-sm font-semibold text-gray-700">Semester</label>
+                                            <Select value={selectedSemester} onValueChange={(val) => {
+                                                setSelectedSemester(val);
+                                                setSelectedSubject("");
+                                                setSelectedSection("");
+                                            }}>
                                                 <SelectTrigger className="h-11 rounded-xl bg-gray-50">
-                                                    <SelectValue placeholder="Select a subject" />
+                                                    <SelectValue placeholder="Select semester" />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    {allSubjects.map(sub => (
+                                                    <SelectItem value="ALL">All Semesters</SelectItem>
+                                                    {availableSemesters.map(sem => (
+                                                        <SelectItem key={sem} value={sem.toString()}>Semester {sem}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-semibold text-gray-700">Subject</label>
+                                            <Select value={selectedSubject} onValueChange={setSelectedSubject} disabled={!selectedSemester}>
+                                                <SelectTrigger className="h-11 rounded-xl bg-gray-50">
+                                                    <SelectValue placeholder={selectedSemester ? "Select a subject" : "Select a semester first"} />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {filteredSubjectsForDropdown.map(sub => (
                                                         <SelectItem key={sub.id} value={sub.id}>
                                                             <div className="flex flex-col">
                                                                 <span className="font-bold">{sub.name}</span>
-                                                                <span className="text-[10px] text-gray-400 uppercase">{sub.courseName}</span>
+                                                                <span className="text-[10px] text-gray-400 uppercase">{sub.courseName} • Sem {sub.semester_number}</span>
                                                             </div>
                                                         </SelectItem>
                                                     ))}
                                                 </SelectContent>
                                             </Select>
                                         </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="space-y-2">
-                                            <label className="text-sm font-semibold text-gray-700">Assign Teacher</label>
+                                            <div className="flex justify-between items-center">
+                                                <label className="text-sm font-semibold text-gray-700">Assign Teacher</label>
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        type="checkbox"
+                                                        id="globalTeachers"
+                                                        checked={showAllTeachers}
+                                                        onChange={(e) => setShowAllTeachers(e.target.checked)}
+                                                        className="rounded text-[#E8B4B8] border-gray-300 focus:ring-[#E8B4B8]"
+                                                    />
+                                                    <label htmlFor="globalTeachers" className="text-xs text-gray-500 cursor-pointer">Global Override</label>
+                                                </div>
+                                            </div>
                                             <Select value={selectedTeacher} onValueChange={setSelectedTeacher}>
                                                 <SelectTrigger className="h-11 rounded-xl bg-gray-50">
                                                     <SelectValue placeholder="Select a teacher" />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    {teachers.map(t => (
+                                                    {eligibleTeachers.map(t => (
                                                         <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
                                                     ))}
                                                 </SelectContent>
@@ -188,41 +285,26 @@ export default function Dashboard({ currentUser }) {
                                         </div>
                                     </div>
 
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-semibold text-gray-700">Academic Year</label>
-                                        <Input value={academicYear} onChange={(e) => setAcademicYear(e.target.value)} placeholder="e.g. 2023-2024" className="h-11 rounded-xl bg-gray-50 border-gray-200" />
-                                    </div>
-
-                                    <div className="border border-gray-100 rounded-xl p-4 bg-gray-50/50 space-y-4">
-                                        <h3 className="font-bold text-gray-800 flex items-center gap-2">
-                                            <UserPlus size={18} className="text-[#E8B4B8]" />
-                                            Student Enrollments
-                                        </h3>
-                                        <p className="text-xs text-gray-500 pb-2 border-b border-gray-200">Explicitly assign students to Group A, Group B, or leave unassigned.</p>
-
-                                        <div className="max-h-[250px] overflow-y-auto space-y-2 pr-2">
-                                            {students.map(s => (
-                                                <div key={s.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-white border text-sm transition-colors border-transparent hover:border-gray-100">
-                                                    <div>
-                                                        <p className="font-semibold text-gray-800">{s.name}</p>
-                                                        <p className="text-xs text-gray-400">{s.roll_no}</p>
-                                                    </div>
-                                                    <Select
-                                                        value={enrollments[s.id] || "NONE"}
-                                                        onValueChange={(val) => setEnrollments(prev => ({ ...prev, [s.id]: val === "NONE" ? null : val }))}
-                                                    >
-                                                        <SelectTrigger className="w-[120px] h-8 bg-white">
-                                                            <SelectValue />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            <SelectItem value="NONE" className="text-gray-400 italic">None</SelectItem>
-                                                            <SelectItem value="A" className="font-bold text-blue-600">Group A</SelectItem>
-                                                            <SelectItem value="B" className="font-bold text-purple-600">Group B</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                </div>
-                                            ))}
-                                            {students.length === 0 && <p className="text-sm text-gray-500 py-4 text-center">No students found in the system.</p>}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-semibold text-gray-700">Academic Year</label>
+                                            <Input value={academicYear} onChange={(e) => setAcademicYear(e.target.value)} placeholder="e.g. 2023-2024" className="h-11 rounded-xl bg-gray-50 border-gray-200" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-semibold text-gray-700 flex justify-between">
+                                                Section
+                                                {selectedSubject && sections.length === 0 && <span className="text-xs text-orange-500 font-normal">No active sections found</span>}
+                                            </label>
+                                            <Select value={selectedSection} onValueChange={setSelectedSection} disabled={sections.length === 0}>
+                                                <SelectTrigger className="h-11 rounded-xl bg-gray-50">
+                                                    <SelectValue placeholder="Select section..." />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {sections.map(sec => (
+                                                        <SelectItem key={sec} value={sec}>Section {sec}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
                                         </div>
                                     </div>
 
@@ -241,18 +323,46 @@ export default function Dashboard({ currentUser }) {
                     )}
                 </header>
 
+                {isAdmin && classes.length > 0 && (
+                    <div className="mb-8 flex flex-wrap gap-4 items-center bg-white/70 backdrop-blur-sm p-3 rounded-2xl border border-black/5 shadow-sm">
+                        <span className="text-sm font-bold text-gray-500 uppercase tracking-wider pl-2">Filters:</span>
+                        <Select value={filterTeacher} onValueChange={setFilterTeacher}>
+                            <SelectTrigger className="w-[200px] h-9 rounded-xl bg-white border-0 shadow-sm font-medium">
+                                <SelectValue placeholder="All Teachers" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="ALL" className="font-bold">All Teachers</SelectItem>
+                                {uniqueClassTeachers.map(t => (
+                                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <Select value={filterSubject} onValueChange={setFilterSubject}>
+                            <SelectTrigger className="w-[240px] h-9 rounded-xl bg-white border-0 shadow-sm font-medium">
+                                <SelectValue placeholder="All Subjects" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="ALL" className="font-bold">All Subjects</SelectItem>
+                                {uniqueClassSubjects.map(s => (
+                                    <SelectItem key={s.id} value={s.id}>{s.name || s.id}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                )}
+
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {isAdmin && (
                         <Card
                             onClick={() => setShowModal(true)}
-                            className="bg-transparent border-2 border-dashed border-gray-200 rounded-[24px] p-2 flex flex-col items-center justify-center text-center transition-all hover:border-[#E8B4B8] hover:bg-white/50 aspect-square group cursor-pointer shadow-none"
+                            className="bg-transparent border-2 border-dashed border-[#E8B4B8]/60 rounded-[24px] p-2 flex flex-col items-center justify-center text-center transition-all hover:bg-[#E8B4B8]/5 aspect-[1.1] group cursor-pointer shadow-none h-full"
                         >
                             <CardContent className="flex flex-col items-center justify-center h-full p-6">
-                                <div className="w-14 h-14 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-4 text-gray-400 group-hover:text-[#E8B4B8] group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
-                                    <Plus size={28} />
+                                <div className="w-16 h-16 bg-white border border-gray-100 rounded-[20px] shadow-sm flex items-center justify-center mb-4 text-[#E8B4B8] group-hover:scale-110 transition-transform duration-300">
+                                    <Plus size={32} strokeWidth={2.5} />
                                 </div>
-                                <CardTitle className="text-xl font-bold text-[#111827] mb-2">New Class</CardTitle>
-                                <CardDescription className="text-sm font-medium px-4">Create a new virtual environment</CardDescription>
+                                <CardTitle className="text-xl font-bold text-[#111827] mb-2">Create New Virtual Class</CardTitle>
+                                <CardDescription className="text-sm font-medium px-4">Set up a new learning environment</CardDescription>
                             </CardContent>
                         </Card>
                     )}
@@ -268,14 +378,28 @@ export default function Dashboard({ currentUser }) {
                             )}
                         </div>
                     ) : (
-                        classes.map((c) => (
+                        displayedClasses.map((c) => (
                             <Link
                                 to={`/class/${c.id}`}
                                 key={c.id}
                                 className="group relative block"
                             >
-                                <Card className="bg-white/70 backdrop-blur-xl border border-black/5 rounded-[24px] p-2 transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-[#111827]/5 flex flex-col justify-between aspect-[1.1] overflow-hidden shadow-sm h-full">
+                                <Card className="bg-white/70 backdrop-blur-xl border border-black/5 rounded-[24px] p-2 transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-[#111827]/5 flex flex-col justify-between aspect-[1.1] overflow-hidden shadow-sm h-full relative">
                                     <div className="absolute inset-0 bg-gradient-to-br from-[#E8B4B8]/0 to-[#E8B4B8]/0 group-hover:to-[#E8B4B8]/10 transition-colors duration-500 pointer-events-none rounded-[24px]"></div>
+
+                                    {isAdmin && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                setClassToDelete(c.id);
+                                            }}
+                                            className="absolute top-4 right-4 z-20 w-8 h-8 rounded-full bg-red-50 text-red-400 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 hover:text-white"
+                                            title="Delete Virtual Class"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    )}
 
                                     <CardHeader className="relative z-10 p-5 pb-2">
                                         <div className="flex justify-between items-start mb-3">
@@ -307,6 +431,34 @@ export default function Dashboard({ currentUser }) {
                         ))
                     )}
                 </div>
+
+                {/* Delete Confirmation Modal */}
+                <Dialog open={!!classToDelete} onOpenChange={(open) => !open && setClassToDelete(null)}>
+                    <DialogContent className="sm:max-w-md rounded-[24px] p-6 text-center border-none shadow-2xl">
+                        <DialogHeader>
+                            <div className="mx-auto w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-4">
+                                <Trash2 size={24} />
+                            </div>
+                            <DialogTitle className="text-2xl font-bold text-[#111827]">Delete Classroom?</DialogTitle>
+                            <DialogDescription className="pt-2 text-gray-500 font-medium pb-4">
+                                This action cannot be undone. This will permanently delete the virtual classroom, all student enrollments, and their evaluation histories.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <DialogFooter className="flex sm:justify-center gap-3">
+                            <Button type="button" variant="ghost" className="rounded-xl px-6 font-semibold" onClick={() => setClassToDelete(null)}>
+                                Cancel
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="destructive"
+                                onClick={() => executeDeleteClass(classToDelete)}
+                                className="bg-red-600 hover:bg-red-700 rounded-xl px-8 font-semibold shadow-md"
+                            >
+                                Yes, Delete
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
 
             </div>
         </div>

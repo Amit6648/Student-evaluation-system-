@@ -36,6 +36,7 @@ app.get('/api/hierarchy', async (req, res) => {
 app.get('/api/users', async (req, res) => {
     try {
         const users = await prisma.user.findMany({
+            include: { course: true },
             orderBy: { name: 'asc' }
         });
         res.json(users);
@@ -45,10 +46,41 @@ app.get('/api/users', async (req, res) => {
     }
 });
 
+// Get Sections for a given Course and Semester
+app.get('/api/sections', async (req, res) => {
+    try {
+        const { course_id, semester_number } = req.query;
+        if (!course_id || !semester_number) {
+            return res.status(400).json({ error: "Missing parameters" });
+        }
+
+        const distinctSections = await prisma.user.findMany({
+            where: {
+                role: 'STUDENT',
+                course_id: course_id,
+                current_semester: parseInt(semester_number)
+            },
+            select: { section: true },
+            distinct: ['section'],
+            orderBy: { section: 'asc' }
+        });
+
+        // Filter out null sections
+        const sections = distinctSections
+            .map(s => s.section)
+            .filter(s => s !== null);
+
+        res.json(sections);
+    } catch (error) {
+        console.error("Error fetching sections:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
 // Create Virtual Class (Admin)
 app.post('/api/virtual-classes', async (req, res) => {
     try {
-        const { subject_id, teacher_id, academic_year, enrollments } = req.body;
+        const { subject_id, teacher_id, academic_year, section, enrollments } = req.body;
         // enrollments: [{ student_id, group_label }]
 
         const virtualClass = await prisma.virtualClass.create({
@@ -56,6 +88,7 @@ app.post('/api/virtual-classes', async (req, res) => {
                 subject_id,
                 teacher_id,
                 academic_year,
+                section,
                 enrollments: {
                     create: enrollments.map(e => ({
                         student_id: e.student_id,
@@ -72,13 +105,20 @@ app.post('/api/virtual-classes', async (req, res) => {
     }
 });
 
-// Fetch Virtual Classes (filtered by teacher_id optionally)
+// Fetch Virtual Classes (filtered by teacher_id or course_id optionally)
 app.get('/api/virtual-classes', async (req, res) => {
     try {
-        const { teacher_id } = req.query;
+        const { teacher_id, course_id } = req.query;
         let whereClause = {};
+
         if (teacher_id) {
             whereClause.teacher_id = teacher_id;
+        }
+
+        if (course_id) {
+            whereClause.subject = {
+                course_id: course_id
+            };
         }
 
         const classes = await prisma.virtualClass.findMany({
@@ -163,6 +203,41 @@ app.get('/api/virtual-classes/:id', async (req, res) => {
     }
 });
 
+// Delete Virtual Class entirely
+app.delete('/api/virtual-classes/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Find all enrollments to delete their evaluations first
+        const enrollments = await prisma.classEnrollment.findMany({
+            where: { virtual_class_id: id }
+        });
+
+        const enrollmentIds = enrollments.map(e => e.id);
+
+        if (enrollmentIds.length > 0) {
+            await prisma.evaluation.deleteMany({
+                where: { enrollment_id: { in: enrollmentIds } }
+            });
+        }
+
+        // Delete enrollments
+        await prisma.classEnrollment.deleteMany({
+            where: { virtual_class_id: id }
+        });
+
+        // Delete virtual class
+        await prisma.virtualClass.delete({
+            where: { id }
+        });
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error("Error deleting classroom:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
 // Enroll a student into an existing class
 app.post('/api/enrollments', async (req, res) => {
     try {
@@ -199,10 +274,83 @@ app.post('/api/enrollments', async (req, res) => {
 app.delete('/api/enrollments/:id', async (req, res) => {
     try {
         const { id } = req.params;
+
+        // Delete all dependent evaluations first to avoid foreign key constraint errors
+        await prisma.evaluation.deleteMany({
+            where: { enrollment_id: id }
+        });
+
+        // Then delete the enrollment itself
         await prisma.classEnrollment.delete({ where: { id } });
         res.json({ success: true });
     } catch (error) {
         console.error("Error removing student:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+// Fetch eligible students for a specific virtual class
+app.get('/api/eligible-students/:class_id', async (req, res) => {
+    try {
+        const { class_id } = req.params;
+        const virtualClass = await prisma.virtualClass.findUnique({
+            where: { id: class_id },
+            include: { subject: true }
+        });
+
+        if (!virtualClass) {
+            return res.status(404).json({ error: "Classroom not found" });
+        }
+
+        const eligibleStudents = await prisma.user.findMany({
+            where: {
+                role: 'STUDENT',
+                course_id: virtualClass.subject.course_id,
+                current_semester: virtualClass.subject.semester_number,
+                section: virtualClass.section
+            },
+            orderBy: { name: 'asc' }
+        });
+
+        res.json(eligibleStudents);
+    } catch (error) {
+        console.error("Error fetching eligible students:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+// Batch enroll students
+app.post('/api/enroll-multiple', async (req, res) => {
+    try {
+        const { virtual_class_id, group_label, student_ids } = req.body;
+
+        if (!virtual_class_id || !group_label || !Array.isArray(student_ids)) {
+            return res.status(400).json({ error: "Missing or invalid required fields" });
+        }
+
+        // Upsert all students in the batch
+        const upsertPromises = student_ids.map(student_id =>
+            prisma.classEnrollment.upsert({
+                where: {
+                    virtual_class_id_student_id: {
+                        virtual_class_id,
+                        student_id
+                    }
+                },
+                update: { group_label },
+                create: {
+                    virtual_class_id,
+                    student_id,
+                    group_label
+                }
+            })
+        );
+
+        await Promise.all(upsertPromises);
+
+        res.json({ success: true, count: student_ids.length });
+    } catch (error) {
+        console.error("Error batch enrolling students:", error);
         res.status(500).json({ error: "Internal server error" });
     }
 });

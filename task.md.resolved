@@ -1,0 +1,16 @@
+# Project Tasks
+
+## Database & Section Engineering
+- [x] Expand [schema.prisma](file:///g:/Projects/Student%20evaluation%20system/Student-evaluation-system-/prisma/schema.prisma) models `User` and `VirtualClass` to natively track section parameters.
+- [x] Wire a new backend REST endpoint `/api/sections` dynamically retrieving available sections keyed to academic course constraints.
+- [x] Ensure React Dashboard intercepts `selectedSemester`, enabling Section dropdown selection for Admins.
+- [x] Refactor existing `/api/eligible-students/` API to intelligently drop non-matching students based on classroom sections.
+- [x] Revamp [seed.js](file:///g:/Projects/Student%20evaluation%20system/Student-evaluation-system-/seed.js) script to autonomously generate a large-volume environment featuring dynamic combinations of multiple teachers, varying configurations of 2-4 sections, and 2000 algorithmic mock students.
+
+## Figma UI Evolved Redesign
+- [ ] Overhaul [Dashboard.jsx](file:///g:/Projects/Student%20evaluation%20system/Student-evaluation-system-/src/pages/Dashboard.jsx) layout logic to inject a highly premium deeply Navy-colored Navigation Sidebar.
+- [ ] Migrate [Dashboard.jsx](file:///g:/Projects/Student%20evaluation%20system/Student-evaluation-system-/src/pages/Dashboard.jsx) Classroom Grid logic to employ generous modern radii (`rounded-2xl` and `rounded-3xl`), stark crisp white components, and elegant micro-hover lifted shadowing (`shadow-xl` hover effects).
+- [ ] Refactor Top Navigation structural headers to adopt a highly lightweight, ultra-thin frosted glassmorphic approach.
+- [ ] Plumb vibrant interactive gradient states to critical Action Buttons (like "Create New Virtual Class").
+- [ ] Overhaul [ClassroomDetail.jsx](file:///g:/Projects/Student%20evaluation%20system/Student-evaluation-system-/src/pages/ClassroomDetail.jsx) geometry utilizing large modern tracking, muted statistical cards, and premium styling for the sub-header routing.
+- [ ] Initiate rapid sequence End-to-End browser UI checks capturing proof-of-iteration via media recordings.
