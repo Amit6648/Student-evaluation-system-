@@ -1,6 +1,32 @@
 import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ChevronLeft, Plus, Users, BookOpen, Trash2, CheckCircle2, X, BarChart } from "lucide-react";
+import { ChevronLeft, Plus, Users, BookOpen, Trash2, CheckCircle2, BarChart, Loader2 } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+    DialogDescription,
+} from "@/components/ui/dialog";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 // Helper to generate initials
 function getInitials(name) {
@@ -27,68 +53,64 @@ function getAvatarColor(name) {
     return colors[Math.abs(hash) % colors.length];
 }
 
-export default function ClassroomDetail() {
+export default function ClassroomDetail({ currentUser }) {
     const { id } = useParams();
 
     // Server state
     const [classroom, setClassroom] = useState(null);
     const [students, setStudents] = useState([]);
-    const [allStudents, setAllStudents] = useState([]);
     const [stats, setStats] = useState({ totalStudents: 0, classAvg: '--', topScore: '--' });
     const [dataLoading, setDataLoading] = useState(true);
 
-    // UI state
+    // Filter state
+    const [activeGroup, setActiveGroup] = useState('A');
     const [activeTab, setActiveTab] = useState("roster");
-    const [showModal, setShowModal] = useState(false);
+
+    // UI state
     const [showEvalModal, setShowEvalModal] = useState(false);
     const [evalStudent, setEvalStudent] = useState(null);
     const [evalHistoryStudent, setEvalHistoryStudent] = useState(null);
     const [loading, setLoading] = useState(false);
 
-    // Filters for enrollment
-    const [filterDept, setFilterDept] = useState("");
-    const [filterSem, setFilterSem] = useState("");
-    const [filterSec, setFilterSec] = useState("");
-
     const fetchClassroomData = async () => {
         try {
-            const res = await fetch(`/api/classrooms/${id}`);
+            const res = await fetch(`/api/virtual-classes/${id}`);
             if (res.ok) {
                 const data = await res.json();
-                setClassroom(data.classroom);
-                setStudents(data.students);
-                calculateStats(data.students);
+                setClassroom(data.virtualClass);
+
+                const mappedEnrollments = data.virtualClass.enrollments.map(e => ({
+                    enrollment_id: e.id,
+                    student_id: e.student.id,
+                    name: e.student.name,
+                    roll_no: e.student.roll_no,
+                    group_label: e.group_label,
+                    averageMarks: e.averageMarks,
+                    evaluations: e.evaluations
+                }));
+
+                setStudents(mappedEnrollments);
             }
         } catch (err) {
             console.error("Failed to fetch classroom data:", err);
-        }
-    };
-
-    const fetchAllStudents = async () => {
-        try {
-            const res = await fetch('/api/students');
-            if (res.ok) {
-                const data = await res.json();
-                setAllStudents(data);
-            }
-        } catch (err) {
-            console.error("Failed to fetch all students:", err);
+        } finally {
+            setDataLoading(false);
         }
     };
 
     useEffect(() => {
-        Promise.all([fetchClassroomData(), fetchAllStudents()]).then(() => {
-            setDataLoading(false);
-        });
+        fetchClassroomData();
     }, [id]);
 
-    const calculateStats = (studentList) => {
-        let totalStudents = studentList.length;
+    useEffect(() => {
+        // Calculate stats for whatever the current group filter is
+        const displayed = students.filter(s => s.group_label === activeGroup);
+
         let totalClassScore = 0;
         let maxScore = 0;
         let studentsWithScore = 0;
 
-        studentList.forEach(s => {
+        displayed.forEach(s => {
             if (s.averageMarks !== null) {
                 totalClassScore += s.averageMarks;
                 maxScore = Math.max(maxScore, s.averageMarks);
@@ -98,37 +120,8 @@ export default function ClassroomDetail() {
 
         const classAvg = studentsWithScore > 0 ? (totalClassScore / studentsWithScore).toFixed(1) : '--';
         const topScore = studentsWithScore > 0 ? maxScore.toFixed(1) : '--';
-        setStats({ totalStudents, classAvg, topScore });
-    };
-
-    const enrolledIds = new Set(students.map(s => s.student_id));
-    const availableStudents = (allStudents || []).filter(s => {
-        if (enrolledIds.has(s.student_id)) return false;
-        if (filterDept && s.department !== filterDept) return false;
-        if (filterSem && s.semester !== filterSem) return false;
-        if (filterSec && s.section !== filterSec) return false;
-        return true;
-    });
-
-    const departments = [...new Set((allStudents || []).map(s => s.department).filter(Boolean))];
-    const semesters = [...new Set((allStudents || []).map(s => s.semester).filter(Boolean))];
-    const sections = [...new Set((allStudents || []).map(s => s.section).filter(Boolean))];
-
-    async function handleEnroll(studentId) {
-        setLoading(true);
-        try {
-            await fetch('/api/enrollments', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ class_id: id, student_id: studentId })
-            });
-            await fetchClassroomData();
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
-    }
+        setStats({ totalStudents: displayed.length, classAvg, topScore });
+    }, [students, activeGroup]);
 
     async function handleAddEval(e) {
         e.preventDefault();
@@ -159,7 +152,7 @@ export default function ClassroomDetail() {
     }
 
     async function handleRemove(enrollmentId) {
-        if (confirm("Remove student? Marks will be lost.")) {
+        if (confirm("Remove student enrollment? Marks will be lost.")) {
             try {
                 await fetch(`/api/enrollments/${enrollmentId}`, { method: 'DELETE' });
                 await fetchClassroomData();
@@ -173,56 +166,76 @@ export default function ClassroomDetail() {
         return <div className="min-h-screen p-8 max-w-7xl mx-auto flex justify-center items-center font-bold text-gray-500">Loading details...</div>;
     }
 
+    const isAdmin = currentUser?.role === 'ADMIN';
+    const displayedStudents = students.filter(s => s.group_label === activeGroup);
+
     return (
         <div className="min-h-screen p-8 max-w-7xl mx-auto">
             <Link to="/" className="inline-flex items-center text-gray-500 hover:text-[#111827] mb-8 font-semibold transition-colors">
-                <ChevronLeft size={20} className="mr-1" /> Back to Classrooms
+                <ChevronLeft size={20} className="mr-1" /> Back to Dashboard
             </Link>
 
-            <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+            <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
                 <div>
-                    <span className="text-sm font-bold uppercase tracking-wider text-[#E8B4B8] mb-2 inline-block">
-                        {classroom.dept_info} {classroom.semester && `• ${classroom.semester}`}
-                    </span>
-                    <h1 className="text-4xl font-extrabold text-[#111827]">{classroom.class_name}</h1>
+                    <Badge variant="secondary" className="bg-[#E8B4B8]/10 text-[#E8B4B8] hover:bg-[#E8B4B8]/20 font-bold uppercase tracking-wider text-xs px-3 py-1 rounded-full mb-3 inline-block border-none">
+                        {classroom.subject?.course?.school?.name || 'School'} • {classroom.subject?.course?.name || 'Course'}
+                    </Badge>
+                    <h1 className="text-4xl font-extrabold text-[#111827]">{classroom.subject?.name}</h1>
+                    <p className="text-gray-500 mt-2 font-medium">Taught by {classroom.teacher?.name} • Year: {classroom.academic_year}</p>
                 </div>
-                <button
-                    onClick={() => setShowModal(true)}
-                    className="bg-[#111827] text-white px-5 py-2.5 rounded-[12px] font-semibold flex items-center justify-center gap-2 hover:bg-gray-800 transition-all shadow-sm active:scale-95 whitespace-nowrap group"
-                >
-                    <Plus size={20} className="group-hover:rotate-90 transition-transform duration-300" /> Enroll Student
-                </button>
+
+                {/* Group A / Group B Subnavigation Toggle */}
+                <div className="flex bg-gray-100 p-1 rounded-xl w-full md:w-auto mt-4 md:mt-0 shadow-inner">
+                    <button
+                        onClick={() => setActiveGroup('A')}
+                        className={`flex-1 md:w-32 py-2.5 rounded-lg text-sm font-bold transition-all ${activeGroup === 'A' ? 'bg-white text-blue-600 shadow-sm ring-1 ring-black/5' : 'text-gray-500 hover:text-gray-700'}`}
+                    >
+                        Group A
+                    </button>
+                    <button
+                        onClick={() => setActiveGroup('B')}
+                        className={`flex-1 md:w-32 py-2.5 rounded-lg text-sm font-bold transition-all ${activeGroup === 'B' ? 'bg-white text-purple-600 shadow-sm ring-1 ring-black/5' : 'text-gray-500 hover:text-gray-700'}`}
+                    >
+                        Group B
+                    </button>
+                </div>
             </header>
 
-            {/* Premium Stat Cards */}
+            {/* Premium Stat Cards for Active Group */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div className="bg-white/70 backdrop-blur-xl border border-black/5 rounded-[24px] p-6 shadow-sm flex items-center justify-between">
-                    <div>
-                        <p className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">Total Enrolled</p>
-                        <p className="text-3xl font-black text-[#111827]">{stats?.totalStudents || 0}</p>
-                    </div>
-                    <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center">
-                        <Users size={24} />
-                    </div>
-                </div>
-                <div className="bg-white/70 backdrop-blur-xl border border-black/5 rounded-[24px] p-6 shadow-sm flex items-center justify-between">
-                    <div>
-                        <p className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">Class Average</p>
-                        <p className="text-3xl font-black text-[#111827]">{stats?.classAvg || '--'}</p>
-                    </div>
-                    <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-500 flex items-center justify-center">
-                        <BarChart size={24} />
-                    </div>
-                </div>
-                <div className="bg-white/70 backdrop-blur-xl border border-black/5 rounded-[24px] p-6 shadow-sm flex items-center justify-between">
-                    <div>
-                        <p className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">Top Score</p>
-                        <p className="text-3xl font-black text-[#111827]">{stats?.topScore || '--'}</p>
-                    </div>
-                    <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center">
-                        <CheckCircle2 size={24} />
-                    </div>
-                </div>
+                <Card className="bg-white/70 backdrop-blur-xl border border-black/5 rounded-[24px] shadow-sm flex items-center justify-between py-2 px-1">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">Group {activeGroup} Enrolled</CardTitle>
+                        <p className="text-3xl font-black text-[#111827]">{stats.totalStudents}</p>
+                    </CardHeader>
+                    <CardContent className="p-6 pt-6 pb-6">
+                        <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center shrink-0">
+                            <Users size={24} />
+                        </div>
+                    </CardContent>
+                </Card>
+                <Card className="bg-white/70 backdrop-blur-xl border border-black/5 rounded-[24px] shadow-sm flex items-center justify-between py-2 px-1">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">Group {activeGroup} Avg</CardTitle>
+                        <p className="text-3xl font-black text-[#111827]">{stats.classAvg}</p>
+                    </CardHeader>
+                    <CardContent className="p-6 pt-6 pb-6">
+                        <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-500 flex items-center justify-center shrink-0">
+                            <BarChart size={24} />
+                        </div>
+                    </CardContent>
+                </Card>
+                <Card className="bg-white/70 backdrop-blur-xl border border-black/5 rounded-[24px] shadow-sm flex items-center justify-between py-2 px-1">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">Group {activeGroup} Top</CardTitle>
+                        <p className="text-3xl font-black text-[#111827]">{stats.topScore}</p>
+                    </CardHeader>
+                    <CardContent className="p-6 pt-6 pb-6">
+                        <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center shrink-0">
+                            <CheckCircle2 size={24} />
+                        </div>
+                    </CardContent>
+                </Card>
             </div >
 
             <div className="bg-white/70 backdrop-blur-xl border border-black/5 rounded-[24px] shadow-sm overflow-hidden flex flex-col mb-12">
@@ -253,20 +266,17 @@ export default function ClassroomDetail() {
 
                 {/* Content */}
                 <div className="p-0 flex-1 flex flex-col">
-                    {students.length === 0 ? (
+                    {displayedStudents.length === 0 ? (
                         <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">
                             <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
                                 <Users size={24} className="text-gray-300" />
                             </div>
-                            <p className="text-gray-500 font-medium mb-4">No students enrolled in this class yet.</p>
-                            <button onClick={() => setShowModal(true)} className="text-[#E8B4B8] font-semibold hover:underline">
-                                Add the first student
-                            </button>
+                            <p className="text-gray-500 font-medium mb-4">No students enrolled in Group {activeGroup} yet.</p>
                         </div>
                     ) : activeTab === 'heatmap' ? (
                         <div className="p-8">
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                                {students.map((s) => {
+                                {displayedStudents.map((s) => {
                                     let colorClass = "bg-gray-100 text-gray-500 border-gray-200"; // No Marks
 
                                     if (s.averageMarks !== null && s.averageMarks !== undefined) {
@@ -308,229 +318,147 @@ export default function ClassroomDetail() {
                         </div>
                     ) : (
                         <div className="overflow-x-auto">
-                            <table className="w-full text-left border-collapse">
-                                <thead>
-                                    <tr className="bg-gray-50/50">
-                                        <th className="py-4 px-8 text-xs font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100">Roll No</th>
-                                        <th className="py-4 px-8 text-xs font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100">Student Name</th>
+                            <Table className="w-full text-left">
+                                <TableHeader>
+                                    <TableRow className="bg-gray-50/50 hover:bg-gray-50/50">
+                                        <TableHead className="py-4 px-8 text-xs font-bold text-gray-400 uppercase tracking-widest">Roll No</TableHead>
+                                        <TableHead className="py-4 px-8 text-xs font-bold text-gray-400 uppercase tracking-widest">Student Name</TableHead>
                                         {activeTab === 'roster' ? (
                                             <>
-                                                <th className="py-4 px-8 text-xs font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100">Dept/Sem</th>
-                                                <th className="py-4 px-8 text-xs font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100 text-right">Action</th>
+                                                {isAdmin && <TableHead className="py-4 px-8 text-xs font-bold text-gray-400 uppercase tracking-widest text-right">Admin Action</TableHead>}
                                             </>
                                         ) : (
                                             <>
-                                                <th className="py-4 px-8 text-xs font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100 text-center">Evals</th>
-                                                <th className="py-4 px-8 text-xs font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100 text-center">Avg Mark</th>
-                                                <th className="py-4 px-8 text-xs font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100 text-right">Action</th>
+                                                <TableHead className="py-4 px-8 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Evals</TableHead>
+                                                <TableHead className="py-4 px-8 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Avg Mark</TableHead>
+                                                {!isAdmin && <TableHead className="py-4 px-8 text-xs font-bold text-gray-400 uppercase tracking-widest text-right">Evaluate</TableHead>}
                                             </>
                                         )}
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100">
-                                    {students.map((s) => (
-                                        <tr key={s.student_id} className="hover:bg-white/50 transition-colors group">
-                                            <td className="py-4 px-8 text-gray-500 font-mono text-xs">{s.roll_no}</td>
-                                            <td className="py-4 px-8">
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {displayedStudents.map((s) => (
+                                        <TableRow key={s.student_id} className="hover:bg-white/50 transition-colors group">
+                                            <TableCell className="py-4 px-8 text-gray-500 font-mono text-xs border-b border-gray-50">{s.roll_no}</TableCell>
+                                            <TableCell className="py-4 px-8 border-b border-gray-50">
                                                 <div className="flex items-center gap-3">
                                                     <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${getAvatarColor(s.name)}`}>
                                                         {getInitials(s.name)}
                                                     </div>
                                                     <span className="font-bold text-[#111827]">{s.name}</span>
                                                 </div>
-                                            </td>
+                                            </TableCell>
                                             {activeTab === 'roster' ? (
                                                 <>
-                                                    <td className="py-4 px-8 text-gray-500 font-medium text-sm">{s.department || '-'} • Sem {s.semester || '-'}</td>
-                                                    <td className="py-4 px-8 text-right">
-                                                        <button onClick={() => handleRemove(s.enrollment_id)} className="text-gray-400 hover:text-red-500 transition-colors p-2 rounded-lg hover:bg-red-50" title="Remove Student">
-                                                            <Trash2 size={18} />
-                                                        </button>
-                                                    </td>
+                                                    {isAdmin && (
+                                                        <TableCell className="py-4 px-8 text-right border-b border-gray-50">
+                                                            <Button variant="ghost" size="icon" onClick={() => handleRemove(s.enrollment_id)} className="text-gray-400 hover:text-red-500 transition-colors p-2 rounded-lg hover:bg-red-50" title="Remove Student">
+                                                                <Trash2 size={18} />
+                                                            </Button>
+                                                        </TableCell>
+                                                    )}
                                                 </>
                                             ) : (
                                                 <>
-                                                    <td className="py-4 px-8 text-center text-gray-500">
+                                                    <TableCell className="py-4 px-8 text-center text-gray-500 border-b border-gray-50">
                                                         {s.evaluations?.length || 0}
-                                                    </td>
-                                                    <td className="py-4 px-8 text-center">
+                                                    </TableCell>
+                                                    <TableCell className="py-4 px-8 text-center border-b border-gray-50">
                                                         <span className="font-bold text-xl text-[#111827]">{s.averageMarks !== null ? s.averageMarks : '--'}</span>
-                                                    </td>
-                                                    <td className="py-4 px-8 text-right">
-                                                        <button
-                                                            onClick={() => { setEvalStudent(s); setShowEvalModal(true); }}
-                                                            className="text-white bg-[#E8B4B8] hover:bg-[#d8a3a7] transition-colors px-3 py-1.5 rounded-lg text-sm font-semibold shadow-sm inline-flex items-center gap-1"
-                                                        >
-                                                            <Plus size={16} /> Add Eval
-                                                        </button>
-                                                    </td>
+                                                    </TableCell>
+                                                    {!isAdmin && (
+                                                        <TableCell className="py-4 px-8 text-right border-b border-gray-50">
+                                                            <Button
+                                                                size="sm"
+                                                                onClick={() => { setEvalStudent(s); setShowEvalModal(true); }}
+                                                                className="text-white bg-[#E8B4B8] hover:bg-[#d8a3a7] transition-colors rounded-lg font-semibold shadow-sm inline-flex items-center gap-1"
+                                                            >
+                                                                <Plus size={16} /> Add Eval
+                                                            </Button>
+                                                        </TableCell>
+                                                    )}
                                                 </>
                                             )}
-                                        </tr>
+                                        </TableRow>
                                     ))}
-                                </tbody>
-                            </table>
+                                </TableBody>
+                            </Table>
                         </div>
                     )}
                 </div>
             </div>
 
-            {
-                showModal && (
-                    <div className="fixed inset-0 bg-[#111827]/30 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-                        <div className="bg-white rounded-[24px] p-6 max-w-2xl w-full shadow-xl animate-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
-                            <div className="flex justify-between items-center mb-6 shrink-0">
-                                <div>
-                                    <h2 className="text-2xl font-bold text-[#111827]">Enroll Students</h2>
-                                    <p className="text-gray-500 text-sm mt-1">Filter and select students to add to the class Roster.</p>
-                                </div>
-                                <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-700 transition-colors">
-                                    <X size={24} />
-                                </button>
-                            </div>
+            <Dialog open={showEvalModal} onOpenChange={(open) => { if (!open) { setShowEvalModal(false); setEvalStudent(null); } }}>
+                <DialogContent className="sm:max-w-sm rounded-[24px] p-8 border-none shadow-2xl">
+                    <DialogHeader className="mb-2">
+                        <DialogTitle className="text-xl font-bold text-[#111827]">New Evaluation</DialogTitle>
+                    </DialogHeader>
 
-                            {/* Filters */}
-                            <div className="grid grid-cols-3 gap-4 mb-6 shrink-0 bg-gray-50 p-4 rounded-xl border border-gray-100">
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Department</label>
-                                    <select
-                                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#111827]/20"
-                                        value={filterDept} onChange={e => setFilterDept(e.target.value)}
-                                    >
-                                        <option value="">All Departments</option>
-                                        {departments.map(d => <option key={d} value={d}>{d}</option>)}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Semester</label>
-                                    <select
-                                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#111827]/20"
-                                        value={filterSem} onChange={e => setFilterSem(e.target.value)}
-                                    >
-                                        <option value="">All Semesters</option>
-                                        {semesters.map(s => <option key={s} value={s}>{s}</option>)}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Section</label>
-                                    <select
-                                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#111827]/20"
-                                        value={filterSec} onChange={e => setFilterSec(e.target.value)}
-                                    >
-                                        <option value="">All Sections</option>
-                                        {sections.map(s => <option key={s} value={s}>{s}</option>)}
-                                    </select>
-                                </div>
-                            </div>
+                    {evalStudent && (
+                        <div className="mb-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                            <span className="text-xs uppercase font-bold text-gray-400">{evalStudent.roll_no}</span>
+                            <p className="font-semibold text-[#111827]">{evalStudent.name}</p>
+                        </div>
+                    )}
 
-                            {/* Student List */}
-                            <div className="overflow-y-auto flex-1 border border-gray-100 rounded-xl">
-                                {availableStudents.length === 0 ? (
-                                    <div className="p-8 text-center text-gray-500">No available students match the filters.</div>
-                                ) : (
-                                    <ul className="divide-y divide-gray-100">
-                                        {availableStudents.map(s => (
-                                            <li key={s.student_id} className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
-                                                <div>
-                                                    <h4 className="font-bold text-[#111827]">{s.name} <span className="text-gray-400 font-mono text-xs ml-2">{s.roll_no}</span></h4>
-                                                    <p className="text-xs text-gray-500 mt-1">{s.department || '-'} • Sem {s.semester || '-'} • Sec {s.section || '-'}</p>
-                                                </div>
-                                                <button
-                                                    onClick={() => handleEnroll(s.student_id)}
-                                                    disabled={loading}
-                                                    className="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 disabled:opacity-50 px-4 py-2 rounded-lg font-semibold text-sm transition-colors"
-                                                >
-                                                    Add
-                                                </button>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                )}
+                    <form onSubmit={handleAddEval} className="space-y-5">
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold text-gray-700">Evaluation Name</label>
+                            <Input required name="eval_name" placeholder="e.g. Presentation 1" className="h-11 rounded-xl bg-gray-50 focus-visible:ring-[#E8B4B8]/50 border-gray-200 font-medium" />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest line-clamp-1" title="Fundamental Knowledge">Fundamental</label>
+                                <Input required name="fundamental_knowledge" type="number" step="0.5" max="10" min="0" placeholder="0 - 10" className="h-11 text-lg font-bold border-gray-200 rounded-xl bg-gray-50 focus-visible:ring-[#E8B4B8]/50 text-center" />
+                            </div>
+                            <div className="space-y-1.5">
+                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest line-clamp-1" title="Core/Technical Skills">Core Skills</label>
+                                <Input required name="core_skills" type="number" step="0.5" max="10" min="0" placeholder="0 - 10" className="h-11 text-lg font-bold border-gray-200 rounded-xl bg-gray-50 focus-visible:ring-[#E8B4B8]/50 text-center" />
+                            </div>
+                            <div className="space-y-1.5">
+                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest line-clamp-1" title="Communication Skills">Communication</label>
+                                <Input required name="communication_skills" type="number" step="0.5" max="10" min="0" placeholder="0 - 10" className="h-11 text-lg font-bold border-gray-200 rounded-xl bg-gray-50 focus-visible:ring-[#E8B4B8]/50 text-center" />
+                            </div>
+                            <div className="space-y-1.5">
+                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest line-clamp-1" title="Soft and Life Skills">Soft Skills</label>
+                                <Input required name="soft_skills" type="number" step="0.5" max="10" min="0" placeholder="0 - 10" className="h-11 text-lg font-bold border-gray-200 rounded-xl bg-gray-50 focus-visible:ring-[#E8B4B8]/50 text-center" />
                             </div>
                         </div>
-                    </div>
-                )
-            }
 
-            {
-                showEvalModal && evalStudent && (
-                    <div className="fixed inset-0 bg-[#111827]/30 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-                        <div className="bg-white rounded-[24px] p-6 max-w-sm w-full shadow-xl animate-in zoom-in-95 duration-200">
-                            <div className="flex justify-between items-center mb-6">
-                                <h2 className="text-xl font-bold text-[#111827]">New Evaluation</h2>
-                                <button onClick={() => { setShowEvalModal(false); setEvalStudent(null); }} className="text-gray-400 hover:text-gray-700 transition-colors">
-                                    <X size={20} />
-                                </button>
-                            </div>
+                        <DialogFooter className="pt-4 sm:justify-end gap-3 mt-4">
+                            <Button type="button" variant="ghost" onClick={() => { setShowEvalModal(false); setEvalStudent(null); }} className="rounded-xl h-11 px-5 text-gray-600 font-semibold hover:bg-gray-100">
+                                Cancel
+                            </Button>
+                            <Button type="submit" disabled={loading} className="rounded-xl h-11 px-6 bg-[#111827] text-white font-semibold hover:bg-gray-800">
+                                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                {loading ? 'Saving...' : 'Save Eval'}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
 
-                            <div className="mb-6 bg-gray-50 p-4 rounded-xl border border-gray-100">
-                                <span className="text-xs uppercase font-bold text-gray-400">{evalStudent.roll_no}</span>
-                                <p className="font-semibold text-[#111827]">{evalStudent.name}</p>
-                            </div>
-
-                            <form onSubmit={handleAddEval} className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-1">Evaluation Name</label>
-                                    <input required name="eval_name" type="text" placeholder="e.g. Presentation 1" className="w-full border border-gray-200 rounded-xl px-4 py-3 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#E8B4B8]/50 transition-all font-medium" />
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1 line-clamp-1" title="Fundamental Knowledge">Fundamental</label>
-                                        <input required name="fundamental_knowledge" type="number" step="0.5" max="10" min="0" placeholder="0 - 10" className="w-full text-lg font-bold border border-gray-200 rounded-xl px-3 py-2 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#E8B4B8]/50 transition-all text-center" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1 line-clamp-1" title="Core/Technical Skills">Core Skills</label>
-                                        <input required name="core_skills" type="number" step="0.5" max="10" min="0" placeholder="0 - 10" className="w-full text-lg font-bold border border-gray-200 rounded-xl px-3 py-2 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#E8B4B8]/50 transition-all text-center" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1 line-clamp-1" title="Communication Skills">Communication</label>
-                                        <input required name="communication_skills" type="number" step="0.5" max="10" min="0" placeholder="0 - 10" className="w-full text-lg font-bold border border-gray-200 rounded-xl px-3 py-2 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#E8B4B8]/50 transition-all text-center" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1 line-clamp-1" title="Soft and Life Skills">Soft Skills</label>
-                                        <input required name="soft_skills" type="number" step="0.5" max="10" min="0" placeholder="0 - 10" className="w-full text-lg font-bold border border-gray-200 rounded-xl px-3 py-2 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#E8B4B8]/50 transition-all text-center" />
-                                    </div>
-                                </div>
-
-                                <div className="pt-4 flex justify-end gap-3 text-sm">
-                                    <button type="button" onClick={() => { setShowEvalModal(false); setEvalStudent(null); }} className="px-5 py-2.5 text-gray-600 font-semibold hover:bg-gray-100 rounded-xl transition-colors">
-                                        Cancel
-                                    </button>
-                                    <button type="submit" disabled={loading} className="bg-[#111827] text-white px-6 py-2.5 rounded-xl font-semibold hover:bg-gray-800 transition-colors disabled:opacity-50">
-                                        {loading ? 'Saving...' : 'Save Eval'}
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                )
-            }
-
-            {/* Heatmap History Detail View */}
-            {
-                evalHistoryStudent && (
-                    <div className="fixed inset-0 bg-[#111827]/30 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-                        <div className="bg-white rounded-[24px] p-6 max-w-2xl w-full shadow-xl animate-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
-                            <div className="flex justify-between items-start mb-6 shrink-0 border-b border-gray-100 pb-4">
+            <Dialog open={!!evalHistoryStudent} onOpenChange={(open) => { if (!open) setEvalHistoryStudent(null) }}>
+                <DialogContent className="sm:max-w-2xl rounded-[24px] p-6 border-none shadow-2xl overflow-hidden max-h-[85vh] flex flex-col">
+                    {evalHistoryStudent && (
+                        <>
+                            <DialogHeader className="flex flex-row justify-between items-start mb-2 shrink-0 border-b border-gray-100 pb-4">
                                 <div className="flex items-center gap-4">
                                     <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg ${getAvatarColor(evalHistoryStudent.name)}`}>
                                         {getInitials(evalHistoryStudent.name)}
                                     </div>
                                     <div>
                                         <div className="flex items-center gap-2">
-                                            <h2 className="text-2xl font-bold text-[#111827]">{evalHistoryStudent.name}</h2>
-                                            <span className="text-xs font-mono bg-gray-100 text-gray-500 px-2 py-0.5 rounded-md">{evalHistoryStudent.roll_no}</span>
+                                            <DialogTitle className="text-2xl font-bold text-[#111827]">{evalHistoryStudent.name}</DialogTitle>
+                                            <Badge variant="secondary" className="font-mono bg-gray-100 text-gray-500 rounded-md py-0">{evalHistoryStudent.roll_no}</Badge>
                                         </div>
-                                        <p className="text-gray-500 text-sm font-medium mt-0.5">Performance History</p>
+                                        <DialogDescription className="font-medium mt-0.5">Performance History</DialogDescription>
                                     </div>
                                 </div>
-                                <button onClick={() => setEvalHistoryStudent(null)} className="text-gray-400 hover:text-gray-700 bg-gray-50 hover:bg-gray-100 p-2 rounded-full transition-colors">
-                                    <X size={20} />
-                                </button>
-                            </div>
+                            </DialogHeader>
 
-                            <div className="overflow-y-auto pr-2 space-y-4">
+                            <div className="overflow-y-auto pr-2 space-y-4 flex-1 mt-4">
                                 {!evalHistoryStudent.evaluations || evalHistoryStudent.evaluations.length === 0 ? (
                                     <div className="py-12 text-center text-gray-500 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
                                         No evaluations recorded for this student yet.
@@ -539,19 +467,18 @@ export default function ClassroomDetail() {
                                     evalHistoryStudent.evaluations.map((ev, i) => {
                                         const total = (ev.fundamental_knowledge || 0) + (ev.core_skills || 0) + (ev.communication_skills || 0) + (ev.soft_skills || 0);
                                         return (
-                                            <div key={ev.eval_id || i} className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
-                                                <div className="flex justify-between items-center mb-4 pb-3 border-b border-gray-50">
-                                                    <h3 className="font-bold text-[#111827] flex items-center gap-2">
+                                            <Card key={ev.id || i} className="border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-shadow py-2 px-1">
+                                                <CardHeader className="flex flex-row justify-between items-center pb-3 border-b border-gray-50">
+                                                    <CardTitle className="text-base font-bold text-[#111827] flex items-center gap-2 m-0 p-0">
                                                         <span className="w-2 h-2 rounded-full bg-[#E8B4B8]"></span>
                                                         {ev.eval_name}
-                                                    </h3>
+                                                    </CardTitle>
                                                     <div className="flex items-baseline gap-1 text-[#111827]">
                                                         <span className="font-black text-xl">{total.toFixed(1)}</span>
                                                         <span className="text-xs font-bold text-gray-400">/ 40</span>
                                                     </div>
-                                                </div>
-
-                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                                </CardHeader>
+                                                <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 pb-2">
                                                     <div className="bg-gray-50/50 rounded-xl p-3 border border-gray-100/50">
                                                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Fundamental</p>
                                                         <p className="font-bold text-[#111827]">{ev.fundamental_knowledge || 0} <span className="text-gray-400 font-normal text-xs">/ 10</span></p>
@@ -568,16 +495,16 @@ export default function ClassroomDetail() {
                                                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Soft Skills</p>
                                                         <p className="font-bold text-[#111827]">{ev.soft_skills || 0} <span className="text-gray-400 font-normal text-xs">/ 10</span></p>
                                                     </div>
-                                                </div>
-                                            </div>
+                                                </CardContent>
+                                            </Card>
                                         );
                                     })
                                 )}
                             </div>
-                        </div>
-                    </div>
-                )
-            }
+                        </>
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
