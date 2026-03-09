@@ -6,8 +6,8 @@
 
 @theme {
   --color-brand-bg: #E6E6DC;
-  --color-brand-accent: #E8B4B8;
-  --color-brand-accent-hover: #d8a2a6;
+  --color-brand-accent: #18181b;
+  --color-brand-accent-hover: #09090b;
   --color-brand-dark: #111827;
   --font-sans: 'Figtree', sans-serif;
 }

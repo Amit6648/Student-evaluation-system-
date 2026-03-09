@@ -36,12 +36,12 @@ function getInitials(name) {
 
 // Helper to get a consistent color based on name string
 function getAvatarColor(name) {
-    if (!name) return "bg-gray-100 text-gray-700";
+    if (!name) return "bg-[#F8F9FA] text-gray-700";
     const colors = [
-        "bg-blue-100 text-blue-700",
+        "bg-zinc-100 text-zinc-800",
         "bg-emerald-100 text-emerald-700",
         "bg-amber-100 text-amber-700",
-        "bg-indigo-100 text-indigo-700",
+        "bg-zinc-100 text-zinc-700",
         "bg-pink-100 text-pink-700",
         "bg-purple-100 text-purple-700",
         "bg-rose-100 text-rose-700",
@@ -212,7 +212,7 @@ export default function ClassroomDetail({ currentUser }) {
     }
 
     if (dataLoading || !classroom) {
-        return <div className="min-h-screen p-8 max-w-7xl mx-auto flex justify-center items-center font-bold text-gray-500">Loading details...</div>;
+        return <div className="min-h-screen p-8 max-w-7xl mx-auto flex justify-center items-center font-bold text-[#64748B]">Loading details...</div>;
     }
 
     const isAdmin = currentUser?.role === 'ADMIN';
@@ -220,38 +220,38 @@ export default function ClassroomDetail({ currentUser }) {
 
     return (
         <div className="min-h-screen p-8 max-w-7xl mx-auto">
-            <Link to="/" className="inline-flex items-center text-gray-500 hover:text-[#111827] mb-8 font-semibold transition-colors">
+            <Link to="/" className="inline-flex items-center text-[#64748B] hover:text-[#111827] mb-8 font-semibold transition-colors">
                 <ChevronLeft size={20} className="mr-1" /> Back to Dashboard
             </Link>
 
-            <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+            <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 sticky top-0 z-50 pt-2 pb-4 backdrop-blur-xl bg-white/50 border-b border-white/40">
                 <div>
-                    <Badge variant="secondary" className="bg-[#E8B4B8]/10 text-[#E8B4B8] hover:bg-[#E8B4B8]/20 font-bold uppercase tracking-wider text-xs px-3 py-1 rounded-full mb-3 inline-block border-none">
+                    <Badge variant="secondary" className="bg-[#18181b]/10 text-[#18181b] hover:bg-[#18181b]/20 font-bold uppercase tracking-wider text-xs px-3 py-1 rounded-full mb-3 inline-block border-none">
                         {classroom.subject?.course?.school?.name || 'School'} • {classroom.subject?.course?.name || 'Course'}
                     </Badge>
                     <h1 className="text-4xl font-extrabold text-[#111827]">{classroom.subject?.name}</h1>
-                    <p className="text-gray-500 mt-2 font-medium">Taught by {classroom.teacher?.name} • Year: {classroom.academic_year}</p>
+                    <p className="text-[#64748B] mt-2 font-medium">Taught by {classroom.teacher?.name} • Year: {classroom.academic_year}</p>
                 </div>
 
                 {/* Group A / Group B Subnavigation Toggle */}
-                <div className="flex bg-gray-100 p-1 rounded-xl w-full md:w-auto mt-4 md:mt-0 shadow-inner">
+                <div className="flex bg-[#F8F9FA] p-1 rounded-xl w-full md:w-auto mt-4 md:mt-0 shadow-inner">
                     <button
                         onClick={() => setActiveGroup('A')}
-                        className={`flex-1 md:w-32 py-2.5 rounded-lg text-sm font-bold transition-all ${activeGroup === 'A' ? 'bg-white text-blue-600 shadow-sm ring-1 ring-black/5' : 'text-gray-500 hover:text-gray-700'}`}
+                        className={`flex-1 md:w-32 py-2.5 rounded-lg text-sm font-bold transition-all ${activeGroup === 'A' ? 'bg-white text-zinc-800 shadow-sm ring-1 ring-black/5' : 'text-[#64748B] hover:text-gray-700'}`}
                     >
                         Group A
                     </button>
                     <button
                         onClick={() => setActiveGroup('B')}
-                        className={`flex-1 md:w-32 py-2.5 rounded-lg text-sm font-bold transition-all ${activeGroup === 'B' ? 'bg-white text-purple-600 shadow-sm ring-1 ring-black/5' : 'text-gray-500 hover:text-gray-700'}`}
+                        className={`flex-1 md:w-32 py-2.5 rounded-lg text-sm font-bold transition-all ${activeGroup === 'B' ? 'bg-white text-purple-600 shadow-sm ring-1 ring-black/5' : 'text-[#64748B] hover:text-gray-700'}`}
                     >
                         Group B
                     </button>
                 </div>
 
                 {isAdmin && (
-                    <Button onClick={() => setShowEnrollModal(true)} className="mt-4 md:mt-0 bg-[#E8B4B8] hover:bg-[#d69f10] text-[#111827] shadow-lg rounded-xl flex items-center gap-2 font-bold px-5 h-12 transition-all hover:scale-[1.02]">
-                        <UserPlus size={18} />
+                    <Button onClick={() => setShowEnrollModal(true)} className="mt-4 md:mt-0 bg-[#18181b] hover:bg-[#09090b] text-white shadow-lg rounded-xl flex items-center gap-2 font-bold px-5 h-12 transition-all hover:scale-[1.02]">
+                        <UserPlus className="w-5 h-5" />
                         Enroll Students
                     </Button>
                 )}
@@ -259,20 +259,20 @@ export default function ClassroomDetail({ currentUser }) {
 
             {/* Premium Stat Cards for Active Group */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <Card className="bg-white/70 backdrop-blur-xl border border-black/5 rounded-[24px] shadow-sm flex items-center justify-between py-2 px-1">
+                <Card className="bg-white/70 backdrop-blur-xl border border-black/5 rounded-3xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all flex items-center justify-between py-2 px-1">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">Group {activeGroup} Enrolled</CardTitle>
+                        <CardTitle className="text-sm font-bold text-[#64748B]/80 uppercase tracking-widest mb-1">Group {activeGroup} Enrolled</CardTitle>
                         <p className="text-3xl font-black text-[#111827]">{stats.totalStudents}</p>
                     </CardHeader>
                     <CardContent className="p-6 pt-6 pb-6">
-                        <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center shrink-0">
+                        <div className="w-12 h-12 rounded-2xl bg-zinc-50 text-zinc-600 flex items-center justify-center shrink-0">
                             <Users size={24} />
                         </div>
                     </CardContent>
                 </Card>
-                <Card className="bg-white/70 backdrop-blur-xl border border-black/5 rounded-[24px] shadow-sm flex items-center justify-between py-2 px-1">
+                <Card className="bg-white/70 backdrop-blur-xl border border-black/5 rounded-3xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all flex items-center justify-between py-2 px-1">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">Group {activeGroup} Avg</CardTitle>
+                        <CardTitle className="text-sm font-bold text-[#64748B]/80 uppercase tracking-widest mb-1">Group {activeGroup} Avg</CardTitle>
                         <p className="text-3xl font-black text-[#111827]">{stats.classAvg}</p>
                     </CardHeader>
                     <CardContent className="p-6 pt-6 pb-6">
@@ -281,9 +281,9 @@ export default function ClassroomDetail({ currentUser }) {
                         </div>
                     </CardContent>
                 </Card>
-                <Card className="bg-white/70 backdrop-blur-xl border border-black/5 rounded-[24px] shadow-sm flex items-center justify-between py-2 px-1">
+                <Card className="bg-white/70 backdrop-blur-xl border border-black/5 rounded-3xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all flex items-center justify-between py-2 px-1">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">Group {activeGroup} Top</CardTitle>
+                        <CardTitle className="text-sm font-bold text-[#64748B]/80 uppercase tracking-widest mb-1">Group {activeGroup} Top</CardTitle>
                         <p className="text-3xl font-black text-[#111827]">{stats.topScore}</p>
                     </CardHeader>
                     <CardContent className="p-6 pt-6 pb-6">
@@ -294,28 +294,28 @@ export default function ClassroomDetail({ currentUser }) {
                 </Card>
             </div >
 
-            <div className="bg-white/70 backdrop-blur-xl border border-black/5 rounded-[24px] shadow-sm overflow-hidden flex flex-col mb-12">
+            <div className="bg-white/70 backdrop-blur-xl border border-black/5 rounded-3xl shadow-sm hover:shadow-xl transition-all overflow-hidden flex flex-col mb-12">
                 {/* Tabs */}
                 <div className="flex border-b border-gray-100 px-6 pt-4">
                     <button
                         onClick={() => setActiveTab('roster')}
-                        className={`px-6 py-4 font-semibold text-[15px] flex items-center gap-2 border-b-2 transition-all ${activeTab === 'roster' ? 'border-[#E8B4B8] text-[#111827]' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+                        className={`px-6 py-4 font-semibold text-[15px] flex items-center gap-2 border-b-2 transition-all ${activeTab === 'roster' ? 'border-[#18181b] text-[#111827]' : 'border-transparent text-[#64748B]/80 hover:text-gray-600'}`}
                     >
-                        <Users size={18} className={activeTab === 'roster' ? 'text-[#E8B4B8]' : ''} />
+                        <Users size={18} className={activeTab === 'roster' ? 'text-[#18181b]' : ''} />
                         Student Roster
                     </button>
                     <button
                         onClick={() => setActiveTab('gradebook')}
-                        className={`px-6 py-4 font-semibold text-[15px] flex items-center gap-2 border-b-2 transition-all ${activeTab === 'gradebook' ? 'border-[#E8B4B8] text-[#111827]' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+                        className={`px-6 py-4 font-semibold text-[15px] flex items-center gap-2 border-b-2 transition-all ${activeTab === 'gradebook' ? 'border-[#18181b] text-[#111827]' : 'border-transparent text-[#64748B]/80 hover:text-gray-600'}`}
                     >
-                        <BookOpen size={18} className={activeTab === 'gradebook' ? 'text-[#E8B4B8]' : ''} />
+                        <BookOpen size={18} className={activeTab === 'gradebook' ? 'text-[#18181b]' : ''} />
                         Gradebook
                     </button>
                     <button
                         onClick={() => setActiveTab('heatmap')}
-                        className={`px-6 py-4 font-semibold text-[15px] flex items-center gap-2 border-b-2 transition-all ${activeTab === 'heatmap' ? 'border-[#E8B4B8] text-[#111827]' : 'border-transparent text-gray-400 hover:text-gray-600'}`}
+                        className={`px-6 py-4 font-semibold text-[15px] flex items-center gap-2 border-b-2 transition-all ${activeTab === 'heatmap' ? 'border-[#18181b] text-[#111827]' : 'border-transparent text-[#64748B]/80 hover:text-gray-600'}`}
                     >
-                        <BarChart size={18} className={activeTab === 'heatmap' ? 'text-[#E8B4B8]' : ''} />
+                        <BarChart size={18} className={activeTab === 'heatmap' ? 'text-[#18181b]' : ''} />
                         Performance Heatmap
                     </button>
                 </div>
@@ -324,16 +324,16 @@ export default function ClassroomDetail({ currentUser }) {
                 <div className="p-0 flex-1 flex flex-col">
                     {displayedStudents.length === 0 ? (
                         <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">
-                            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                            <div className="w-16 h-16 bg-[#F8F9FA] rounded-full flex items-center justify-center mb-4">
                                 <Users size={24} className="text-gray-300" />
                             </div>
-                            <p className="text-gray-500 font-medium mb-4">No students enrolled in Group {activeGroup} yet.</p>
+                            <p className="text-[#64748B] font-medium mb-4">No students enrolled in Group {activeGroup} yet.</p>
                         </div>
                     ) : activeTab === 'heatmap' ? (
                         <div className="p-8">
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                                 {displayedStudents.map((s) => {
-                                    let colorClass = "bg-gray-100 text-gray-500 border-gray-200"; // No Marks
+                                    let colorClass = "bg-[#F8F9FA] text-[#64748B] border-gray-200"; // No Marks
 
                                     if (s.averageMarks !== null && s.averageMarks !== undefined) {
                                         if (s.averageMarks >= 32) colorClass = "bg-emerald-100 text-emerald-800 border-emerald-200";
@@ -346,7 +346,7 @@ export default function ClassroomDetail({ currentUser }) {
                                         <div
                                             key={s.student_id}
                                             onClick={() => setEvalHistoryStudent(s)}
-                                            className={`p-5 rounded-[24px] border ${colorClass} flex flex-col justify-between aspect-square transition-all duration-300 hover:scale-[1.03] hover:-translate-y-1 shadow-sm hover:shadow-lg cursor-pointer`}
+                                            className={`p-5 rounded-3xl border ${colorClass} flex flex-col justify-between aspect-square transition-all duration-300 hover:scale-[1.03] hover:-translate-y-1 shadow-sm hover:shadow-xl cursor-pointer`}
                                         >
                                             <div className="flex justify-between items-start">
                                                 <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${getAvatarColor(s.name)}`}>
@@ -365,7 +365,7 @@ export default function ClassroomDetail({ currentUser }) {
                                     );
                                 })}
                             </div>
-                            <div className="mt-8 flex gap-6 text-sm font-semibold text-gray-500 items-center justify-center bg-gray-50 py-3 rounded-xl">
+                            <div className="mt-8 flex gap-6 text-sm font-semibold text-[#64748B] items-center justify-center bg-[#F8F9FA] py-3 rounded-xl">
                                 <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-emerald-100 border border-emerald-200"></div> &ge; 32 (High)</div>
                                 <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-amber-100 border border-amber-200"></div> 24 - 31 (Average)</div>
                                 <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-orange-100 border border-orange-200"></div> 16 - 23 (Low)</div>
@@ -376,18 +376,18 @@ export default function ClassroomDetail({ currentUser }) {
                         <div className="overflow-x-auto">
                             <Table className="w-full text-left">
                                 <TableHeader>
-                                    <TableRow className="bg-gray-50/50 hover:bg-gray-50/50">
-                                        <TableHead className="py-4 px-8 text-xs font-bold text-gray-400 uppercase tracking-widest">Roll No</TableHead>
-                                        <TableHead className="py-4 px-8 text-xs font-bold text-gray-400 uppercase tracking-widest">Student Name</TableHead>
+                                    <TableRow className="bg-[#F8F9FA] hover:bg-[#F8F9FA]">
+                                        <TableHead className="py-4 px-8 text-xs font-bold text-[#64748B]/80 uppercase tracking-widest">Roll No</TableHead>
+                                        <TableHead className="py-4 px-8 text-xs font-bold text-[#64748B]/80 uppercase tracking-widest">Student Name</TableHead>
                                         {activeTab === 'roster' ? (
                                             <>
-                                                {isAdmin && <TableHead className="py-4 px-8 text-xs font-bold text-gray-400 uppercase tracking-widest text-right">Admin Action</TableHead>}
+                                                {isAdmin && <TableHead className="py-4 px-8 text-xs font-bold text-[#64748B]/80 uppercase tracking-widest text-right">Admin Action</TableHead>}
                                             </>
                                         ) : (
                                             <>
-                                                <TableHead className="py-4 px-8 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Evals</TableHead>
-                                                <TableHead className="py-4 px-8 text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Avg Mark</TableHead>
-                                                {!isAdmin && <TableHead className="py-4 px-8 text-xs font-bold text-gray-400 uppercase tracking-widest text-right">Evaluate</TableHead>}
+                                                <TableHead className="py-4 px-8 text-xs font-bold text-[#64748B]/80 uppercase tracking-widest text-center">Evals</TableHead>
+                                                <TableHead className="py-4 px-8 text-xs font-bold text-[#64748B]/80 uppercase tracking-widest text-center">Avg Mark</TableHead>
+                                                {!isAdmin && <TableHead className="py-4 px-8 text-xs font-bold text-[#64748B]/80 uppercase tracking-widest text-right">Evaluate</TableHead>}
                                             </>
                                         )}
                                     </TableRow>
@@ -395,7 +395,7 @@ export default function ClassroomDetail({ currentUser }) {
                                 <TableBody>
                                     {displayedStudents.map((s) => (
                                         <TableRow key={s.student_id} className="hover:bg-white/50 transition-colors group">
-                                            <TableCell className="py-4 px-8 text-gray-500 font-mono text-xs border-b border-gray-50">{s.roll_no}</TableCell>
+                                            <TableCell className="py-4 px-8 text-[#64748B] font-mono text-xs border-b border-gray-50">{s.roll_no}</TableCell>
                                             <TableCell className="py-4 px-8 border-b border-gray-50">
                                                 <div className="flex items-center gap-3">
                                                     <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${getAvatarColor(s.name)}`}>
@@ -408,7 +408,7 @@ export default function ClassroomDetail({ currentUser }) {
                                                 <>
                                                     {isAdmin && (
                                                         <TableCell className="py-4 px-8 text-right border-b border-gray-50">
-                                                            <Button variant="ghost" size="icon" onClick={() => setEnrollmentToDelete(s.enrollment_id)} className="text-gray-400 hover:text-red-500 transition-colors p-2 rounded-lg hover:bg-red-50" title="Remove Student">
+                                                            <Button variant="ghost" size="icon" onClick={() => setEnrollmentToDelete(s.enrollment_id)} className="text-[#64748B]/80 hover:text-red-500 transition-colors p-2 rounded-lg hover:bg-red-50" title="Remove Student">
                                                                 <Trash2 size={18} />
                                                             </Button>
                                                         </TableCell>
@@ -416,7 +416,7 @@ export default function ClassroomDetail({ currentUser }) {
                                                 </>
                                             ) : (
                                                 <>
-                                                    <TableCell className="py-4 px-8 text-center text-gray-500 border-b border-gray-50">
+                                                    <TableCell className="py-4 px-8 text-center text-[#64748B] border-b border-gray-50">
                                                         {s.evaluations?.length || 0}
                                                     </TableCell>
                                                     <TableCell className="py-4 px-8 text-center border-b border-gray-50">
@@ -427,7 +427,7 @@ export default function ClassroomDetail({ currentUser }) {
                                                             <Button
                                                                 size="sm"
                                                                 onClick={() => { setEvalStudent(s); setShowEvalModal(true); }}
-                                                                className="text-white bg-[#E8B4B8] hover:bg-[#d8a3a7] transition-colors rounded-lg font-semibold shadow-sm inline-flex items-center gap-1"
+                                                                className="text-white bg-[#18181b] hover:bg-[#27272a] transition-colors rounded-lg font-semibold shadow-sm inline-flex items-center gap-1"
                                                             >
                                                                 <Plus size={16} /> Add Eval
                                                             </Button>
@@ -451,8 +451,8 @@ export default function ClassroomDetail({ currentUser }) {
                     </DialogHeader>
 
                     {evalStudent && (
-                        <div className="mb-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
-                            <span className="text-xs uppercase font-bold text-gray-400">{evalStudent.roll_no}</span>
+                        <div className="mb-4 bg-[#F8F9FA] p-4 rounded-xl border border-gray-100">
+                            <span className="text-xs uppercase font-bold text-[#64748B]/80">{evalStudent.roll_no}</span>
                             <p className="font-semibold text-[#111827]">{evalStudent.name}</p>
                         </div>
                     )}
@@ -460,30 +460,30 @@ export default function ClassroomDetail({ currentUser }) {
                     <form onSubmit={handleAddEval} className="space-y-5">
                         <div className="space-y-2">
                             <label className="text-sm font-semibold text-gray-700">Evaluation Name</label>
-                            <Input required name="eval_name" placeholder="e.g. Presentation 1" className="h-11 rounded-xl bg-gray-50 focus-visible:ring-[#E8B4B8]/50 border-gray-200 font-medium" />
+                            <Input required name="eval_name" placeholder="e.g. Presentation 1" className="h-11 rounded-xl bg-[#F8F9FA] focus-visible:ring-[#18181b]/50 border-gray-200 font-medium" />
                         </div>
 
                         <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-1.5">
-                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest line-clamp-1" title="Fundamental Knowledge">Fundamental</label>
-                                <Input required name="fundamental_knowledge" type="number" step="0.5" max="10" min="0" placeholder="0 - 10" className="h-11 text-lg font-bold border-gray-200 rounded-xl bg-gray-50 focus-visible:ring-[#E8B4B8]/50 text-center" />
+                                <label className="block text-[10px] font-bold text-[#64748B] uppercase tracking-widest line-clamp-1" title="Fundamental Knowledge">Fundamental</label>
+                                <Input required name="fundamental_knowledge" type="number" step="0.5" max="10" min="0" placeholder="0 - 10" className="h-11 text-lg font-bold border-gray-200 rounded-xl bg-[#F8F9FA] focus-visible:ring-[#18181b]/50 text-center" />
                             </div>
                             <div className="space-y-1.5">
-                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest line-clamp-1" title="Core/Technical Skills">Core Skills</label>
-                                <Input required name="core_skills" type="number" step="0.5" max="10" min="0" placeholder="0 - 10" className="h-11 text-lg font-bold border-gray-200 rounded-xl bg-gray-50 focus-visible:ring-[#E8B4B8]/50 text-center" />
+                                <label className="block text-[10px] font-bold text-[#64748B] uppercase tracking-widest line-clamp-1" title="Core/Technical Skills">Core Skills</label>
+                                <Input required name="core_skills" type="number" step="0.5" max="10" min="0" placeholder="0 - 10" className="h-11 text-lg font-bold border-gray-200 rounded-xl bg-[#F8F9FA] focus-visible:ring-[#18181b]/50 text-center" />
                             </div>
                             <div className="space-y-1.5">
-                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest line-clamp-1" title="Communication Skills">Communication</label>
-                                <Input required name="communication_skills" type="number" step="0.5" max="10" min="0" placeholder="0 - 10" className="h-11 text-lg font-bold border-gray-200 rounded-xl bg-gray-50 focus-visible:ring-[#E8B4B8]/50 text-center" />
+                                <label className="block text-[10px] font-bold text-[#64748B] uppercase tracking-widest line-clamp-1" title="Communication Skills">Communication</label>
+                                <Input required name="communication_skills" type="number" step="0.5" max="10" min="0" placeholder="0 - 10" className="h-11 text-lg font-bold border-gray-200 rounded-xl bg-[#F8F9FA] focus-visible:ring-[#18181b]/50 text-center" />
                             </div>
                             <div className="space-y-1.5">
-                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest line-clamp-1" title="Soft and Life Skills">Soft Skills</label>
-                                <Input required name="soft_skills" type="number" step="0.5" max="10" min="0" placeholder="0 - 10" className="h-11 text-lg font-bold border-gray-200 rounded-xl bg-gray-50 focus-visible:ring-[#E8B4B8]/50 text-center" />
+                                <label className="block text-[10px] font-bold text-[#64748B] uppercase tracking-widest line-clamp-1" title="Soft and Life Skills">Soft Skills</label>
+                                <Input required name="soft_skills" type="number" step="0.5" max="10" min="0" placeholder="0 - 10" className="h-11 text-lg font-bold border-gray-200 rounded-xl bg-[#F8F9FA] focus-visible:ring-[#18181b]/50 text-center" />
                             </div>
                         </div>
 
                         <DialogFooter className="pt-4 sm:justify-end gap-3 mt-4">
-                            <Button type="button" variant="ghost" onClick={() => { setShowEvalModal(false); setEvalStudent(null); }} className="rounded-xl h-11 px-5 text-gray-600 font-semibold hover:bg-gray-100">
+                            <Button type="button" variant="ghost" onClick={() => { setShowEvalModal(false); setEvalStudent(null); }} className="rounded-xl h-11 px-5 text-gray-600 font-semibold hover:bg-[#F8F9FA]">
                                 Cancel
                             </Button>
                             <Button type="submit" disabled={loading} className="rounded-xl h-11 px-6 bg-[#111827] text-white font-semibold hover:bg-gray-800">
@@ -507,7 +507,7 @@ export default function ClassroomDetail({ currentUser }) {
                                     <div>
                                         <div className="flex items-center gap-2">
                                             <DialogTitle className="text-2xl font-bold text-[#111827]">{evalHistoryStudent.name}</DialogTitle>
-                                            <Badge variant="secondary" className="font-mono bg-gray-100 text-gray-500 rounded-md py-0">{evalHistoryStudent.roll_no}</Badge>
+                                            <Badge variant="secondary" className="font-mono bg-[#F8F9FA] text-[#64748B] rounded-md py-0">{evalHistoryStudent.roll_no}</Badge>
                                         </div>
                                         <DialogDescription className="font-medium mt-0.5">Performance History</DialogDescription>
                                     </div>
@@ -516,7 +516,7 @@ export default function ClassroomDetail({ currentUser }) {
 
                             <div className="overflow-y-auto pr-2 space-y-4 flex-1 mt-4">
                                 {!evalHistoryStudent.evaluations || evalHistoryStudent.evaluations.length === 0 ? (
-                                    <div className="py-12 text-center text-gray-500 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                                    <div className="py-12 text-center text-[#64748B] bg-[#F8F9FA] rounded-2xl border border-dashed border-gray-200">
                                         No evaluations recorded for this student yet.
                                     </div>
                                 ) : (
@@ -526,30 +526,30 @@ export default function ClassroomDetail({ currentUser }) {
                                             <Card key={ev.id || i} className="border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-shadow py-2 px-1">
                                                 <CardHeader className="flex flex-row justify-between items-center pb-3 border-b border-gray-50">
                                                     <CardTitle className="text-base font-bold text-[#111827] flex items-center gap-2 m-0 p-0">
-                                                        <span className="w-2 h-2 rounded-full bg-[#E8B4B8]"></span>
+                                                        <span className="w-2 h-2 rounded-full bg-[#18181b]"></span>
                                                         {ev.eval_name}
                                                     </CardTitle>
                                                     <div className="flex items-baseline gap-1 text-[#111827]">
                                                         <span className="font-black text-xl">{total.toFixed(1)}</span>
-                                                        <span className="text-xs font-bold text-gray-400">/ 40</span>
+                                                        <span className="text-xs font-bold text-[#64748B]/80">/ 40</span>
                                                     </div>
                                                 </CardHeader>
                                                 <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 pb-2">
-                                                    <div className="bg-gray-50/50 rounded-xl p-3 border border-gray-100/50">
-                                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Fundamental</p>
-                                                        <p className="font-bold text-[#111827]">{ev.fundamental_knowledge || 0} <span className="text-gray-400 font-normal text-xs">/ 10</span></p>
+                                                    <div className="bg-[#F8F9FA] rounded-xl p-3 border border-gray-100/50">
+                                                        <p className="text-[10px] font-bold text-[#64748B]/80 uppercase tracking-widest mb-1">Fundamental</p>
+                                                        <p className="font-bold text-[#111827]">{ev.fundamental_knowledge || 0} <span className="text-[#64748B]/80 font-normal text-xs">/ 10</span></p>
                                                     </div>
-                                                    <div className="bg-gray-50/50 rounded-xl p-3 border border-gray-100/50">
-                                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Core Skills</p>
-                                                        <p className="font-bold text-[#111827]">{ev.core_skills || 0} <span className="text-gray-400 font-normal text-xs">/ 10</span></p>
+                                                    <div className="bg-[#F8F9FA] rounded-xl p-3 border border-gray-100/50">
+                                                        <p className="text-[10px] font-bold text-[#64748B]/80 uppercase tracking-widest mb-1">Core Skills</p>
+                                                        <p className="font-bold text-[#111827]">{ev.core_skills || 0} <span className="text-[#64748B]/80 font-normal text-xs">/ 10</span></p>
                                                     </div>
-                                                    <div className="bg-gray-50/50 rounded-xl p-3 border border-gray-100/50">
-                                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Communication</p>
-                                                        <p className="font-bold text-[#111827]">{ev.communication_skills || 0} <span className="text-gray-400 font-normal text-xs">/ 10</span></p>
+                                                    <div className="bg-[#F8F9FA] rounded-xl p-3 border border-gray-100/50">
+                                                        <p className="text-[10px] font-bold text-[#64748B]/80 uppercase tracking-widest mb-1">Communication</p>
+                                                        <p className="font-bold text-[#111827]">{ev.communication_skills || 0} <span className="text-[#64748B]/80 font-normal text-xs">/ 10</span></p>
                                                     </div>
-                                                    <div className="bg-gray-50/50 rounded-xl p-3 border border-gray-100/50">
-                                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Soft Skills</p>
-                                                        <p className="font-bold text-[#111827]">{ev.soft_skills || 0} <span className="text-gray-400 font-normal text-xs">/ 10</span></p>
+                                                    <div className="bg-[#F8F9FA] rounded-xl p-3 border border-gray-100/50">
+                                                        <p className="text-[10px] font-bold text-[#64748B]/80 uppercase tracking-widest mb-1">Soft Skills</p>
+                                                        <p className="font-bold text-[#111827]">{ev.soft_skills || 0} <span className="text-[#64748B]/80 font-normal text-xs">/ 10</span></p>
                                                     </div>
                                                 </CardContent>
                                             </Card>
@@ -568,7 +568,7 @@ export default function ClassroomDetail({ currentUser }) {
                 <DialogContent className="sm:max-w-xl rounded-[24px] p-8">
                     <DialogHeader>
                         <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-                            <Users size={24} className="text-[#E8B4B8]" />
+                            <Users size={24} className="text-[#18181b]" />
                             Batch Enroll Students
                         </DialogTitle>
                         <DialogDescription className="pt-2">
@@ -579,18 +579,18 @@ export default function ClassroomDetail({ currentUser }) {
                     <form onSubmit={handleEnrollSubmit} className="space-y-6 mt-4">
                         <div className="space-y-3">
                             <label className="text-sm font-bold text-gray-700 uppercase tracking-wider">1. Target Enrollment Group</label>
-                            <div className="flex bg-gray-100 p-1 rounded-xl w-full shadow-inner">
+                            <div className="flex bg-[#F8F9FA] p-1 rounded-xl w-full shadow-inner">
                                 <button
                                     type="button"
                                     onClick={() => setBatchGroup('A')}
-                                    className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${batchGroup === 'A' ? 'bg-white text-blue-600 shadow-sm ring-1 ring-black/5' : 'text-gray-500 hover:text-gray-700'}`}
+                                    className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${batchGroup === 'A' ? 'bg-white text-zinc-800 shadow-sm ring-1 ring-black/5' : 'text-[#64748B] hover:text-gray-700'}`}
                                 >
                                     Group A
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setBatchGroup('B')}
-                                    className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${batchGroup === 'B' ? 'bg-white text-purple-600 shadow-sm ring-1 ring-black/5' : 'text-gray-500 hover:text-gray-700'}`}
+                                    className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${batchGroup === 'B' ? 'bg-white text-purple-600 shadow-sm ring-1 ring-black/5' : 'text-[#64748B] hover:text-gray-700'}`}
                                 >
                                     Group B
                                 </button>
@@ -599,9 +599,9 @@ export default function ClassroomDetail({ currentUser }) {
 
                         <div className="space-y-3">
                             <label className="text-sm font-bold text-gray-700 uppercase tracking-wider">2. Select Students</label>
-                            <div className="bg-gray-50 border border-gray-100 rounded-xl p-4 max-h-[300px] overflow-y-auto">
+                            <div className="bg-[#F8F9FA] border border-gray-100 rounded-xl p-4 max-h-[300px] overflow-y-auto">
                                 {eligibleStudents.length === 0 ? (
-                                    <p className="text-gray-500 text-sm text-center py-4 italic">No eligible students found in the system for this course and semester.</p>
+                                    <p className="text-[#64748B] text-sm text-center py-4 italic">No eligible students found in the system for this course and semester.</p>
                                 ) : (
                                     <div className="space-y-3">
                                         {eligibleStudents.map((student) => {
@@ -611,14 +611,14 @@ export default function ClassroomDetail({ currentUser }) {
                                             // As requested, green styling for already assigned students.
                                             const containerClasses = isAssigned
                                                 ? "bg-green-50/50 border-green-200"
-                                                : "bg-white border-gray-100 hover:border-[#E8B4B8]/40";
+                                                : "bg-white border-gray-100 hover:border-[#18181b]/40";
 
                                             return (
                                                 <div key={student.id} className={`flex justify-between items-center p-3 rounded-xl shadow-sm border transition-colors ${containerClasses}`}>
                                                     <div className="flex items-center gap-3">
                                                         <input
                                                             type="checkbox"
-                                                            className="w-4 h-4 rounded text-[#111827] border-gray-300 focus:ring-[#E8B4B8]"
+                                                            className="w-4 h-4 rounded text-[#111827] border-gray-300 focus:ring-[#18181b]"
                                                             checked={selectedStudentIds.includes(student.id)}
                                                             onChange={(e) => {
                                                                 if (e.target.checked) setSelectedStudentIds(prev => [...prev, student.id]);
@@ -627,7 +627,7 @@ export default function ClassroomDetail({ currentUser }) {
                                                         />
                                                         <div>
                                                             <p className={`font-semibold ${isAssigned ? 'text-green-800' : 'text-gray-800'}`}>{student.name}</p>
-                                                            <p className={`text-xs ${isAssigned ? 'text-green-600' : 'text-gray-500'}`}>{student.roll_no}</p>
+                                                            <p className={`text-xs ${isAssigned ? 'text-green-600' : 'text-[#64748B]'}`}>{student.roll_no}</p>
                                                         </div>
                                                     </div>
                                                     {isAssigned && (
@@ -662,7 +662,7 @@ export default function ClassroomDetail({ currentUser }) {
                             <Trash2 size={24} />
                         </div>
                         <DialogTitle className="text-2xl font-bold text-[#111827]">Remove Student?</DialogTitle>
-                        <DialogDescription className="pt-2 text-gray-500 font-medium pb-4">
+                        <DialogDescription className="pt-2 text-[#64748B] font-medium pb-4">
                             Are you sure you want to remove this student from the classroom? All recorded marks and evaluation history for this class will be permanently lost.
                         </DialogDescription>
                     </DialogHeader>

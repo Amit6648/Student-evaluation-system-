@@ -38,7 +38,6 @@ export default function Dashboard({ currentUser }) {
     const [selectedSemester, setSelectedSemester] = useState("");
     const [selectedSubject, setSelectedSubject] = useState("");
     const [selectedTeacher, setSelectedTeacher] = useState("");
-    const [academicYear, setAcademicYear] = useState("2023-2024");
     const [classToDelete, setClassToDelete] = useState(null);
 
     // Advanced Creation Logic States
@@ -169,14 +168,20 @@ export default function Dashboard({ currentUser }) {
                 body: JSON.stringify({
                     subject_id: selectedSubject,
                     teacher_id: selectedTeacher,
-                    academic_year: academicYear,
+                    academic_year: "2023-2024", // Hardcoded default to fulfill schema
                     section: selectedSection,
                     enrollments: []
                 })
             });
 
-            // Reload classes
-            const updatedRes = await fetch('/api/virtual-classes');
+            // Reload classes with strict role scoping
+            let url = '/api/virtual-classes';
+            if (currentUser.role === 'TEACHER') {
+                url += `?teacher_id=${currentUser.id}`;
+            } else if (currentUser.role === 'ADMIN' && currentUser.course_id) {
+                url += `?course_id=${currentUser.course_id}`;
+            }
+            const updatedRes = await fetch(url);
             const updatedData = await updatedRes.json();
             setClasses(updatedData);
 
@@ -189,7 +194,7 @@ export default function Dashboard({ currentUser }) {
     }
 
     if (dataLoading) {
-        return <div className="min-h-screen p-8 max-w-7xl mx-auto flex justify-center items-center font-bold text-gray-500">Loading Dashboard...</div>;
+        return <div className="min-h-screen p-8 max-w-7xl mx-auto flex justify-center items-center font-bold text-[#64748B]">Loading Dashboard...</div>;
     }
 
     const isAdmin = currentUser.role === 'ADMIN';
@@ -197,16 +202,15 @@ export default function Dashboard({ currentUser }) {
     return (
         <div className="min-h-screen p-8 max-w-7xl mx-auto">
             <div className="relative z-0">
-                <div className="fixed inset-0 z-[-1] bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-50/50 via-white to-pink-50/50 opacity-60 pointer-events-none"></div>
+                <div className="fixed inset-0 z-[-1] bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-zinc-100/50 via-white to-zinc-50/50 opacity-60 pointer-events-none"></div>
 
-                <header className="flex flex-col md:flex-row md:justify-between md:items-end mb-12 gap-6">
+                <header className="flex flex-col md:flex-row md:justify-between md:items-end mb-12 gap-6 sticky top-0 z-50 pt-2 pb-4 backdrop-blur-xl bg-white/50 border-b border-white/40">
                     <div>
-                        <h1 className="text-4xl font-extrabold text-[#111827] flex items-center gap-3">
-                            <GraduationCap className="w-10 h-10 text-[#E8B4B8]" />
+                        <h1 className="text-4xl font-extrabold text-[#111827]">
                             {isAdmin ? 'Admin Dashboard' : 'Teacher Dashboard'}
                         </h1>
-                        <p className="text-gray-500 mt-2 font-medium">
-                            {isAdmin ? 'Manage school hierarchy, courses, and cross-department assignments.' : `Manage your flipped classrooms, ${currentUser.name}`}
+                        <p className="text-[#64748B] mt-2 text-lg font-medium">
+                            Welcome, {currentUser.name}
                         </p>
                     </div>
 
@@ -214,11 +218,12 @@ export default function Dashboard({ currentUser }) {
                         <Dialog open={showModal} onOpenChange={setShowModal}>
                             <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto rounded-[24px] p-8 border-none shadow-2xl">
                                 <DialogHeader className="mb-6">
-                                    <DialogTitle className="text-2xl font-bold text-[#111827]">Create Virtual Class</DialogTitle>
-                                    <DialogDescription className="text-gray-500">Assign a subject, teacher, and students to groups A and B.</DialogDescription>
+                                    <DialogTitle className="text-2xl font-bold text-[#111827]">Create Class</DialogTitle>
+                                    <DialogDescription className="text-[#64748B]">Assign a subject, teacher, and students to groups A and B.</DialogDescription>
                                 </DialogHeader>
                                 <form onSubmit={handleSubmit} className="space-y-6">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="flex flex-col space-y-5">
+                                        {/* Row 1: Semester & Subject */}
                                         <div className="space-y-2">
                                             <label className="text-sm font-semibold text-gray-700">Semester</label>
                                             <Select value={selectedSemester} onValueChange={(val) => {
@@ -226,7 +231,7 @@ export default function Dashboard({ currentUser }) {
                                                 setSelectedSubject("");
                                                 setSelectedSection("");
                                             }}>
-                                                <SelectTrigger className="h-11 rounded-xl bg-gray-50">
+                                                <SelectTrigger className="w-full h-11 rounded-xl bg-[#F8F9FA]">
                                                     <SelectValue placeholder="Select semester" />
                                                 </SelectTrigger>
                                                 <SelectContent>
@@ -237,10 +242,11 @@ export default function Dashboard({ currentUser }) {
                                                 </SelectContent>
                                             </Select>
                                         </div>
+
                                         <div className="space-y-2">
                                             <label className="text-sm font-semibold text-gray-700">Subject</label>
                                             <Select value={selectedSubject} onValueChange={setSelectedSubject} disabled={!selectedSemester}>
-                                                <SelectTrigger className="h-11 rounded-xl bg-gray-50">
+                                                <SelectTrigger className="w-full h-11 rounded-xl bg-[#F8F9FA]">
                                                     <SelectValue placeholder={selectedSemester ? "Select a subject" : "Select a semester first"} />
                                                 </SelectTrigger>
                                                 <SelectContent>
@@ -248,16 +254,32 @@ export default function Dashboard({ currentUser }) {
                                                         <SelectItem key={sub.id} value={sub.id}>
                                                             <div className="flex flex-col">
                                                                 <span className="font-bold">{sub.name}</span>
-                                                                <span className="text-[10px] text-gray-400 uppercase">{sub.courseName} • Sem {sub.semester_number}</span>
+                                                                <span className="text-[10px] text-[#64748B]/80 uppercase">{sub.courseName} • Sem {sub.semester_number}</span>
                                                             </div>
                                                         </SelectItem>
                                                     ))}
                                                 </SelectContent>
                                             </Select>
                                         </div>
-                                    </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        {/* Row 2: Section & Assign Teacher */}
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-semibold text-gray-700 flex justify-between">
+                                                Section
+                                                {selectedSubject && sections.length === 0 && <span className="text-xs text-orange-500 font-normal">No active sections found</span>}
+                                            </label>
+                                            <Select value={selectedSection} onValueChange={setSelectedSection} disabled={sections.length === 0}>
+                                                <SelectTrigger className="w-full h-11 rounded-xl bg-[#F8F9FA]">
+                                                    <SelectValue placeholder="Select section..." />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {sections.map(sec => (
+                                                        <SelectItem key={sec} value={sec}>Section {sec}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+
                                         <div className="space-y-2">
                                             <div className="flex justify-between items-center">
                                                 <label className="text-sm font-semibold text-gray-700">Assign Teacher</label>
@@ -267,13 +289,13 @@ export default function Dashboard({ currentUser }) {
                                                         id="globalTeachers"
                                                         checked={showAllTeachers}
                                                         onChange={(e) => setShowAllTeachers(e.target.checked)}
-                                                        className="rounded text-[#E8B4B8] border-gray-300 focus:ring-[#E8B4B8]"
+                                                        className="rounded text-[#18181b] border-gray-300 focus:ring-[#18181b]"
                                                     />
-                                                    <label htmlFor="globalTeachers" className="text-xs text-gray-500 cursor-pointer">Global Override</label>
+                                                    <label htmlFor="globalTeachers" className="text-xs text-[#64748B] cursor-pointer">Global Override</label>
                                                 </div>
                                             </div>
                                             <Select value={selectedTeacher} onValueChange={setSelectedTeacher}>
-                                                <SelectTrigger className="h-11 rounded-xl bg-gray-50">
+                                                <SelectTrigger className="w-full h-11 rounded-xl bg-[#F8F9FA]">
                                                     <SelectValue placeholder="Select a teacher" />
                                                 </SelectTrigger>
                                                 <SelectContent>
@@ -285,31 +307,8 @@ export default function Dashboard({ currentUser }) {
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-semibold text-gray-700">Academic Year</label>
-                                            <Input value={academicYear} onChange={(e) => setAcademicYear(e.target.value)} placeholder="e.g. 2023-2024" className="h-11 rounded-xl bg-gray-50 border-gray-200" />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-semibold text-gray-700 flex justify-between">
-                                                Section
-                                                {selectedSubject && sections.length === 0 && <span className="text-xs text-orange-500 font-normal">No active sections found</span>}
-                                            </label>
-                                            <Select value={selectedSection} onValueChange={setSelectedSection} disabled={sections.length === 0}>
-                                                <SelectTrigger className="h-11 rounded-xl bg-gray-50">
-                                                    <SelectValue placeholder="Select section..." />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {sections.map(sec => (
-                                                        <SelectItem key={sec} value={sec}>Section {sec}</SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                    </div>
-
                                     <DialogFooter className="pt-4 sm:justify-end gap-3">
-                                        <Button type="button" variant="ghost" onClick={() => setShowModal(false)} className="rounded-xl h-11 px-5 text-gray-600 font-semibold hover:bg-gray-100">
+                                        <Button type="button" variant="ghost" onClick={() => setShowModal(false)} className="rounded-xl h-11 px-5 text-gray-600 font-semibold hover:bg-[#F8F9FA]">
                                             Cancel
                                         </Button>
                                         <Button type="submit" disabled={loading} className="rounded-xl h-11 px-6 bg-[#111827] text-white font-semibold hover:bg-gray-800">
@@ -325,7 +324,7 @@ export default function Dashboard({ currentUser }) {
 
                 {isAdmin && classes.length > 0 && (
                     <div className="mb-8 flex flex-wrap gap-4 items-center bg-white/70 backdrop-blur-sm p-3 rounded-2xl border border-black/5 shadow-sm">
-                        <span className="text-sm font-bold text-gray-500 uppercase tracking-wider pl-2">Filters:</span>
+                        <span className="text-sm font-bold text-[#64748B] uppercase tracking-wider pl-2">Filters:</span>
                         <Select value={filterTeacher} onValueChange={setFilterTeacher}>
                             <SelectTrigger className="w-[200px] h-9 rounded-xl bg-white border-0 shadow-sm font-medium">
                                 <SelectValue placeholder="All Teachers" />
@@ -355,24 +354,23 @@ export default function Dashboard({ currentUser }) {
                     {isAdmin && (
                         <Card
                             onClick={() => setShowModal(true)}
-                            className="bg-transparent border-2 border-dashed border-[#E8B4B8]/60 rounded-[24px] p-2 flex flex-col items-center justify-center text-center transition-all hover:bg-[#E8B4B8]/5 aspect-[1.1] group cursor-pointer shadow-none h-full"
+                            className="bg-transparent border-2 border-dashed border-[#18181b]/60 rounded-3xl p-2 flex flex-col items-center justify-center text-center transition-all hover:bg-[#18181b]/5 aspect-[1.1] group cursor-pointer shadow-none h-full"
                         >
                             <CardContent className="flex flex-col items-center justify-center h-full p-6">
-                                <div className="w-16 h-16 bg-white border border-gray-100 rounded-[20px] shadow-sm flex items-center justify-center mb-4 text-[#E8B4B8] group-hover:scale-110 transition-transform duration-300">
+                                <div className="w-16 h-16 bg-white border border-[#F8F9FA] rounded-[20px] shadow-sm flex items-center justify-center mb-1 text-[#18181b] group-hover:scale-110 transition-transform duration-300">
                                     <Plus size={32} strokeWidth={2.5} />
                                 </div>
-                                <CardTitle className="text-xl font-bold text-[#111827] mb-2">Create New Virtual Class</CardTitle>
-                                <CardDescription className="text-sm font-medium px-4">Set up a new learning environment</CardDescription>
+                                <CardTitle className="text-xl font-bold text-[#111827]">Create Class</CardTitle>
                             </CardContent>
                         </Card>
                     )}
 
                     {classes.length === 0 ? (
-                        <div className="col-span-full py-20 text-center bg-white/40 rounded-[24px] border border-black/5">
+                        <div className="col-span-full py-20 text-center bg-white/40 rounded-3xl border border-black/5">
                             <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                            <p className="text-gray-500 mb-4">{isAdmin ? "No classrooms created yet" : "No classrooms have been assigned to you yet."}</p>
+                            <p className="text-[#64748B] mb-4">{isAdmin ? "No classrooms created yet" : "No classrooms have been assigned to you yet."}</p>
                             {isAdmin && (
-                                <Button variant="link" onClick={() => setShowModal(true)} className="text-[#E8B4B8] font-semibold text-md h-auto p-0">
+                                <Button variant="link" onClick={() => setShowModal(true)} className="text-[#18181b] font-semibold text-md h-auto p-0">
                                     Create your first class
                                 </Button>
                             )}
@@ -384,8 +382,8 @@ export default function Dashboard({ currentUser }) {
                                 key={c.id}
                                 className="group relative block"
                             >
-                                <Card className="bg-white/70 backdrop-blur-xl border border-black/5 rounded-[24px] p-2 transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-[#111827]/5 flex flex-col justify-between aspect-[1.1] overflow-hidden shadow-sm h-full relative">
-                                    <div className="absolute inset-0 bg-gradient-to-br from-[#E8B4B8]/0 to-[#E8B4B8]/0 group-hover:to-[#E8B4B8]/10 transition-colors duration-500 pointer-events-none rounded-[24px]"></div>
+                                <Card className="bg-white/70 backdrop-blur-xl border border-black/5 rounded-3xl p-2 transition-all hover:-translate-y-2 hover:shadow-2xl hover:shadow-[#111827]/10 flex flex-col justify-between aspect-[1.1] overflow-hidden shadow-sm h-full relative">
+                                    <div className="absolute inset-0 bg-gradient-to-br from-[#18181b]/0 to-[#18181b]/0 group-hover:to-[#18181b]/10 transition-colors duration-500 pointer-events-none rounded-3xl"></div>
 
                                     {isAdmin && (
                                         <button
@@ -403,11 +401,11 @@ export default function Dashboard({ currentUser }) {
 
                                     <CardHeader className="relative z-10 p-5 pb-2">
                                         <div className="flex justify-between items-start mb-3">
-                                            <Badge variant="secondary" className="bg-[#E8B4B8]/10 text-[#E8B4B8] hover:bg-[#E8B4B8]/20 font-bold uppercase tracking-wider text-xs px-2.5 py-1 rounded-full border-none max-w-[150px] truncate">
+                                            <Badge variant="secondary" className="bg-[#18181b]/10 text-[#18181b] hover:bg-[#18181b]/20 font-bold uppercase tracking-wider text-xs px-2.5 py-1 rounded-full border-none max-w-[150px] truncate">
                                                 {c.subject?.course?.name || 'Unknown Course'}
                                             </Badge>
-                                            <Badge variant="outline" className="bg-gray-50 text-gray-500 font-bold flex gap-1.5 px-2.5 py-1 rounded-full border border-gray-100 shadow-sm text-xs">
-                                                <Users size={14} className="text-[#E8B4B8]" />
+                                            <Badge variant="outline" className="bg-[#F8F9FA] text-[#64748B] font-bold flex gap-1.5 px-2.5 py-1 rounded-full border border-gray-100 shadow-sm text-xs">
+                                                <Users size={14} className="text-[#18181b]" />
                                                 {c._count?.enrollments || 0}
                                             </Badge>
                                         </div>
@@ -415,14 +413,14 @@ export default function Dashboard({ currentUser }) {
                                             {c.subject?.name || 'Unknown Subject'}
                                         </CardTitle>
                                         <CardDescription className="font-medium text-xs flex flex-col gap-1.5 mt-2">
-                                            {isAdmin && <span className="flex items-center gap-1"><span className="w-1 h-1 rounded-full bg-blue-400 block"></span> Teacher: {c.teacher?.name}</span>}
-                                            <span className="flex items-center gap-1 opacity-70"><span className="w-1 h-1 rounded-full bg-gray-400 block"></span> Year: {c.academic_year}</span>
+                                            {isAdmin && <span className="flex items-center gap-1"><span className="w-1 h-1 rounded-full bg-zinc-500 block"></span> Teacher: {c.teacher?.name}</span>}
+                                            <span className="flex items-center gap-1 opacity-70"><span className="w-1 h-1 rounded-full bg-gray-400 block"></span> Section: {c.section || 'N/A'}</span>
                                         </CardDescription>
                                     </CardHeader>
 
-                                    <CardFooter className="relative z-10 p-5 pt-0 mt-auto flex items-center justify-between text-[#E8B4B8] font-bold">
+                                    <CardFooter className="relative z-10 p-5 pt-0 mt-auto flex items-center justify-between text-[#18181b] font-bold">
                                         <span className="text-sm tracking-wide group-hover:translate-x-1 transition-transform">Enter Classroom</span>
-                                        <div className="w-10 h-10 rounded-full bg-white border border-[#E8B4B8]/20 flex items-center justify-center group-hover:bg-[#E8B4B8] group-hover:text-white transition-all shadow-sm">
+                                        <div className="w-10 h-10 rounded-full bg-white border border-[#18181b]/20 flex items-center justify-center group-hover:bg-[#18181b] group-hover:text-white transition-all shadow-sm">
                                             <ChevronRight size={18} />
                                         </div>
                                     </CardFooter>
@@ -440,7 +438,7 @@ export default function Dashboard({ currentUser }) {
                                 <Trash2 size={24} />
                             </div>
                             <DialogTitle className="text-2xl font-bold text-[#111827]">Delete Classroom?</DialogTitle>
-                            <DialogDescription className="pt-2 text-gray-500 font-medium pb-4">
+                            <DialogDescription className="pt-2 text-[#64748B] font-medium pb-4">
                                 This action cannot be undone. This will permanently delete the virtual classroom, all student enrollments, and their evaluation histories.
                             </DialogDescription>
                         </DialogHeader>
