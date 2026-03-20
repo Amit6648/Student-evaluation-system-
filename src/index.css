@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -5,11 +6,11 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --color-brand-bg: #E6E6DC;
-  --color-brand-accent: #18181b;
-  --color-brand-accent-hover: #09090b;
+  --color-brand-bg: #F0F4F8;
+  --color-brand-accent: #0088FF;
+  --color-brand-accent-hover: #0070D2;
   --color-brand-dark: #111827;
-  --font-sans: 'Figtree', sans-serif;
+  --font-sans: 'Noto Sans', sans-serif;
 }
 
 @layer base {
@@ -140,4 +141,13 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Hide all scrollbars globally */
+* {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+*::-webkit-scrollbar {
+  display: none; /* Chrome/Safari/Opera */
 }

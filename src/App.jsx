@@ -26,44 +26,44 @@ function App() {
     if (!currentUser) return <div className="p-8 font-bold text-[#64748B] flex justify-center mt-20">Loading System...</div>;
 
     return (
-        <div className="flex min-h-screen bg-[#F8F9FA] font-sans">
-            {/* Deep Rich Navy Sidebar */}
-            <aside className="w-64 bg-zinc-200 flex flex-col min-h-screen shadow-inner relative z-40 hidden md:flex border-r border-zinc-300">
-                <div className="w-full bg-zinc-800 border-b border-zinc-700 shadow-sm">
-                    <div className="flex items-center gap-3 px-5 py-4">
-                        <div className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center shrink-0">
-                            <Lightbulb className="text-white w-5 h-5" />
+        <div className="flex min-h-screen bg-[#F0F4F8] font-sans">
+            {/* Deep Rich Navy Sidebar -> Refined Academic Sidebar */}
+            <aside className="w-64 bg-[#E8EEF4] flex flex-col min-h-screen shadow-[4px_0_24px_rgba(0,0,0,0.02)] relative z-40 hidden md:flex border-r border-[#111827]/5">
+                <div className="w-full bg-[#5D685C] shadow-sm">
+                    <div className="flex items-center gap-3 px-6 py-5">
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0">
+                            <Lightbulb className="text-white w-6 h-6" />
                         </div>
-                        <h1 className="text-lg font-extrabold text-white tracking-tight leading-none mt-0.5">Flip Classroom</h1>
+                        <h1 className="text-lg font-bold text-white tracking-tight leading-none mt-0.5">Flip Classroom</h1>
                     </div>
                 </div>
 
-                <nav className="flex-1 px-4 space-y-2 mt-2">
+                <nav className="flex-1 px-4 space-y-2 mt-4">
                     {/* Active Route Simulator (Mock) */}
-                    <div className="px-4 py-3 rounded-xl bg-zinc-300 text-zinc-900 font-bold border border-zinc-400 transition-all flex items-center gap-3 cursor-pointer shadow-sm">
-                        <LayoutDashboard className="w-5 h-5" />
+                    <div className="px-4 py-3 rounded-r-xl rounded-l-sm bg-white/60 text-[#111827] font-bold border-l-[4px] border-[#0088FF] transition-all flex items-center gap-3 cursor-pointer shadow-sm">
+                        <LayoutDashboard className="w-5 h-5 text-[#0088FF]" />
                         Dashboard
                     </div>
-                    <div className="px-4 py-3 rounded-xl hover:bg-zinc-300/60 text-zinc-600 hover:text-zinc-900 font-semibold transition-all group cursor-pointer flex items-center gap-3">
-                        <Settings className="w-5 h-5 text-zinc-500 group-hover:text-zinc-900 transition-colors" />
+                    <div className="px-4 py-3 rounded-xl hover:bg-white/40 text-[#111827]/70 hover:text-[#111827] font-semibold transition-all group cursor-pointer flex items-center gap-3">
+                        <Settings className="w-5 h-5 text-[#111827]/50 group-hover:text-[#111827] transition-colors" />
                         Settings
                     </div>
-                    <div className="px-4 py-3 rounded-xl hover:bg-zinc-300/60 text-zinc-600 hover:text-zinc-900 font-semibold transition-all group cursor-pointer flex items-center gap-3">
-                        <LifeBuoy className="w-5 h-5 text-zinc-500 group-hover:text-zinc-900 transition-colors" />
+                    <div className="px-4 py-3 rounded-xl hover:bg-white/40 text-[#111827]/70 hover:text-[#111827] font-semibold transition-all group cursor-pointer flex items-center gap-3">
+                        <LifeBuoy className="w-5 h-5 text-[#111827]/50 group-hover:text-[#111827] transition-colors" />
                         Support
                     </div>
                 </nav>
 
-                <div className="p-5 mt-auto border-t border-zinc-300">
-                    <div className="flex items-center gap-3 bg-zinc-100 rounded-2xl p-3 border border-zinc-300 cursor-pointer hover:bg-white transition-colors group shadow-sm">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-zinc-800 to-zinc-600 flex items-center justify-center text-white font-bold shadow-sm shrink-0">
+                <div className="p-5 mt-auto border-t border-[#111827]/5">
+                    <div className="flex items-center gap-3 bg-white/50 rounded-2xl p-3 border border-white/60 cursor-pointer hover:bg-white transition-colors group shadow-sm">
+                        <div className="w-10 h-10 rounded-full bg-[#5D685C] flex items-center justify-center text-white font-bold shadow-sm shrink-0">
                             {currentUser?.name?.charAt(0) || 'U'}
                         </div>
                         <div className="flex flex-col text-left overflow-hidden">
-                            <span className="text-sm font-semibold text-zinc-900 transition-colors truncate">
+                            <span className="text-sm font-semibold text-[#111827] transition-colors truncate">
                                 {currentUser?.name || "User"}
                             </span>
-                            <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold truncate">
+                            <span className="text-[10px] text-[#111827]/60 uppercase tracking-wider font-bold truncate">
                                 {currentUser?.role || "GUEST"}
                             </span>
                         </div>
@@ -73,23 +73,23 @@ function App() {
 
             {/* Main Content Area */}
             <main className="flex-1 flex flex-col h-screen overflow-y-auto relative">
-                {/* Global Role Simulator Bar (Float top right or Sticky) */}
-                <div className="bg-white/80 text-zinc-900 px-6 py-3 flex justify-between items-center shadow-sm z-[100] sticky top-0 md:static backdrop-blur-xl border-b border-zinc-200">
+                {/* Global Role Simulator Bar */}
+                <div className="bg-[#F0F4F8]/90 px-6 py-4 flex justify-between items-center z-[100] sticky top-0 md:static backdrop-blur-xl border-b border-[#111827]/5 shadow-sm">
                     <div className="flex items-center gap-3">
-                        <span className="font-bold text-[10px] text-zinc-600 uppercase tracking-wider bg-zinc-100 px-2 py-1 rounded-md">Role Sim</span>
+                        <span className="font-bold text-[10px] text-[#111827]/60 uppercase tracking-wider bg-[#E8EEF4] px-2.5 py-1 rounded-md border border-[#111827]/10">Role Sim</span>
                     </div>
                     <div className="flex items-center gap-3">
-                        <span className="text-xs font-semibold text-zinc-500 hidden sm:block">Viewing as:</span>
+                        <span className="text-xs font-semibold text-[#111827]/70 hidden sm:block">Viewing as:</span>
                         <Select value={currentUser.id} onValueChange={(val) => setCurrentUser(users.find(u => u.id === val))}>
-                            <SelectTrigger className="w-[200px] h-9 bg-zinc-50 border-zinc-200 text-zinc-900 focus:ring-0 rounded-lg text-sm font-medium">
+                            <SelectTrigger className="w-[240px] h-10 bg-white border border-[#111827]/10 text-[#111827] focus:ring-2 focus:ring-[#0088FF] focus:ring-offset-2 rounded-full text-sm font-bold shadow-sm transition-all">
                                 <SelectValue placeholder="Select user..." />
                             </SelectTrigger>
-                            <SelectContent className="z-[9999]">
+                            <SelectContent className="z-[9999] rounded-xl border-none shadow-xl">
                                 {users.map(u => (
-                                    <SelectItem key={u.id} value={u.id} className="cursor-pointer">
+                                    <SelectItem key={u.id} value={u.id} className="cursor-pointer focus:bg-[#E8EEF4]">
                                         <div className="flex flex-col">
-                                            <span className="font-bold">{u.name}</span>
-                                            <span className="text-[10px] text-[#64748B]/80 font-semibold">{u.role}</span>
+                                            <span className="font-bold text-[#111827]">{u.name}</span>
+                                            <span className="text-[10px] text-[#111827]/60 font-semibold">{u.role}</span>
                                         </div>
                                     </SelectItem>
                                 ))}

@@ -219,103 +219,101 @@ export default function ClassroomDetail({ currentUser }) {
     const displayedStudents = students.filter(s => s.group_label === activeGroup);
 
     return (
-        <div className="min-h-screen p-8 max-w-7xl mx-auto">
-            <Link to="/" className="inline-flex items-center text-[#64748B] hover:text-[#111827] mb-8 font-semibold transition-colors">
+        <div className="min-h-screen p-8 max-w-7xl mx-auto relative pl-12 border-l-[4px] border-[#0088FF] shadow-[inset_1px_0_0_rgba(0,0,0,0.05)]">
+            <Link to="/" className="inline-flex items-center text-[#111827]/70 hover:text-[#0088FF] mb-8 font-bold transition-colors">
                 <ChevronLeft size={20} className="mr-1" /> Back to Dashboard
             </Link>
 
-            <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 sticky top-0 z-50 pt-2 pb-4 backdrop-blur-xl bg-white/50 border-b border-white/40">
+            <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 sticky top-0 z-50 pt-2 pb-4 backdrop-blur-xl bg-[#F0F4F8]/80 border-b border-[#111827]/10">
                 <div>
-                    <Badge variant="secondary" className="bg-[#18181b]/10 text-[#18181b] hover:bg-[#18181b]/20 font-bold uppercase tracking-wider text-xs px-3 py-1 rounded-full mb-3 inline-block border-none">
+                    <Badge variant="secondary" className="bg-[#5D685C] text-white hover:bg-[#5D685C]/90 font-bold uppercase tracking-widest text-[10px] px-3 py-1 rounded-sm mb-3 inline-block border-none">
                         {classroom.subject?.course?.school?.name || 'School'} • {classroom.subject?.course?.name || 'Course'}
                     </Badge>
-                    <h1 className="text-4xl font-extrabold text-[#111827]">{classroom.subject?.name}</h1>
-                    <p className="text-[#64748B] mt-2 font-medium">Taught by {classroom.teacher?.name} • Year: {classroom.academic_year}</p>
+                    <h1 className="text-4xl font-extrabold text-[#111827] leading-tight">{classroom.subject?.name}</h1>
+                    <p className="text-[#111827]/70 mt-3 font-semibold text-lg flex items-center gap-3">
+                        <span className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-[#5D685C] block"></span> Teacher: {classroom.teacher?.name}</span>
+                        <span className="opacity-50">•</span>
+                        <span className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-[#767472] block"></span> Year: {classroom.academic_year}</span>
+                    </p>
                 </div>
 
                 {/* Group A / Group B Subnavigation Toggle */}
-                <div className="flex bg-[#F8F9FA] p-1 rounded-xl w-full md:w-auto mt-4 md:mt-0 shadow-inner">
+                <div className="flex bg-[#E8EEF4] p-1.5 rounded-full w-full md:w-auto mt-4 md:mt-0 shadow-sm border border-[#111827]/5">
                     <button
                         onClick={() => setActiveGroup('A')}
-                        className={`flex-1 md:w-32 py-2.5 rounded-lg text-sm font-bold transition-all ${activeGroup === 'A' ? 'bg-white text-zinc-800 shadow-sm ring-1 ring-black/5' : 'text-[#64748B] hover:text-gray-700'}`}
+                        className={`flex-1 md:w-32 py-2.5 rounded-full text-sm font-bold transition-all ${activeGroup === 'A' ? 'bg-[#767472] text-white shadow-md' : 'text-[#111827]/60 hover:text-[#111827]'}`}
                     >
                         Group A
                     </button>
                     <button
                         onClick={() => setActiveGroup('B')}
-                        className={`flex-1 md:w-32 py-2.5 rounded-lg text-sm font-bold transition-all ${activeGroup === 'B' ? 'bg-white text-purple-600 shadow-sm ring-1 ring-black/5' : 'text-[#64748B] hover:text-gray-700'}`}
+                        className={`flex-1 md:w-32 py-2.5 rounded-full text-sm font-bold transition-all ${activeGroup === 'B' ? 'bg-[#767472] text-white shadow-md' : 'text-[#111827]/60 hover:text-[#111827]'}`}
                     >
                         Group B
                     </button>
                 </div>
 
                 {isAdmin && (
-                    <Button onClick={() => setShowEnrollModal(true)} className="mt-4 md:mt-0 bg-[#18181b] hover:bg-[#09090b] text-white shadow-lg rounded-xl flex items-center gap-2 font-bold px-5 h-12 transition-all hover:scale-[1.02]">
+                    <Button onClick={() => setShowEnrollModal(true)} className="mt-4 md:mt-0 bg-[#767472] hover:bg-[#5f5d5b] text-white shadow-md rounded-full flex items-center gap-2 font-bold px-6 h-12 transition-all hover:scale-[1.02]">
                         <UserPlus className="w-5 h-5" />
                         Enroll Students
                     </Button>
                 )}
             </header>
 
-            {/* Premium Stat Cards for Active Group */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <Card className="bg-white/70 backdrop-blur-xl border border-black/5 rounded-3xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all flex items-center justify-between py-2 px-1">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-bold text-[#64748B]/80 uppercase tracking-widest mb-1">Group {activeGroup} Enrolled</CardTitle>
-                        <p className="text-3xl font-black text-[#111827]">{stats.totalStudents}</p>
-                    </CardHeader>
-                    <CardContent className="p-6 pt-6 pb-6">
-                        <div className="w-12 h-12 rounded-2xl bg-zinc-50 text-zinc-600 flex items-center justify-center shrink-0">
-                            <Users size={24} />
-                        </div>
-                    </CardContent>
-                </Card>
-                <Card className="bg-white/70 backdrop-blur-xl border border-black/5 rounded-3xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all flex items-center justify-between py-2 px-1">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-bold text-[#64748B]/80 uppercase tracking-widest mb-1">Group {activeGroup} Avg</CardTitle>
-                        <p className="text-3xl font-black text-[#111827]">{stats.classAvg}</p>
-                    </CardHeader>
-                    <CardContent className="p-6 pt-6 pb-6">
-                        <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-500 flex items-center justify-center shrink-0">
-                            <BarChart size={24} />
-                        </div>
-                    </CardContent>
-                </Card>
-                <Card className="bg-white/70 backdrop-blur-xl border border-black/5 rounded-3xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all flex items-center justify-between py-2 px-1">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-bold text-[#64748B]/80 uppercase tracking-widest mb-1">Group {activeGroup} Top</CardTitle>
-                        <p className="text-3xl font-black text-[#111827]">{stats.topScore}</p>
-                    </CardHeader>
-                    <CardContent className="p-6 pt-6 pb-6">
-                        <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center shrink-0">
-                            <CheckCircle2 size={24} />
-                        </div>
-                    </CardContent>
-                </Card>
+            {/* Compact Stat Cards for Active Group */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                <div className="bg-[#E8EEF4] border border-[#111827]/5 rounded-xl shadow-sm hover:shadow-md transition-all flex items-center gap-4 px-5 py-4">
+                    <div className="w-10 h-10 rounded-full bg-white text-[#0088FF] flex items-center justify-center shrink-0 shadow-sm border border-[#111827]/5">
+                        <Users size={20} />
+                    </div>
+                    <div>
+                        <p className="text-[9px] font-black text-[#111827]/50 uppercase tracking-widest">Group {activeGroup} Enrolled</p>
+                        <p className="text-2xl font-black text-[#111827] leading-tight">{stats.totalStudents}</p>
+                    </div>
+                </div>
+                <div className="bg-[#E8EEF4] border border-[#111827]/5 rounded-xl shadow-sm hover:shadow-md transition-all flex items-center gap-4 px-5 py-4">
+                    <div className="w-10 h-10 rounded-full bg-white text-[#0088FF] flex items-center justify-center shrink-0 shadow-sm border border-[#111827]/5">
+                        <BarChart size={20} />
+                    </div>
+                    <div>
+                        <p className="text-[9px] font-black text-[#111827]/50 uppercase tracking-widest">Group {activeGroup} Avg</p>
+                        <p className="text-2xl font-black text-[#111827] leading-tight">{stats.classAvg}</p>
+                    </div>
+                </div>
+                <div className="bg-[#E8EEF4] border border-[#111827]/5 rounded-xl shadow-sm hover:shadow-md transition-all flex items-center gap-4 px-5 py-4">
+                    <div className="w-10 h-10 rounded-full bg-white text-[#0088FF] flex items-center justify-center shrink-0 shadow-sm border border-[#111827]/5">
+                        <CheckCircle2 size={20} />
+                    </div>
+                    <div>
+                        <p className="text-[9px] font-black text-[#111827]/50 uppercase tracking-widest">Group {activeGroup} Top</p>
+                        <p className="text-2xl font-black text-[#111827] leading-tight">{stats.topScore}</p>
+                    </div>
+                </div>
             </div >
 
-            <div className="bg-white/70 backdrop-blur-xl border border-black/5 rounded-3xl shadow-sm hover:shadow-xl transition-all overflow-hidden flex flex-col mb-12">
+            <div className="bg-[#E8EEF4] border border-[#111827]/5 rounded-2xl shadow-sm flex flex-col mb-12 overflow-hidden">
                 {/* Tabs */}
-                <div className="flex border-b border-gray-100 px-6 pt-4">
+                <div className="flex border-b border-[#111827]/5 px-6 pt-4 bg-[#F0F4F8]/30">
                     <button
                         onClick={() => setActiveTab('roster')}
-                        className={`px-6 py-4 font-semibold text-[15px] flex items-center gap-2 border-b-2 transition-all ${activeTab === 'roster' ? 'border-[#18181b] text-[#111827]' : 'border-transparent text-[#64748B]/80 hover:text-gray-600'}`}
+                        className={`px-6 py-4 font-bold text-sm tracking-wide flex items-center gap-2 border-b-[3px] transition-all ${activeTab === 'roster' ? 'border-[#0088FF] text-[#0088FF]' : 'border-transparent text-[#111827]/50 hover:text-[#111827]'}`}
                     >
-                        <Users size={18} className={activeTab === 'roster' ? 'text-[#18181b]' : ''} />
+                        <Users size={18} className={activeTab === 'roster' ? 'text-[#0088FF]' : ''} />
                         Student Roster
                     </button>
                     <button
                         onClick={() => setActiveTab('gradebook')}
-                        className={`px-6 py-4 font-semibold text-[15px] flex items-center gap-2 border-b-2 transition-all ${activeTab === 'gradebook' ? 'border-[#18181b] text-[#111827]' : 'border-transparent text-[#64748B]/80 hover:text-gray-600'}`}
+                        className={`px-6 py-4 font-bold text-sm tracking-wide flex items-center gap-2 border-b-[3px] transition-all ${activeTab === 'gradebook' ? 'border-[#0088FF] text-[#0088FF]' : 'border-transparent text-[#111827]/50 hover:text-[#111827]'}`}
                     >
-                        <BookOpen size={18} className={activeTab === 'gradebook' ? 'text-[#18181b]' : ''} />
+                        <BookOpen size={18} className={activeTab === 'gradebook' ? 'text-[#0088FF]' : ''} />
                         Gradebook
                     </button>
                     <button
                         onClick={() => setActiveTab('heatmap')}
-                        className={`px-6 py-4 font-semibold text-[15px] flex items-center gap-2 border-b-2 transition-all ${activeTab === 'heatmap' ? 'border-[#18181b] text-[#111827]' : 'border-transparent text-[#64748B]/80 hover:text-gray-600'}`}
+                        className={`px-6 py-4 font-bold text-sm tracking-wide flex items-center gap-2 border-b-[3px] transition-all ${activeTab === 'heatmap' ? 'border-[#0088FF] text-[#0088FF]' : 'border-transparent text-[#111827]/50 hover:text-[#111827]'}`}
                     >
-                        <BarChart size={18} className={activeTab === 'heatmap' ? 'text-[#18181b]' : ''} />
+                        <BarChart size={18} className={activeTab === 'heatmap' ? 'text-[#0088FF]' : ''} />
                         Performance Heatmap
                     </button>
                 </div>
@@ -324,10 +322,10 @@ export default function ClassroomDetail({ currentUser }) {
                 <div className="p-0 flex-1 flex flex-col">
                     {displayedStudents.length === 0 ? (
                         <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">
-                            <div className="w-16 h-16 bg-[#F8F9FA] rounded-full flex items-center justify-center mb-4">
-                                <Users size={24} className="text-gray-300" />
+                            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm">
+                                <Users size={24} className="text-[#111827]/30" />
                             </div>
-                            <p className="text-[#64748B] font-medium mb-4">No students enrolled in Group {activeGroup} yet.</p>
+                            <p className="text-[#111827]/60 font-bold mb-4">No students enrolled in Group {activeGroup} yet.</p>
                         </div>
                     ) : activeTab === 'heatmap' ? (
                         <div className="p-8">
@@ -365,40 +363,40 @@ export default function ClassroomDetail({ currentUser }) {
                                     );
                                 })}
                             </div>
-                            <div className="mt-8 flex gap-6 text-sm font-semibold text-[#64748B] items-center justify-center bg-[#F8F9FA] py-3 rounded-xl">
-                                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-emerald-100 border border-emerald-200"></div> &ge; 32 (High)</div>
-                                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-amber-100 border border-amber-200"></div> 24 - 31 (Average)</div>
-                                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-orange-100 border border-orange-200"></div> 16 - 23 (Low)</div>
-                                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-red-100 border border-red-200"></div> &lt; 16 (Critical)</div>
+                            <div className="mt-8 flex gap-6 text-xs font-bold text-[#111827]/60 items-center justify-center bg-[#F0F4F8]/80 py-3 rounded-full border border-[#111827]/5">
+                                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-emerald-100 border border-emerald-200"></div> &ge; 32 (High)</div>
+                                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-amber-100 border border-amber-200"></div> 24 - 31 (Average)</div>
+                                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-orange-100 border border-orange-200"></div> 16 - 23 (Low)</div>
+                                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-red-100 border border-red-200"></div> &lt; 16 (Critical)</div>
                             </div>
                         </div>
                     ) : (
-                        <div className="overflow-x-auto">
+                        <div className="overflow-x-auto bg-[#E8EEF4]">
                             <Table className="w-full text-left">
                                 <TableHeader>
-                                    <TableRow className="bg-[#F8F9FA] hover:bg-[#F8F9FA]">
-                                        <TableHead className="py-4 px-8 text-xs font-bold text-[#64748B]/80 uppercase tracking-widest">Roll No</TableHead>
-                                        <TableHead className="py-4 px-8 text-xs font-bold text-[#64748B]/80 uppercase tracking-widest">Student Name</TableHead>
+                                    <TableRow className="bg-[#E8EEF4] border-b border-[#111827]/10 hover:bg-[#E8EEF4]">
+                                        <TableHead className="py-4 px-8 text-[10px] font-bold text-[#111827]/50 uppercase tracking-widest">Roll No</TableHead>
+                                        <TableHead className="py-4 px-8 text-[10px] font-bold text-[#111827]/50 uppercase tracking-widest">Student Name</TableHead>
                                         {activeTab === 'roster' ? (
                                             <>
-                                                {isAdmin && <TableHead className="py-4 px-8 text-xs font-bold text-[#64748B]/80 uppercase tracking-widest text-right">Admin Action</TableHead>}
+                                                {isAdmin && <TableHead className="py-4 px-8 text-[10px] font-bold text-[#111827]/50 uppercase tracking-widest text-right">Admin Action</TableHead>}
                                             </>
                                         ) : (
                                             <>
-                                                <TableHead className="py-4 px-8 text-xs font-bold text-[#64748B]/80 uppercase tracking-widest text-center">Evals</TableHead>
-                                                <TableHead className="py-4 px-8 text-xs font-bold text-[#64748B]/80 uppercase tracking-widest text-center">Avg Mark</TableHead>
-                                                {!isAdmin && <TableHead className="py-4 px-8 text-xs font-bold text-[#64748B]/80 uppercase tracking-widest text-right">Evaluate</TableHead>}
+                                                <TableHead className="py-4 px-8 text-[10px] font-bold text-[#111827]/50 uppercase tracking-widest text-center">Evals</TableHead>
+                                                <TableHead className="py-4 px-8 text-[10px] font-bold text-[#111827]/50 uppercase tracking-widest text-center">Avg Mark</TableHead>
+                                                {!isAdmin && <TableHead className="py-4 px-8 text-[10px] font-bold text-[#111827]/50 uppercase tracking-widest text-right">Evaluate</TableHead>}
                                             </>
                                         )}
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {displayedStudents.map((s) => (
-                                        <TableRow key={s.student_id} className="hover:bg-white/50 transition-colors group">
-                                            <TableCell className="py-4 px-8 text-[#64748B] font-mono text-xs border-b border-gray-50">{s.roll_no}</TableCell>
-                                            <TableCell className="py-4 px-8 border-b border-gray-50">
+                                        <TableRow key={s.student_id} className="hover:bg-white/40 transition-colors border-b border-[#111827]/5 group">
+                                            <TableCell className="py-4 px-8 text-[#111827]/60 font-mono font-bold text-xs">{s.roll_no}</TableCell>
+                                            <TableCell className="py-4 px-8">
                                                 <div className="flex items-center gap-3">
-                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${getAvatarColor(s.name)}`}>
+                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shadow-sm shrink-0 ${getAvatarColor(s.name)}`}>
                                                         {getInitials(s.name)}
                                                     </div>
                                                     <span className="font-bold text-[#111827]">{s.name}</span>
@@ -407,8 +405,8 @@ export default function ClassroomDetail({ currentUser }) {
                                             {activeTab === 'roster' ? (
                                                 <>
                                                     {isAdmin && (
-                                                        <TableCell className="py-4 px-8 text-right border-b border-gray-50">
-                                                            <Button variant="ghost" size="icon" onClick={() => setEnrollmentToDelete(s.enrollment_id)} className="text-[#64748B]/80 hover:text-red-500 transition-colors p-2 rounded-lg hover:bg-red-50" title="Remove Student">
+                                                        <TableCell className="py-4 px-8 text-right">
+                                                            <Button variant="ghost" size="icon" onClick={() => setEnrollmentToDelete(s.enrollment_id)} className="text-[#111827]/40 hover:text-red-500 transition-colors rounded-full hover:bg-red-50" title="Remove Student">
                                                                 <Trash2 size={18} />
                                                             </Button>
                                                         </TableCell>
@@ -416,18 +414,18 @@ export default function ClassroomDetail({ currentUser }) {
                                                 </>
                                             ) : (
                                                 <>
-                                                    <TableCell className="py-4 px-8 text-center text-[#64748B] border-b border-gray-50">
+                                                    <TableCell className="py-4 px-8 text-center font-bold text-[#111827]/60">
                                                         {s.evaluations?.length || 0}
                                                     </TableCell>
-                                                    <TableCell className="py-4 px-8 text-center border-b border-gray-50">
-                                                        <span className="font-bold text-xl text-[#111827]">{s.averageMarks !== null ? s.averageMarks : '--'}</span>
+                                                    <TableCell className="py-4 px-8 text-center">
+                                                        <span className="font-extrabold text-xl text-[#0088FF]">{s.averageMarks !== null ? s.averageMarks : '--'}</span>
                                                     </TableCell>
                                                     {!isAdmin && (
-                                                        <TableCell className="py-4 px-8 text-right border-b border-gray-50">
+                                                        <TableCell className="py-4 px-8 text-right">
                                                             <Button
                                                                 size="sm"
                                                                 onClick={() => { setEvalStudent(s); setShowEvalModal(true); }}
-                                                                className="text-white bg-[#18181b] hover:bg-[#27272a] transition-colors rounded-lg font-semibold shadow-sm inline-flex items-center gap-1"
+                                                                className="text-white bg-[#767472] hover:bg-[#5f5d5b] transition-colors rounded-full font-bold shadow-sm inline-flex items-center gap-1 px-4"
                                                             >
                                                                 <Plus size={16} /> Add Eval
                                                             </Button>
@@ -445,48 +443,56 @@ export default function ClassroomDetail({ currentUser }) {
             </div>
 
             <Dialog open={showEvalModal} onOpenChange={(open) => { if (!open) { setShowEvalModal(false); setEvalStudent(null); } }}>
-                <DialogContent className="sm:max-w-sm rounded-[24px] p-8 border-none shadow-2xl">
-                    <DialogHeader className="mb-2">
-                        <DialogTitle className="text-xl font-bold text-[#111827]">New Evaluation</DialogTitle>
+                <DialogContent className="sm:max-w-sm rounded-[24px] p-8 border-none shadow-2xl bg-[#E8EEF4] relative">
+                    <div className="absolute top-0 left-0 bg-[#5D685C] text-white px-5 py-2.5 rounded-br-xl font-bold flex items-center gap-2 shadow-sm z-10 text-xs uppercase tracking-wider">
+                        Evaluation
+                    </div>
+                    <DialogHeader className="mb-2 mt-6 border-b border-[#111827]/10 pb-4">
+                        <DialogTitle className="text-2xl font-black text-[#111827]">New Evaluation</DialogTitle>
                     </DialogHeader>
 
                     {evalStudent && (
-                        <div className="mb-4 bg-[#F8F9FA] p-4 rounded-xl border border-gray-100">
-                            <span className="text-xs uppercase font-bold text-[#64748B]/80">{evalStudent.roll_no}</span>
-                            <p className="font-semibold text-[#111827]">{evalStudent.name}</p>
+                        <div className="mb-1 bg-[#F0F4F8] p-4 rounded-xl border border-[#111827]/5 flex items-center gap-4">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shadow-sm ${getAvatarColor(evalStudent.name)}`}>
+                                {getInitials(evalStudent.name)}
+                            </div>
+                            <div>
+                                <p className="font-bold text-[#111827] line-clamp-1">{evalStudent.name}</p>
+                                <span className="text-xs uppercase font-bold text-[#111827]/50 tracking-widest">{evalStudent.roll_no}</span>
+                            </div>
                         </div>
                     )}
 
-                    <form onSubmit={handleAddEval} className="space-y-5">
+                    <form onSubmit={handleAddEval} className="space-y-5 pt-2">
                         <div className="space-y-2">
-                            <label className="text-sm font-semibold text-gray-700">Evaluation Name</label>
-                            <Input required name="eval_name" placeholder="e.g. Presentation 1" className="h-11 rounded-xl bg-[#F8F9FA] focus-visible:ring-[#18181b]/50 border-gray-200 font-medium" />
+                            <label className="text-xs font-bold text-[#111827] uppercase tracking-wider ml-1">Evaluation Title</label>
+                            <Input required name="eval_name" placeholder="e.g. Presentation 1" className="h-12 rounded-full bg-white border-none shadow-sm focus-visible:ring-2 focus-visible:ring-[#0088FF] font-medium px-5" />
                         </div>
 
                         <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-1.5">
-                                <label className="block text-[10px] font-bold text-[#64748B] uppercase tracking-widest line-clamp-1" title="Fundamental Knowledge">Fundamental</label>
-                                <Input required name="fundamental_knowledge" type="number" step="0.5" max="10" min="0" placeholder="0 - 10" className="h-11 text-lg font-bold border-gray-200 rounded-xl bg-[#F8F9FA] focus-visible:ring-[#18181b]/50 text-center" />
+                            <div className="space-y-1.5 focus-within:text-[#0088FF] transition-colors">
+                                <label className="block text-[9px] font-black text-[#111827]/50 uppercase tracking-widest line-clamp-1 ml-1" title="Fundamental Knowledge">Fundamental</label>
+                                <Input required name="fundamental_knowledge" type="number" step="0.5" max="10" min="0" placeholder="0-10" className="h-12 text-lg font-black bg-white border-none shadow-sm rounded-2xl focus-visible:ring-2 focus-visible:ring-[#0088FF] text-center" />
                             </div>
-                            <div className="space-y-1.5">
-                                <label className="block text-[10px] font-bold text-[#64748B] uppercase tracking-widest line-clamp-1" title="Core/Technical Skills">Core Skills</label>
-                                <Input required name="core_skills" type="number" step="0.5" max="10" min="0" placeholder="0 - 10" className="h-11 text-lg font-bold border-gray-200 rounded-xl bg-[#F8F9FA] focus-visible:ring-[#18181b]/50 text-center" />
+                            <div className="space-y-1.5 focus-within:text-[#0088FF] transition-colors">
+                                <label className="block text-[9px] font-black text-[#111827]/50 uppercase tracking-widest line-clamp-1 ml-1" title="Core/Technical Skills">Core Skills</label>
+                                <Input required name="core_skills" type="number" step="0.5" max="10" min="0" placeholder="0-10" className="h-12 text-lg font-black bg-white border-none shadow-sm rounded-2xl focus-visible:ring-2 focus-visible:ring-[#0088FF] text-center" />
                             </div>
-                            <div className="space-y-1.5">
-                                <label className="block text-[10px] font-bold text-[#64748B] uppercase tracking-widest line-clamp-1" title="Communication Skills">Communication</label>
-                                <Input required name="communication_skills" type="number" step="0.5" max="10" min="0" placeholder="0 - 10" className="h-11 text-lg font-bold border-gray-200 rounded-xl bg-[#F8F9FA] focus-visible:ring-[#18181b]/50 text-center" />
+                            <div className="space-y-1.5 focus-within:text-[#0088FF] transition-colors">
+                                <label className="block text-[9px] font-black text-[#111827]/50 uppercase tracking-widest line-clamp-1 ml-1" title="Communication Skills">Communication</label>
+                                <Input required name="communication_skills" type="number" step="0.5" max="10" min="0" placeholder="0-10" className="h-12 text-lg font-black bg-white border-none shadow-sm rounded-2xl focus-visible:ring-2 focus-visible:ring-[#0088FF] text-center" />
                             </div>
-                            <div className="space-y-1.5">
-                                <label className="block text-[10px] font-bold text-[#64748B] uppercase tracking-widest line-clamp-1" title="Soft and Life Skills">Soft Skills</label>
-                                <Input required name="soft_skills" type="number" step="0.5" max="10" min="0" placeholder="0 - 10" className="h-11 text-lg font-bold border-gray-200 rounded-xl bg-[#F8F9FA] focus-visible:ring-[#18181b]/50 text-center" />
+                            <div className="space-y-1.5 focus-within:text-[#0088FF] transition-colors">
+                                <label className="block text-[9px] font-black text-[#111827]/50 uppercase tracking-widest line-clamp-1 ml-1" title="Soft and Life Skills">Soft Skills</label>
+                                <Input required name="soft_skills" type="number" step="0.5" max="10" min="0" placeholder="0-10" className="h-12 text-lg font-black bg-white border-none shadow-sm rounded-2xl focus-visible:ring-2 focus-visible:ring-[#0088FF] text-center" />
                             </div>
                         </div>
 
-                        <DialogFooter className="pt-4 sm:justify-end gap-3 mt-4">
-                            <Button type="button" variant="ghost" onClick={() => { setShowEvalModal(false); setEvalStudent(null); }} className="rounded-xl h-11 px-5 text-gray-600 font-semibold hover:bg-[#F8F9FA]">
+                        <DialogFooter className="pt-6 sm:justify-end gap-3 mt-4 border-t border-[#111827]/10">
+                            <Button type="button" variant="ghost" onClick={() => { setShowEvalModal(false); setEvalStudent(null); }} className="rounded-full h-12 px-6 text-[#111827]/60 font-bold hover:bg-white hover:text-[#111827] shadow-sm">
                                 Cancel
                             </Button>
-                            <Button type="submit" disabled={loading} className="rounded-xl h-11 px-6 bg-[#111827] text-white font-semibold hover:bg-gray-800">
+                            <Button type="submit" disabled={loading} className="rounded-full h-12 px-8 bg-[#767472] text-white font-bold hover:bg-[#5f5d5b] shadow-md transition-all">
                                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 {loading ? 'Saving...' : 'Save Eval'}
                             </Button>
@@ -496,60 +502,63 @@ export default function ClassroomDetail({ currentUser }) {
             </Dialog>
 
             <Dialog open={!!evalHistoryStudent} onOpenChange={(open) => { if (!open) setEvalHistoryStudent(null) }}>
-                <DialogContent className="sm:max-w-2xl rounded-[24px] p-6 border-none shadow-2xl overflow-hidden max-h-[85vh] flex flex-col">
+                <DialogContent className="sm:max-w-2xl rounded-[24px] p-8 border-none shadow-2xl overflow-hidden max-h-[85vh] flex flex-col bg-[#E8EEF4] relative">
+                    <div className="absolute top-0 right-0 bg-[#5D685C] text-white px-5 py-2.5 rounded-bl-xl font-bold flex items-center gap-2 shadow-sm z-10 text-xs uppercase tracking-wider">
+                        History
+                    </div>
                     {evalHistoryStudent && (
                         <>
-                            <DialogHeader className="flex flex-row justify-between items-start mb-2 shrink-0 border-b border-gray-100 pb-4">
-                                <div className="flex items-center gap-4">
-                                    <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg ${getAvatarColor(evalHistoryStudent.name)}`}>
+                            <DialogHeader className="flex flex-row justify-between items-start mb-2 shrink-0 border-b border-[#111827]/10 pb-6 mt-4">
+                                <div className="flex items-center gap-5">
+                                    <div className={`w-14 h-14 rounded-full flex items-center justify-center font-bold text-xl shadow-sm ${getAvatarColor(evalHistoryStudent.name)}`}>
                                         {getInitials(evalHistoryStudent.name)}
                                     </div>
                                     <div>
-                                        <div className="flex items-center gap-2">
-                                            <DialogTitle className="text-2xl font-bold text-[#111827]">{evalHistoryStudent.name}</DialogTitle>
-                                            <Badge variant="secondary" className="font-mono bg-[#F8F9FA] text-[#64748B] rounded-md py-0">{evalHistoryStudent.roll_no}</Badge>
+                                        <div className="flex items-center gap-3">
+                                            <DialogTitle className="text-3xl font-black text-[#111827] leading-none">{evalHistoryStudent.name}</DialogTitle>
+                                            <Badge variant="secondary" className="font-mono bg-white text-[#111827]/60 rounded-md py-0 shadow-sm border border-[#111827]/5">{evalHistoryStudent.roll_no}</Badge>
                                         </div>
-                                        <DialogDescription className="font-medium mt-0.5">Performance History</DialogDescription>
+                                        <DialogDescription className="font-bold text-[#111827]/50 mt-1 uppercase tracking-widest text-[10px]">Performance History</DialogDescription>
                                     </div>
                                 </div>
                             </DialogHeader>
 
                             <div className="overflow-y-auto pr-2 space-y-4 flex-1 mt-4">
                                 {!evalHistoryStudent.evaluations || evalHistoryStudent.evaluations.length === 0 ? (
-                                    <div className="py-12 text-center text-[#64748B] bg-[#F8F9FA] rounded-2xl border border-dashed border-gray-200">
+                                    <div className="py-12 text-center text-[#111827]/50 font-bold bg-[#F0F4F8] rounded-2xl border border-dashed border-[#111827]/10">
                                         No evaluations recorded for this student yet.
                                     </div>
                                 ) : (
                                     evalHistoryStudent.evaluations.map((ev, i) => {
                                         const total = (ev.fundamental_knowledge || 0) + (ev.core_skills || 0) + (ev.communication_skills || 0) + (ev.soft_skills || 0);
                                         return (
-                                            <Card key={ev.id || i} className="border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-shadow py-2 px-1">
-                                                <CardHeader className="flex flex-row justify-between items-center pb-3 border-b border-gray-50">
-                                                    <CardTitle className="text-base font-bold text-[#111827] flex items-center gap-2 m-0 p-0">
-                                                        <span className="w-2 h-2 rounded-full bg-[#18181b]"></span>
+                                            <Card key={ev.id || i} className="border-none bg-white rounded-2xl shadow-sm hover:shadow-md transition-all py-2 px-1">
+                                                <CardHeader className="flex flex-row justify-between items-center pb-3 border-b border-[#111827]/5">
+                                                    <CardTitle className="text-lg font-black text-[#111827] flex items-center gap-3 m-0 p-0">
+                                                        <span className="w-2.5 h-2.5 rounded-full bg-[#0088FF]"></span>
                                                         {ev.eval_name}
                                                     </CardTitle>
-                                                    <div className="flex items-baseline gap-1 text-[#111827]">
+                                                    <div className="flex items-baseline gap-1 text-[#111827] bg-[#F0F4F8] px-3 py-1 rounded-full border border-[#111827]/5">
                                                         <span className="font-black text-xl">{total.toFixed(1)}</span>
-                                                        <span className="text-xs font-bold text-[#64748B]/80">/ 40</span>
+                                                        <span className="text-xs font-bold text-[#111827]/50">/ 40</span>
                                                     </div>
                                                 </CardHeader>
                                                 <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 pb-2">
-                                                    <div className="bg-[#F8F9FA] rounded-xl p-3 border border-gray-100/50">
-                                                        <p className="text-[10px] font-bold text-[#64748B]/80 uppercase tracking-widest mb-1">Fundamental</p>
-                                                        <p className="font-bold text-[#111827]">{ev.fundamental_knowledge || 0} <span className="text-[#64748B]/80 font-normal text-xs">/ 10</span></p>
+                                                    <div className="bg-[#E8EEF4] rounded-xl p-3 border-none">
+                                                        <p className="text-[9px] font-black text-[#111827]/50 uppercase tracking-widest mb-1.5">Fundamental</p>
+                                                        <p className="font-black text-lg text-[#111827]">{ev.fundamental_knowledge || 0} <span className="text-[#111827]/40 font-bold text-xs">/ 10</span></p>
                                                     </div>
-                                                    <div className="bg-[#F8F9FA] rounded-xl p-3 border border-gray-100/50">
-                                                        <p className="text-[10px] font-bold text-[#64748B]/80 uppercase tracking-widest mb-1">Core Skills</p>
-                                                        <p className="font-bold text-[#111827]">{ev.core_skills || 0} <span className="text-[#64748B]/80 font-normal text-xs">/ 10</span></p>
+                                                    <div className="bg-[#E8EEF4] rounded-xl p-3 border-none">
+                                                        <p className="text-[9px] font-black text-[#111827]/50 uppercase tracking-widest mb-1.5">Core Skills</p>
+                                                        <p className="font-black text-lg text-[#111827]">{ev.core_skills || 0} <span className="text-[#111827]/40 font-bold text-xs">/ 10</span></p>
                                                     </div>
-                                                    <div className="bg-[#F8F9FA] rounded-xl p-3 border border-gray-100/50">
-                                                        <p className="text-[10px] font-bold text-[#64748B]/80 uppercase tracking-widest mb-1">Communication</p>
-                                                        <p className="font-bold text-[#111827]">{ev.communication_skills || 0} <span className="text-[#64748B]/80 font-normal text-xs">/ 10</span></p>
+                                                    <div className="bg-[#E8EEF4] rounded-xl p-3 border-none">
+                                                        <p className="text-[9px] font-black text-[#111827]/50 uppercase tracking-widest mb-1.5">Communication</p>
+                                                        <p className="font-black text-lg text-[#111827]">{ev.communication_skills || 0} <span className="text-[#111827]/40 font-bold text-xs">/ 10</span></p>
                                                     </div>
-                                                    <div className="bg-[#F8F9FA] rounded-xl p-3 border border-gray-100/50">
-                                                        <p className="text-[10px] font-bold text-[#64748B]/80 uppercase tracking-widest mb-1">Soft Skills</p>
-                                                        <p className="font-bold text-[#111827]">{ev.soft_skills || 0} <span className="text-[#64748B]/80 font-normal text-xs">/ 10</span></p>
+                                                    <div className="bg-[#E8EEF4] rounded-xl p-3 border-none">
+                                                        <p className="text-[9px] font-black text-[#111827]/50 uppercase tracking-widest mb-1.5">Soft Skills</p>
+                                                        <p className="font-black text-lg text-[#111827]">{ev.soft_skills || 0} <span className="text-[#111827]/40 font-bold text-xs">/ 10</span></p>
                                                     </div>
                                                 </CardContent>
                                             </Card>
@@ -565,32 +574,35 @@ export default function ClassroomDetail({ currentUser }) {
                 setShowEnrollModal(open);
                 if (!open) setSelectedStudentIds([]);
             }}>
-                <DialogContent className="sm:max-w-xl rounded-[24px] p-8">
-                    <DialogHeader>
-                        <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-                            <Users size={24} className="text-[#18181b]" />
-                            Batch Enroll Students
+                <DialogContent className="sm:max-w-xl rounded-[24px] p-8 md:p-10 border-none shadow-2xl bg-[#E8EEF4] relative">
+                    <div className="absolute top-0 left-0 bg-[#5D685C] text-white px-5 py-2.5 rounded-br-xl font-bold flex items-center gap-2 shadow-sm z-10 text-xs uppercase tracking-wider">
+                        Enrollment
+                    </div>
+                    <DialogHeader className="mt-6 border-b border-[#111827]/10 pb-4">
+                        <DialogTitle className="text-3xl font-black text-[#111827] flex items-center gap-3">
+                            <Users size={28} className="text-[#0088FF]" />
+                            Batch Enroll
                         </DialogTitle>
-                        <DialogDescription className="pt-2">
-                            Administer student roster for Section {classroom.section}.
+                        <DialogDescription className="pt-2 text-[#111827]/70 font-semibold">
+                            Administer student roster for Section {classroom?.section}.
                         </DialogDescription>
                     </DialogHeader>
 
                     <form onSubmit={handleEnrollSubmit} className="space-y-6 mt-4">
                         <div className="space-y-3">
-                            <label className="text-sm font-bold text-gray-700 uppercase tracking-wider">1. Target Enrollment Group</label>
-                            <div className="flex bg-[#F8F9FA] p-1 rounded-xl w-full shadow-inner">
+                            <label className="text-xs font-bold text-[#111827] uppercase tracking-widest ml-1">1. Target Enrollment Group</label>
+                            <div className="flex bg-[#F0F4F8] p-1.5 rounded-full w-full shadow-sm border border-[#111827]/5">
                                 <button
                                     type="button"
                                     onClick={() => setBatchGroup('A')}
-                                    className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${batchGroup === 'A' ? 'bg-white text-zinc-800 shadow-sm ring-1 ring-black/5' : 'text-[#64748B] hover:text-gray-700'}`}
+                                    className={`flex-1 py-2.5 rounded-full text-sm font-bold transition-all ${batchGroup === 'A' ? 'bg-[#767472] text-white shadow-md' : 'text-[#111827]/50 hover:text-[#111827]'}`}
                                 >
                                     Group A
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setBatchGroup('B')}
-                                    className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${batchGroup === 'B' ? 'bg-white text-purple-600 shadow-sm ring-1 ring-black/5' : 'text-[#64748B] hover:text-gray-700'}`}
+                                    className={`flex-1 py-2.5 rounded-full text-sm font-bold transition-all ${batchGroup === 'B' ? 'bg-[#767472] text-white shadow-md' : 'text-[#111827]/50 hover:text-[#111827]'}`}
                                 >
                                     Group B
                                 </button>
@@ -598,8 +610,11 @@ export default function ClassroomDetail({ currentUser }) {
                         </div>
 
                         <div className="space-y-3">
-                            <label className="text-sm font-bold text-gray-700 uppercase tracking-wider">2. Select Students</label>
-                            <div className="bg-[#F8F9FA] border border-gray-100 rounded-xl p-4 max-h-[300px] overflow-y-auto">
+                            <label className="text-xs font-bold text-[#111827] uppercase tracking-widest ml-1 flex justify-between">
+                                2. Select Students
+                                <span className="text-[10px] opacity-50">{eligibleStudents.length} available</span>
+                            </label>
+                            <div className="bg-[#F0F4F8] border border-[#111827]/10 rounded-2xl p-4 max-h-[300px] overflow-y-auto shadow-sm">
                                 {eligibleStudents.length === 0 ? (
                                     <p className="text-[#64748B] text-sm text-center py-4 italic">No eligible students found in the system for this course and semester.</p>
                                 ) : (
@@ -643,11 +658,11 @@ export default function ClassroomDetail({ currentUser }) {
                             </div>
                         </div>
 
-                        <DialogFooter className="gap-2 sm:justify-end">
-                            <Button type="button" variant="ghost" className="rounded-xl px-5" onClick={() => setShowEnrollModal(false)}>
+                        <DialogFooter className="gap-3 sm:justify-end pt-6 mt-4 border-t border-[#111827]/10">
+                            <Button type="button" variant="ghost" className="rounded-full h-12 px-6 text-[#111827]/60 font-bold hover:bg-white hover:text-[#111827] shadow-sm" onClick={() => setShowEnrollModal(false)}>
                                 Cancel
                             </Button>
-                            <Button type="submit" disabled={loading || selectedStudentIds.length === 0} className="bg-[#111827] text-white hover:bg-gray-800 rounded-xl px-6 font-semibold">
+                            <Button type="submit" disabled={loading || selectedStudentIds.length === 0} className="rounded-full h-12 px-8 bg-[#767472] text-white font-bold hover:bg-[#5f5d5b] shadow-md transition-all">
                                 {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                                 Save {selectedStudentIds.length > 0 ? `(${selectedStudentIds.length})` : ''} Enrollments
                             </Button>
@@ -656,25 +671,26 @@ export default function ClassroomDetail({ currentUser }) {
                 </DialogContent>
             </Dialog>
             <Dialog open={!!enrollmentToDelete} onOpenChange={(open) => !open && setEnrollmentToDelete(null)}>
-                <DialogContent className="sm:max-w-md rounded-[24px] p-6 text-center border-none shadow-2xl">
+                <DialogContent className="sm:max-w-md rounded-[24px] p-6 text-center border-none shadow-2xl bg-[#E8EEF4]">
                     <DialogHeader>
-                        <div className="mx-auto w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-4">
-                            <Trash2 size={24} />
+                        <div className="mx-auto w-16 h-16 bg-white shrink-0 text-red-600 rounded-full flex items-center justify-center mb-6 shadow-sm">
+                            <Trash2 size={28} />
                         </div>
-                        <DialogTitle className="text-2xl font-bold text-[#111827]">Remove Student?</DialogTitle>
-                        <DialogDescription className="pt-2 text-[#64748B] font-medium pb-4">
-                            Are you sure you want to remove this student from the classroom? All recorded marks and evaluation history for this class will be permanently lost.
+                        <DialogTitle className="text-3xl font-black text-[#111827]">Remove Student?</DialogTitle>
+                        <DialogDescription className="pt-3 text-[#111827]/70 font-semibold pb-6">
+                            Are you sure you want to remove this student from the classroom? <br /><br />
+                            <span className="text-red-500 font-bold bg-white px-3 py-1.5 rounded-lg border border-red-100 inline-block">All recorded marks and evaluation history will be permanently lost!</span>
                         </DialogDescription>
                     </DialogHeader>
-                    <DialogFooter className="flex sm:justify-center gap-3">
-                        <Button type="button" variant="ghost" className="rounded-xl px-6 font-semibold" onClick={() => setEnrollmentToDelete(null)}>
+                    <DialogFooter className="flex sm:justify-center gap-4 border-t border-[#111827]/10 pt-6">
+                        <Button type="button" variant="ghost" className="rounded-full px-8 h-12 font-bold hover:bg-white text-[#111827]/60 hover:text-[#111827]" onClick={() => setEnrollmentToDelete(null)}>
                             Cancel
                         </Button>
                         <Button
                             type="button"
                             variant="destructive"
                             onClick={() => executeRemoveStudent(enrollmentToDelete)}
-                            className="bg-red-600 hover:bg-red-700 rounded-xl px-8 font-semibold shadow-md"
+                            className="bg-red-500 hover:bg-red-600 rounded-full px-10 h-12 font-bold shadow-md transition-all hover:scale-[1.02]"
                         >
                             Yes, Remove
                         </Button>
