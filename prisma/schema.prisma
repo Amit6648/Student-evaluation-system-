@@ -6,20 +6,11 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
-enum Role {
-  ADMIN
-  TEACHER
-  STUDENT
-}
 
-enum GroupLabel {
-  A
-  B
-}
 
 model School {
   id      String   @id @default(uuid())
@@ -56,7 +47,7 @@ model Subject {
 model User {
   id               String            @id @default(uuid())
   name             String
-  role             Role
+  role             String
   course_id        String?
   roll_no          String?           @unique
   current_semester Int?
@@ -81,7 +72,7 @@ model ClassEnrollment {
   id               String       @id @default(uuid())
   virtual_class_id String
   student_id       String
-  group_label      GroupLabel
+  group_label      String
   virtual_class    VirtualClass @relation(fields: [virtual_class_id], references: [id])
   student          User         @relation(fields: [student_id], references: [id])
   evaluations      Evaluation[]

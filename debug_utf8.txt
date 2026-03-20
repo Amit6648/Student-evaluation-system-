@@ -1,0 +1,188 @@
+﻿node.exe : 
+prisma:cli:bin Failed 
+to initialize the 
+command state: Error: 
+ENOENT: no such file 
+or directory, open 'C:\
+Users\amit6\AppData\Roa
+ming\prisma-nodejs\Conf
+ig\commands.json' 
++706ms
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo 
+...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (prisma:cli:bi   
+ n ...ds.json' +706    
+ms:String) [], Rem    
+oteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+prisma:config:loadConfi
+gFromFile Config file 
+loaded in 57.99ms 
++469ms
+prisma:config:loadConfi
+gFromFile No config 
+file found in the 
+current working 
+directory 
+G:\notmine\demo +1ms
+prisma:getSchema 
+Checking existence of G
+:\notmine\demo\schema.p
+risma +60ms
+prisma:getSchema 
+Reading schema from 
+single file G:\notmine\
+demo\schema.prisma +0ms
+prisma:getSchema 
+Checking existence of G
+:\notmine\demo\schema.p
+risma +1ms
+prisma:getSchema 
+Reading schema from 
+single file G:\notmine\
+demo\schema.prisma +0ms
+prisma:engines 
+binaries to download 
+schema-engine +763ms
+prisma:getSchema 
+Checking existence of G
+:\notmine\demo\prisma\s
+chema.prisma +2ms
+prisma:getSchema 
+Reading schema from 
+single file G:\notmine\
+demo\prisma\schema.pris
+ma +0ms
+prisma:getSchema 
+Checking existence of G
+:\notmine\demo\prisma\s
+chema.prisma +0ms
+prisma:getSchema 
+Reading schema from 
+single file G:\notmine\
+demo\prisma\schema.pris
+ma +0ms
+prisma:getConfig Using 
+getConfig Wasm +12ms
+prisma:cli:checkpoint 
+Error from tryToReadDat
+aFromSchema() while 
+processing the schema. 
+This is not a fatal 
+error. It will 
+continue without the 
+processed data. +11ms
+prisma:cli:checkpoint {
+  "name": 
+"GetConfigError"
+} +1ms
+prisma:cli:checkpoint r
+unCheckpointClientCheck
+(): Execution time for 
+getting info: 
+26.609199999999987 ms 
++0ms
+prisma:getSchema 
+Checking existence of G
+:\notmine\demo\schema.p
+risma +11ms
+prisma:getSchema 
+Reading schema from 
+single file G:\notmine\
+demo\schema.prisma +0ms
+prisma:getSchema 
+Checking existence of G
+:\notmine\demo\prisma\s
+chema.prisma +1ms
+prisma:getSchema 
+Reading schema from 
+single file G:\notmine\
+demo\prisma\schema.pris
+ma +0ms
+Prisma schema loaded 
+from 
+prisma\schema.prisma.
+prisma:getConfig Using 
+getConfig Wasm +1ms
+Error: GetConfigError: 
+Prisma schema 
+validation - 
+(get-config wasm)
+Error code: P1012
+error: The datasource 
+property `url` is no 
+longer supported in 
+schema files. Move 
+connection URLs for 
+Migrate to 
+`prisma.config.ts` and 
+pass either `adapter` 
+for a direct database 
+connection or 
+`accelerateUrl` for 
+Accelerate to the 
+`PrismaClient` 
+constructor. See https:
+//pris.ly/d/config-data
+source and https://pris
+.ly/d/prisma7-client-co
+nfig
+  -->  
+prisma\schema.prisma:10
+   | 
+ 9 |   provider = 
+"sqlite"
+10 |   url      = 
+env("DATABASE_URL")
+   | 
+
+Validation Error 
+Count: 1
+[Context: getConfig]
+
+Prisma CLI Version : 
+7.4.1
+    at G:\notmine\demo\
+node_modules\prisma\bui
+ld\index.js:203:1073
+    at e.with (G:\notmi
+ne\demo\node_modules\pr
+isma\build\index.js:163
+:41041)
+    at Cy (G:\notmine\d
+emo\node_modules\prisma
+\build\index.js:203:104
+3)
+    at oD (G:\notmine\d
+emo\node_modules\prisma
+\build\index.js:222:131
+8)
+    at Yn (G:\notmine\d
+emo\node_modules\prisma
+\build\index.js:222:110
+9)
+    at async e.parse (G
+:\notmine\demo\node_mod
+ules\prisma\build\index
+.js:576:285)
+    at async e.parse (G
+:\notmine\demo\node_mod
+ules\prisma\build\index
+.js:1060:2319)
+    at async qir (G:\no
+tmine\demo\node_modules
+\prisma\build\index.js:
+4927:136)

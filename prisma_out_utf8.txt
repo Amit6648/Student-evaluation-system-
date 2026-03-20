@@ -1,0 +1,73 @@
+﻿Prisma schema loaded from prisma\schema.prisma
+node.exe : Error: 
+Prisma schema 
+validation - (get-dmmf 
+wasm)
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo 
+...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (Error: Prisma   
+  s...(get-dmmf was    
+m):String) [], Rem    
+oteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+Error code: P1012
+[1;91merror[0m: 
+[1mError validating: 
+You defined the enum 
+`Role`. But the 
+current connector does 
+not support enums.[0m
+  [1;94m-->[0m  [4mp
+risma\schema.prisma:13
+[0m
+[1;94m   | [0m
+[1;94m12 | [0m
+[1;94m13 | 
+[0m[1;91menum Role {
+[0m
+[1;94m14 | [0m  ADMIN
+[1;94m15 | [0m  
+TEACHER
+[1;94m16 | [0m  
+STUDENT
+[1;94m17 | [0m}
+[1;94m   | [0m
+[1;91merror[0m: 
+[1mError validating: 
+You defined the enum 
+`GroupLabel`. But the 
+current connector does 
+not support enums.[0m
+  [1;94m-->[0m  [4mp
+risma\schema.prisma:19
+[0m
+[1;94m   | [0m
+[1;94m18 | [0m
+[1;94m19 | 
+[0m[1;91menum 
+GroupLabel {
+[0m
+[1;94m20 | [0m  A
+[1;94m21 | [0m  B
+[1;94m22 | [0m}
+[1;94m   | [0m
+
+Validation Error 
+Count: 2
+[Context: getDmmf]
+
+Prisma CLI Version : 
+5.22.0
