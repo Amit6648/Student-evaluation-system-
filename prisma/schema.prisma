@@ -27,25 +27,21 @@ model Course {
   users     User[]
 }
 
-model Specialization {
-  id       String    @id @default(uuid())
-  name     String
-  subjects Subject[]
-}
+
 
 model Subject {
   id                String           @id @default(uuid())
   course_id         String
-  specialization_id String?
   name              String
   semester_number   Int
   course            Course           @relation(fields: [course_id], references: [id])
-  specialization    Specialization?  @relation(fields: [specialization_id], references: [id])
   virtual_classes   VirtualClass[]
 }
 
 model User {
   id               String            @id @default(uuid())
+  email            String?           @unique
+  password         String?
   name             String
   role             String
   course_id        String?
@@ -88,7 +84,9 @@ model Evaluation {
   core_skills           Float?
   communication_skills  Float?
   soft_skills           Float?
-  evaluation_date       DateTime        @default(now())
+  evaluation_date       DateTime
   remarks               String?
   enrollment            ClassEnrollment @relation(fields: [enrollment_id], references: [id])
+
+  @@unique([enrollment_id, evaluation_date])
 }

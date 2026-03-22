@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -30,7 +31,6 @@ async function main() {
   await prisma.virtualClass.deleteMany({});
   await prisma.user.deleteMany({});
   await prisma.subject.deleteMany({});
-  await prisma.specialization.deleteMany({});
   await prisma.course.deleteMany({});
   await prisma.school.deleteMany({});
 
@@ -56,6 +56,8 @@ async function main() {
       data: {
         name: `Admin ${c.prefix}`,
         role: 'ADMIN',
+        email: `admin${c.prefix.toLowerCase()}@school.com`,
+        password: await bcrypt.hash('password123', 10),
         course_id: course.id,
       }
     });
@@ -66,17 +68,25 @@ async function main() {
     data: {
       name: `Main System Admin`,
       role: 'ADMIN',
+      email: 'admin@school.com',
+      password: await bcrypt.hash('password123', 10),
       course_id: courses[0].id,
     }
   });
 
   console.log('Creating Teachers...');
+  const teacherPassword = await bcrypt.hash('password123', 10);
+
   // Distribute teachers randomly among courses
-  for (const tName of TEACHERS) {
+  for (let i = 0; i < TEACHERS.length; i++) {
+    const tName = TEACHERS[i];
+    const emailPrefix = tName.toLowerCase().replace(/[^a-z0-9]/g, '');
     await prisma.user.create({
       data: {
         name: tName,
         role: 'TEACHER',
+        email: `${emailPrefix}@school.com`,
+        password: teacherPassword,
         course_id: getRandomItem(courses).id
       }
     });
@@ -84,7 +94,13 @@ async function main() {
 
   // Common teacher for guaranteed scenarios
   const teacherJohn = await prisma.user.create({
-    data: { name: 'Dr. John Smith', role: 'TEACHER', course_id: courses[0].id },
+    data: { 
+        name: 'Dr. John Smith', 
+        role: 'TEACHER', 
+        email: 'john@school.com',
+        password: teacherPassword,
+        course_id: courses[0].id 
+    },
   });
 
   console.log('Creating Subjects...');

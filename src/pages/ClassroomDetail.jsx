@@ -1,6 +1,10 @@
 import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ChevronLeft, Plus, Users, BookOpen, Trash2, CheckCircle2, BarChart, Loader2, UserPlus } from "lucide-react";
+import { ChevronLeft, Plus, Users, BookOpen, Trash2, CheckCircle2, BarChart, Loader2, UserPlus, Calendar as CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,6 +69,36 @@ export default function ClassroomDetail({ currentUser }) {
     // Filter state
     const [activeGroup, setActiveGroup] = useState('A');
     const [activeTab, setActiveTab] = useState("roster");
+    const [selectedDate, setSelectedDate] = useState(() => {
+        const td = new Date();
+        if (td.getDay() === 0) return new Date(td.getTime() - 86400000 * 2); // Force to Friday if Sunday
+        if (td.getDay() === 6) return new Date(td.getTime() - 86400000); // Force to Friday if Saturday
+        return td;
+    });
+
+    const isWeekend = selectedDate && (selectedDate.getDay() === 0 || selectedDate.getDay() === 6);
+    
+    // Future date clamp (strip time to evaluate pure dates)
+    const isFutureDate = () => {
+        if (!selectedDate) return false;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const sel = new Date(selectedDate);
+        sel.setHours(0, 0, 0, 0);
+        return sel > today;
+    };
+    
+    const isInvalidDate = isWeekend || isFutureDate();
+
+    const getEvalForDate = (studentEvals) => {
+        if (!studentEvals) return null;
+        const targetDateStr = format(selectedDate, 'yyyy-MM-dd');
+        return studentEvals.find(ev => {
+            if (!ev.evaluation_date) return false;
+            // Native string-slice isolates identical Date strings bypassing all local browser +05:30 UTC cast anomalies
+            return ev.evaluation_date.split('T')[0] === targetDateStr;
+        });
+    };
 
     // UI state
     const [showEvalModal, setShowEvalModal] = useState(false);
@@ -147,6 +181,9 @@ export default function ClassroomDetail({ currentUser }) {
         e.preventDefault();
         setLoading(true);
         const formData = new FormData(e.target);
+        
+        // Pass standard noon UTC equivalent preventing day-shifting
+        const evalDateStr = format(selectedDate, "yyyy-MM-dd'T'12:00:00.000'Z'");
 
         try {
             await fetch('/api/evaluations', {
@@ -154,11 +191,13 @@ export default function ClassroomDetail({ currentUser }) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     enrollment_id: evalStudent.enrollment_id,
+                    evaluation_date: evalDateStr,
                     eval_name: formData.get("eval_name"),
                     fundamental_knowledge: formData.get("fundamental_knowledge"),
                     core_skills: formData.get("core_skills"),
                     communication_skills: formData.get("communication_skills"),
                     soft_skills: formData.get("soft_skills"),
+                    remarks: "Evaluated on " + format(selectedDate, 'MMM d, yyyy')
                 })
             });
             await fetchClassroomData();
@@ -237,20 +276,56 @@ export default function ClassroomDetail({ currentUser }) {
                     </p>
                 </div>
 
-                {/* Group A / Group B Subnavigation Toggle */}
-                <div className="flex bg-[#E8EEF4] p-1.5 rounded-full w-full md:w-auto mt-4 md:mt-0 shadow-sm border border-[#111827]/5">
-                    <button
-                        onClick={() => setActiveGroup('A')}
-                        className={`flex-1 md:w-32 py-2.5 rounded-full text-sm font-bold transition-all ${activeGroup === 'A' ? 'bg-[#767472] text-white shadow-md' : 'text-[#111827]/60 hover:text-[#111827]'}`}
-                    >
-                        Group A
-                    </button>
-                    <button
-                        onClick={() => setActiveGroup('B')}
-                        className={`flex-1 md:w-32 py-2.5 rounded-full text-sm font-bold transition-all ${activeGroup === 'B' ? 'bg-[#767472] text-white shadow-md' : 'text-[#111827]/60 hover:text-[#111827]'}`}
-                    >
-                        Group B
-                    </button>
+                <div className="flex flex-col md:flex-row items-end gap-4 mt-4 md:mt-0">
+                    <div className="flex flex-col items-start gap-1.5 focus-within:ring-2 rounded-full focus-within:ring-[#0088FF]/30 transition-all">
+                        <label className="text-[10px] font-black tracking-widest uppercase text-[#111827]/50 ml-2">Evaluation Date</label>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                        "w-[240px] justify-start text-left font-normal rounded-full border border-[#111827]/10 shadow-sm h-11 bg-white hover:bg-[#F0F4F8] transition-colors focus-visible:ring-0",
+                                        !selectedDate && "text-muted-foreground"
+                                    )}
+                                >
+                                    <CalendarIcon className="mr-3 h-4 w-4 text-[#0088FF]" />
+                                    {selectedDate ? <span className="font-bold text-[#111827]">{format(selectedDate, "PPP")}</span> : <span>Pick a date</span>}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0 rounded-2xl border-none shadow-2xl bg-white" align="end">
+                                <Calendar
+                                    mode="single"
+                                    selected={selectedDate}
+                                    onSelect={(date) => { if (date) setSelectedDate(date); }}
+                                    initialFocus
+                                    className="p-3"
+                                    disabled={(date) => {
+                                        const td = new Date();
+                                        td.setHours(0, 0, 0, 0);
+                                        const d = new Date(date);
+                                        d.setHours(0, 0, 0, 0);
+                                        return d.getDay() === 0 || d.getDay() === 6 || d > td;
+                                    }}
+                                />
+                            </PopoverContent>
+                        </Popover>
+                    </div>
+
+                    {/* Group A / Group B Subnavigation Toggle */}
+                    <div className="flex bg-[#E8EEF4] p-1.5 rounded-full w-full md:w-auto shadow-sm border border-[#111827]/5">
+                        <button
+                            onClick={() => setActiveGroup('A')}
+                            className={`flex-1 md:w-32 py-2.5 rounded-full text-sm font-bold transition-all ${activeGroup === 'A' ? 'bg-[#767472] text-white shadow-md' : 'text-[#111827]/60 hover:text-[#111827]'}`}
+                        >
+                            Group A
+                        </button>
+                        <button
+                            onClick={() => setActiveGroup('B')}
+                            className={`flex-1 md:w-32 py-2.5 rounded-full text-sm font-bold transition-all ${activeGroup === 'B' ? 'bg-[#767472] text-white shadow-md' : 'text-[#111827]/60 hover:text-[#111827]'}`}
+                        >
+                            Group B
+                        </button>
+                    </div>
                 </div>
 
                 {isAdmin && (
@@ -383,8 +458,8 @@ export default function ClassroomDetail({ currentUser }) {
                                             </>
                                         ) : (
                                             <>
-                                                <TableHead className="py-4 px-8 text-[10px] font-bold text-[#111827]/50 uppercase tracking-widest text-center">Evals</TableHead>
-                                                <TableHead className="py-4 px-8 text-[10px] font-bold text-[#111827]/50 uppercase tracking-widest text-center">Avg Mark</TableHead>
+                                                <TableHead className="py-4 px-8 text-[10px] font-bold text-[#111827]/50 uppercase tracking-widest text-center">Status</TableHead>
+                                                <TableHead className="py-4 px-8 text-[10px] font-bold text-[#111827]/50 uppercase tracking-widest text-center">Daily Score</TableHead>
                                                 {!isAdmin && <TableHead className="py-4 px-8 text-[10px] font-bold text-[#111827]/50 uppercase tracking-widest text-right">Evaluate</TableHead>}
                                             </>
                                         )}
@@ -414,23 +489,38 @@ export default function ClassroomDetail({ currentUser }) {
                                                 </>
                                             ) : (
                                                 <>
-                                                    <TableCell className="py-4 px-8 text-center font-bold text-[#111827]/60">
-                                                        {s.evaluations?.length || 0}
-                                                    </TableCell>
-                                                    <TableCell className="py-4 px-8 text-center">
-                                                        <span className="font-extrabold text-xl text-[#0088FF]">{s.averageMarks !== null ? s.averageMarks : '--'}</span>
-                                                    </TableCell>
-                                                    {!isAdmin && (
-                                                        <TableCell className="py-4 px-8 text-right">
-                                                            <Button
-                                                                size="sm"
-                                                                onClick={() => { setEvalStudent(s); setShowEvalModal(true); }}
-                                                                className="text-white bg-[#767472] hover:bg-[#5f5d5b] transition-colors rounded-full font-bold shadow-sm inline-flex items-center gap-1 px-4"
-                                                            >
-                                                                <Plus size={16} /> Add Eval
-                                                            </Button>
-                                                        </TableCell>
-                                                    )}
+                                                    {(() => {
+                                                        const evForDate = getEvalForDate(s.evaluations);
+                                                        const dateTotal = evForDate ? (evForDate.fundamental_knowledge + evForDate.core_skills + evForDate.communication_skills + evForDate.soft_skills) : null;
+                                                        
+                                                        return (
+                                                            <>
+                                                                <TableCell className="py-4 px-8 text-center font-bold text-[#111827]/60">
+                                                                    {evForDate ? <div className="inline-flex items-center gap-1 text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full"><CheckCircle2 className="w-3 h-3" /> Graded</div> : <div className="text-amber-500 opacity-60">Pending</div>}
+                                                                </TableCell>
+                                                                <TableCell className="py-4 px-8 text-center">
+                                                                    <span className="font-extrabold text-xl text-[#0088FF]">{dateTotal !== null ? dateTotal : '--'}</span>
+                                                                </TableCell>
+                                                                {!isAdmin && (
+                                                                    <TableCell className="py-4 px-8 text-right">
+                                                                        {isInvalidDate ? (
+                                                                            <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest bg-amber-50 px-3 py-1.5 rounded-full inline-flex items-center gap-1">
+                                                                                <CalendarIcon size={12}/> {isFutureDate() ? 'Future Locked' : 'Weekend Locked'}
+                                                                            </span>
+                                                                        ) : (
+                                                                            <Button
+                                                                                size="sm"
+                                                                                onClick={() => { setEvalStudent(s); setShowEvalModal(true); }}
+                                                                                className={evForDate ? "text-[#111827]/60 bg-transparent border border-[#111827]/20 hover:bg-[#F0F4F8] transition-colors rounded-full font-bold shadow-sm inline-flex items-center gap-1 px-4" : "text-white bg-[#767472] hover:bg-[#5f5d5b] transition-colors rounded-full font-bold shadow-sm inline-flex items-center gap-1 px-4"}
+                                                                            >
+                                                                                <Plus size={16} /> {evForDate ? 'Edit Eval' : 'Add Eval'}
+                                                                            </Button>
+                                                                        )}
+                                                                    </TableCell>
+                                                                )}
+                                                            </>
+                                                        );
+                                                    })()}
                                                 </>
                                             )}
                                         </TableRow>
@@ -463,30 +553,37 @@ export default function ClassroomDetail({ currentUser }) {
                         </div>
                     )}
 
-                    <form onSubmit={handleAddEval} className="space-y-5 pt-2">
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-[#111827] uppercase tracking-wider ml-1">Evaluation Title</label>
-                            <Input required name="eval_name" placeholder="e.g. Presentation 1" className="h-12 rounded-full bg-white border-none shadow-sm focus-visible:ring-2 focus-visible:ring-[#0088FF] font-medium px-5" />
-                        </div>
+                    <form key={evalStudent?.student_id + format(selectedDate, 'yyyy-MM-dd')} onSubmit={handleAddEval} className="space-y-5 pt-2">
+                        {(() => {
+                            const currentEval = evalStudent ? getEvalForDate(evalStudent.evaluations) : null;
+                            return (
+                                <>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold text-[#111827] uppercase tracking-wider ml-1">Evaluation Title</label>
+                                        <Input required name="eval_name" defaultValue={currentEval?.eval_name || ''} placeholder={`e.g. Daily Evaluation - ${format(selectedDate, 'MMM d')}`} className="h-12 rounded-full bg-white border-none shadow-sm focus-visible:ring-2 focus-visible:ring-[#0088FF] font-medium px-5" />
+                                    </div>
 
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-1.5 focus-within:text-[#0088FF] transition-colors">
-                                <label className="block text-[9px] font-black text-[#111827]/50 uppercase tracking-widest line-clamp-1 ml-1" title="Fundamental Knowledge">Fundamental</label>
-                                <Input required name="fundamental_knowledge" type="number" step="0.5" max="10" min="0" placeholder="0-10" className="h-12 text-lg font-black bg-white border-none shadow-sm rounded-2xl focus-visible:ring-2 focus-visible:ring-[#0088FF] text-center" />
-                            </div>
-                            <div className="space-y-1.5 focus-within:text-[#0088FF] transition-colors">
-                                <label className="block text-[9px] font-black text-[#111827]/50 uppercase tracking-widest line-clamp-1 ml-1" title="Core/Technical Skills">Core Skills</label>
-                                <Input required name="core_skills" type="number" step="0.5" max="10" min="0" placeholder="0-10" className="h-12 text-lg font-black bg-white border-none shadow-sm rounded-2xl focus-visible:ring-2 focus-visible:ring-[#0088FF] text-center" />
-                            </div>
-                            <div className="space-y-1.5 focus-within:text-[#0088FF] transition-colors">
-                                <label className="block text-[9px] font-black text-[#111827]/50 uppercase tracking-widest line-clamp-1 ml-1" title="Communication Skills">Communication</label>
-                                <Input required name="communication_skills" type="number" step="0.5" max="10" min="0" placeholder="0-10" className="h-12 text-lg font-black bg-white border-none shadow-sm rounded-2xl focus-visible:ring-2 focus-visible:ring-[#0088FF] text-center" />
-                            </div>
-                            <div className="space-y-1.5 focus-within:text-[#0088FF] transition-colors">
-                                <label className="block text-[9px] font-black text-[#111827]/50 uppercase tracking-widest line-clamp-1 ml-1" title="Soft and Life Skills">Soft Skills</label>
-                                <Input required name="soft_skills" type="number" step="0.5" max="10" min="0" placeholder="0-10" className="h-12 text-lg font-black bg-white border-none shadow-sm rounded-2xl focus-visible:ring-2 focus-visible:ring-[#0088FF] text-center" />
-                            </div>
-                        </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="space-y-1.5 focus-within:text-[#0088FF] transition-colors">
+                                            <label className="block text-[9px] font-black text-[#111827]/50 uppercase tracking-widest line-clamp-1 ml-1" title="Fundamental Knowledge">Fundamental</label>
+                                            <Input required name="fundamental_knowledge" defaultValue={currentEval?.fundamental_knowledge ?? ''} type="number" step="0.5" max="10" min="0" placeholder="0-10" className="h-12 text-lg font-black bg-white border-none shadow-sm rounded-2xl focus-visible:ring-2 focus-visible:ring-[#0088FF] text-center" />
+                                        </div>
+                                        <div className="space-y-1.5 focus-within:text-[#0088FF] transition-colors">
+                                            <label className="block text-[9px] font-black text-[#111827]/50 uppercase tracking-widest line-clamp-1 ml-1" title="Core/Technical Skills">Core Skills</label>
+                                            <Input required name="core_skills" defaultValue={currentEval?.core_skills ?? ''} type="number" step="0.5" max="10" min="0" placeholder="0-10" className="h-12 text-lg font-black bg-white border-none shadow-sm rounded-2xl focus-visible:ring-2 focus-visible:ring-[#0088FF] text-center" />
+                                        </div>
+                                        <div className="space-y-1.5 focus-within:text-[#0088FF] transition-colors">
+                                            <label className="block text-[9px] font-black text-[#111827]/50 uppercase tracking-widest line-clamp-1 ml-1" title="Communication Skills">Communication</label>
+                                            <Input required name="communication_skills" defaultValue={currentEval?.communication_skills ?? ''} type="number" step="0.5" max="10" min="0" placeholder="0-10" className="h-12 text-lg font-black bg-white border-none shadow-sm rounded-2xl focus-visible:ring-2 focus-visible:ring-[#0088FF] text-center" />
+                                        </div>
+                                        <div className="space-y-1.5 focus-within:text-[#0088FF] transition-colors">
+                                            <label className="block text-[9px] font-black text-[#111827]/50 uppercase tracking-widest line-clamp-1 ml-1" title="Soft and Life Skills">Soft Skills</label>
+                                            <Input required name="soft_skills" defaultValue={currentEval?.soft_skills ?? ''} type="number" step="0.5" max="10" min="0" placeholder="0-10" className="h-12 text-lg font-black bg-white border-none shadow-sm rounded-2xl focus-visible:ring-2 focus-visible:ring-[#0088FF] text-center" />
+                                        </div>
+                                    </div>
+                                </>
+                            );
+                        })()}
 
                         <DialogFooter className="pt-6 sm:justify-end gap-3 mt-4 border-t border-[#111827]/10">
                             <Button type="button" variant="ghost" onClick={() => { setShowEvalModal(false); setEvalStudent(null); }} className="rounded-full h-12 px-6 text-[#111827]/60 font-bold hover:bg-white hover:text-[#111827] shadow-sm">
