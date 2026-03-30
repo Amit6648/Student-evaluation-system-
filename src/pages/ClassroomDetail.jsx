@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ChevronLeft, Plus, Users, BookOpen, Trash2, CheckCircle2, BarChart, Loader2, UserPlus, Calendar as CalendarIcon } from "lucide-react";
+import { ChevronLeft, Plus, Users, BookOpen, Trash2, CheckCircle2, BarChart, Loader2, UserPlus, Calendar as CalendarIcon, Download } from "lucide-react";
 import { format } from "date-fns";
+import * as XLSX from 'xlsx';
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
@@ -112,6 +113,84 @@ export default function ClassroomDetail({ currentUser }) {
     const [eligibleStudents, setEligibleStudents] = useState([]);
     const [batchGroup, setBatchGroup] = useState('A');
     const [selectedStudentIds, setSelectedStudentIds] = useState([]);
+
+    // Export state
+    const [showExportModal, setShowExportModal] = useState(false);
+    const [exportMode, setExportMode] = useState('all'); // 'all' or 'average'
+    const [exportTopN, setExportTopN] = useState(3);
+
+    const handleExport = () => {
+        let exportData = [];
+        // Export the entirety of the classroom un-filtered by the current UI Tab
+        const displayed = students;
+
+        if (exportMode === 'all') {
+            // Collect all unique dates across all students to form columns
+            const allDates = new Set();
+            displayed.forEach(s => {
+                if(s.evaluations) {
+                    s.evaluations.forEach(ev => {
+                        const d = format(new Date(ev.evaluation_date), 'MMM d, yyyy');
+                        allDates.add(d);
+                    });
+                }
+            });
+            const dateColumns = Array.from(allDates).sort();
+
+            exportData = displayed.map(s => {
+                const row = {
+                    "Roll No": s.roll_no,
+                    "Student Name": s.name,
+                    "Group": s.group_label,
+                };
+                
+                // Fill individual marks for every logged date
+                dateColumns.forEach(dateLabel => {
+                   const ev = s.evaluations?.find(e => format(new Date(e.evaluation_date), 'MMM d, yyyy') === dateLabel);
+                   if(ev) {
+                       row[dateLabel] = ev.fundamental_knowledge + ev.core_skills + ev.communication_skills + ev.soft_skills;
+                   } else {
+                       row[dateLabel] = "-";
+                   }
+                });
+                row["Overall Average"] = s.averageMarks !== null ? s.averageMarks : "-";
+                return row;
+            });
+
+        } else if (exportMode === 'average') {
+            exportData = displayed.map(s => {
+                const row = {
+                    "Roll No": s.roll_no,
+                    "Student Name": s.name,
+                    "Group": s.group_label,
+                };
+                
+                if(!s.evaluations || s.evaluations.length === 0) {
+                    row[`Top ${exportTopN} Average`] = "-";
+                    return row;
+                }
+
+                // Parse topological arrays mathematically sorting values
+                const totals = s.evaluations.map(ev => ev.fundamental_knowledge + ev.core_skills + ev.communication_skills + ev.soft_skills);
+                totals.sort((a,b) => b - a); // descending
+                const topScores = totals.slice(0, exportTopN);
+                const sum = topScores.reduce((acc, val) => acc + val, 0);
+                const avg = topScores.length > 0 ? (sum / topScores.length).toFixed(2) : "-";
+                
+                row[`Top ${exportTopN} Average`] = avg;
+                return row;
+            });
+        }
+
+        const ws = XLSX.utils.json_to_sheet(exportData);
+        const wb = XLSX.utils.book_new();
+        const sheetName = exportMode === 'all' ? 'All Data' : `Top ${exportTopN} Avg`;
+        XLSX.utils.book_append_sheet(wb, ws, sheetName);
+        
+        const fileName = `${classroom?.subject?.name || 'Class'}_Full_Roster_Export.xlsx`;
+        XLSX.writeFile(wb, fileName);
+        setShowExportModal(false);
+    };
 
     const fetchClassroomData = async () => {
         try {
@@ -369,28 +448,36 @@ export default function ClassroomDetail({ currentUser }) {
 
             <div className="bg-[#E8EEF4] border border-[#111827]/5 rounded-2xl shadow-sm flex flex-col mb-12 overflow-hidden">
                 {/* Tabs */}
-                <div className="flex border-b border-[#111827]/5 px-6 pt-4 bg-[#F0F4F8]/30">
-                    <button
-                        onClick={() => setActiveTab('roster')}
-                        className={`px-6 py-4 font-bold text-sm tracking-wide flex items-center gap-2 border-b-[3px] transition-all ${activeTab === 'roster' ? 'border-[#0088FF] text-[#0088FF]' : 'border-transparent text-[#111827]/50 hover:text-[#111827]'}`}
-                    >
-                        <Users size={18} className={activeTab === 'roster' ? 'text-[#0088FF]' : ''} />
-                        Student Roster
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('gradebook')}
-                        className={`px-6 py-4 font-bold text-sm tracking-wide flex items-center gap-2 border-b-[3px] transition-all ${activeTab === 'gradebook' ? 'border-[#0088FF] text-[#0088FF]' : 'border-transparent text-[#111827]/50 hover:text-[#111827]'}`}
-                    >
-                        <BookOpen size={18} className={activeTab === 'gradebook' ? 'text-[#0088FF]' : ''} />
-                        Gradebook
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('heatmap')}
-                        className={`px-6 py-4 font-bold text-sm tracking-wide flex items-center gap-2 border-b-[3px] transition-all ${activeTab === 'heatmap' ? 'border-[#0088FF] text-[#0088FF]' : 'border-transparent text-[#111827]/50 hover:text-[#111827]'}`}
-                    >
-                        <BarChart size={18} className={activeTab === 'heatmap' ? 'text-[#0088FF]' : ''} />
-                        Performance Heatmap
-                    </button>
+                <div className="flex justify-between items-center border-b border-[#111827]/5 px-6 pt-4 bg-[#F0F4F8]/30 overflow-x-auto">
+                    <div className="flex shrink-0">
+                        <button
+                            onClick={() => setActiveTab('roster')}
+                            className={`px-6 py-4 font-bold text-sm tracking-wide flex items-center gap-2 border-b-[3px] transition-all ${activeTab === 'roster' ? 'border-[#0088FF] text-[#0088FF]' : 'border-transparent text-[#111827]/50 hover:text-[#111827]'}`}
+                        >
+                            <Users size={18} className={activeTab === 'roster' ? 'text-[#0088FF]' : ''} />
+                            Student Roster
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('gradebook')}
+                            className={`px-6 py-4 font-bold text-sm tracking-wide flex items-center gap-2 border-b-[3px] transition-all ${activeTab === 'gradebook' ? 'border-[#0088FF] text-[#0088FF]' : 'border-transparent text-[#111827]/50 hover:text-[#111827]'}`}
+                        >
+                            <BookOpen size={18} className={activeTab === 'gradebook' ? 'text-[#0088FF]' : ''} />
+                            Gradebook
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('heatmap')}
+                            className={`px-6 py-4 font-bold text-sm tracking-wide flex items-center gap-2 border-b-[3px] transition-all ${activeTab === 'heatmap' ? 'border-[#0088FF] text-[#0088FF]' : 'border-transparent text-[#111827]/50 hover:text-[#111827]'}`}
+                        >
+                            <BarChart size={18} className={activeTab === 'heatmap' ? 'text-[#0088FF]' : ''} />
+                            Performance Heatmap
+                        </button>
+                    </div>
+                    {/* Excel Export Button Integration */}
+                    {activeTab !== 'heatmap' && (
+                        <Button onClick={() => setShowExportModal(true)} variant="outline" className="h-9 rounded-full font-bold shadow-sm flex items-center gap-2 text-emerald-600 border-emerald-500/30 hover:bg-emerald-50 shrink-0 ml-4">
+                            <Download size={16} /> Export to Excel
+                        </Button>
+                    )}
                 </div>
 
                 {/* Content */}
@@ -595,6 +682,59 @@ export default function ClassroomDetail({ currentUser }) {
                             </Button>
                         </DialogFooter>
                     </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* Excel Export Configuration Modal */}
+            <Dialog open={showExportModal} onOpenChange={setShowExportModal}>
+                <DialogContent className="sm:max-w-md rounded-[24px] p-8 border-none shadow-2xl bg-white">
+                    <DialogHeader className="mb-4">
+                        <DialogTitle className="text-2xl font-black text-[#111827]">Export Data to Excel</DialogTitle>
+                        <DialogDescription className="font-bold text-[#111827]/50 mt-1 uppercase tracking-widest text-[10px]">Generate localized .XLSX spreadsheets</DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-6">
+                        <div className="space-y-3">
+                            <label className="text-xs font-bold text-[#111827] uppercase tracking-wider">Export Format Mode</label>
+                            <div className="flex gap-4">
+                                <label className={`flex-1 border p-4 rounded-xl cursor-pointer transition-all ${exportMode === 'all' ? 'border-emerald-500 bg-emerald-50 shadow-sm' : 'border-[#111827]/10 hover:bg-slate-50'}`}>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <input type="radio" value="all" checked={exportMode === 'all'} onChange={() => setExportMode('all')} className="accent-emerald-600" />
+                                        <span className="font-bold text-[#111827] text-sm">Full Data Matrix</span>
+                                    </div>
+                                    <p className="text-[10px] text-[#111827]/50 font-semibold uppercase tracking-wider leading-tight ml-5">Every daily evaluation individually parsed.</p>
+                                </label>
+                                <label className={`flex-1 border p-4 rounded-xl cursor-pointer transition-all ${exportMode === 'average' ? 'border-[#0088FF] bg-[#0088FF]/5 shadow-sm' : 'border-[#111827]/10 hover:bg-slate-50'}`}>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <input type="radio" value="average" checked={exportMode === 'average'} onChange={() => setExportMode('average')} className="accent-[#0088FF]" />
+                                        <span className="font-bold text-[#111827] text-sm">Top-N Average</span>
+                                    </div>
+                                    <p className="text-[10px] text-[#111827]/50 font-semibold uppercase tracking-wider leading-tight ml-5">Averages specific highest scoring entries.</p>
+                                </label>
+                            </div>
+                        </div>
+
+                        {exportMode === 'average' && (
+                            <div className="space-y-2 animate-in fade-in slide-in-from-top-2 bg-[#F0F4F8] p-4 rounded-2xl border border-[#111827]/5">
+                                <label className="text-[10px] font-black tracking-widest text-[#111827]/50 uppercase text-center block mb-2">Extract Highest 'N' Outcomes</label>
+                                <Input 
+                                    type="number" 
+                                    min="1" 
+                                    value={exportTopN} 
+                                    onChange={(e) => setExportTopN(parseInt(e.target.value) || 1)} 
+                                    className="h-14 rounded-xl bg-white border-transparent shadow-sm font-black text-center text-xl focus-visible:ring-2 focus-visible:ring-[#0088FF] transition-all"
+                                />
+                                <p className="text-center text-[10px] font-bold text-[#111827]/40 mt-2">Will structurally sort and exclusively average the {exportTopN || 1} highest evaluations per student.</p>
+                            </div>
+                        )}
+                    </div>
+                    
+                    <DialogFooter className="mt-8 pt-5 border-t border-[#111827]/5 gap-3">
+                        <Button variant="ghost" onClick={() => setShowExportModal(false)} className="rounded-full h-12 px-6 font-bold text-[#111827]/60 hover:bg-[#F0F4F8] transition-colors">Cancel</Button>
+                        <Button onClick={handleExport} className="rounded-full h-12 px-8 bg-emerald-600 text-white hover:bg-emerald-700 font-bold shadow-md shadow-emerald-500/20 flex items-center gap-2 transition-all hover:scale-[1.02]">
+                            <Download size={18} /> Generate .XLSX
+                        </Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 
