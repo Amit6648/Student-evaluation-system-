@@ -11,8 +11,8 @@
 !.yarn/versions
 
 # vite
-/dist/
-/dist-ssr/
+dist/
+dist-ssr/
 
 # testing
 /coverage
@@ -37,3 +37,12 @@ yarn-error.log*
 *.tsbuildinfo
 
 /app/generated/prisma
+
+# next.js
+/.next/
+/out/
+
+# databases
+*.db
+*.db-journal
+dev.db
