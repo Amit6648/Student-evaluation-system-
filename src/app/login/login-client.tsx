@@ -31,6 +31,23 @@ export default function LoginPageClient() {
         }
     };
 
+    const handleDemoLogin = async (role: 'admin' | 'teacher') => {
+        setLoading(true);
+        setError("");
+        
+        const demoEmail = role === 'admin' ? 'admin@school.com' : 'john@school.com';
+        const demoPassword = 'password123';
+        
+        const result = await login(demoEmail, demoPassword);
+        if (result.success) {
+            router.push("/admin/dashboard");
+            router.refresh();
+        } else {
+            setError(result.error || `Demo ${role} login failed`);
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-[#F8FAFC]">
             {/* Subtle background rings replicating the light wave aesthetic */}
@@ -88,6 +105,36 @@ export default function LoginPageClient() {
                         {loading ? <Loader2 className="animate-spin text-white mx-auto" /> : "Log In"}
                     </Button>
                 </form>
+
+                <div className="relative my-6">
+                    <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-slate-200" />
+                    </div>
+                    <div className="relative flex justify-center text-[10px] font-bold uppercase tracking-wider">
+                        <span className="bg-white px-3 text-[#64748b]">Or try a demo session</span>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <Button 
+                        type="button"
+                        variant="outline"
+                        disabled={loading}
+                        onClick={() => handleDemoLogin('admin')}
+                        className="h-12 border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-700 rounded-2xl font-bold transition-all flex items-center justify-center gap-2"
+                    >
+                        Admin Mode
+                    </Button>
+                    <Button 
+                        type="button"
+                        variant="outline"
+                        disabled={loading}
+                        onClick={() => handleDemoLogin('teacher')}
+                        className="h-12 border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-700 rounded-2xl font-bold transition-all flex items-center justify-center gap-2"
+                    >
+                        Teacher Mode
+                    </Button>
+                </div>
             </div>
         </div>
     );
