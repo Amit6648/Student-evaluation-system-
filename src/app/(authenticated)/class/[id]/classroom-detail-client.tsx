@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Input } from "@/components/ui/input";
 import {
     Dialog,
@@ -494,12 +495,15 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                     </div>
                 </div>
 
-                {isAdmin && (
-                    <Button onClick={() => setShowEnrollModal(true)} className="mt-4 md:mt-0 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 rounded-full flex items-center gap-2 font-bold px-6 h-12 transition-all hover:scale-[1.02]">
-                        <UserPlus className="w-5 h-5" />
-                        Enroll Students
-                    </Button>
-                )}
+                <div className="flex flex-col sm:flex-row items-center gap-3 mt-4 md:mt-0">
+                    {isAdmin && (
+                        <Button onClick={() => setShowEnrollModal(true)} className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 rounded-full flex items-center justify-center gap-2 font-bold px-6 h-11 transition-all hover:scale-[1.02]">
+                            <UserPlus className="w-5 h-5" />
+                            Enroll Students
+                        </Button>
+                    )}
+                    <ThemeToggle />
+                </div>
             </header>
 
             {/* Compact Stat Cards for Active Group */}

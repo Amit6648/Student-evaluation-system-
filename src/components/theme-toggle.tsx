@@ -1,11 +1,11 @@
 "use client"
 
 import * as React from "react"
-import { Moon, Sun, Laptop } from "lucide-react"
+import { Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
 
 export function ThemeToggle({ className = "" }: { className?: string }) {
-  const { theme, setTheme } = useTheme()
+  const { resolvedTheme, setTheme } = useTheme()
   const [mounted, setMounted] = React.useState(false)
 
   React.useEffect(() => {
@@ -14,55 +14,25 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
 
   if (!mounted) {
     return (
-      <div className={`flex items-center justify-between bg-slate-100 dark:bg-white/5 p-1 rounded-xl border border-slate-200/60 dark:border-white/10 ${className}`}>
-        <div className="w-8 h-7 rounded-lg" />
-      </div>
+      <div className={`w-10 h-10 rounded-2xl bg-white/80 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 ${className}`} />
     )
   }
 
+  const isDark = resolvedTheme === "dark"
+
   return (
-    <div className={`flex items-center bg-slate-100 dark:bg-white/5 p-1 rounded-2xl border border-slate-200/60 dark:border-white/10 ${className}`}>
-      <button
-        type="button"
-        onClick={() => setTheme("light")}
-        className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-xl text-xs font-bold transition-all ${
-          theme === "light"
-            ? "bg-white text-slate-900 shadow-xs dark:bg-white/10 dark:text-white"
-            : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white"
-        }`}
-        title="Light Mode"
-      >
-        <Sun size={14} className={theme === "light" ? "text-amber-500" : ""} />
-        <span className="hidden sm:inline">Light</span>
-      </button>
-
-      <button
-        type="button"
-        onClick={() => setTheme("dark")}
-        className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-xl text-xs font-bold transition-all ${
-          theme === "dark"
-            ? "bg-white text-slate-900 shadow-xs dark:bg-emerald-700 dark:text-white"
-            : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white"
-        }`}
-        title="Dark Mode"
-      >
-        <Moon size={14} className={theme === "dark" ? "text-emerald-200" : ""} />
-        <span className="hidden sm:inline">Dark</span>
-      </button>
-
-      <button
-        type="button"
-        onClick={() => setTheme("system")}
-        className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-xl text-xs font-bold transition-all ${
-          theme === "system"
-            ? "bg-white text-slate-900 shadow-xs dark:bg-white/10 dark:text-white"
-            : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white"
-        }`}
-        title="System Preference"
-      >
-        <Laptop size={14} />
-        <span className="hidden sm:inline">Auto</span>
-      </button>
-    </div>
+    <button
+      type="button"
+      onClick={() => setTheme(isDark ? "light" : "dark")}
+      className={`w-10 h-10 rounded-2xl bg-white dark:bg-[#111A17] border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-emerald-300 hover:bg-slate-50 dark:hover:bg-white/5 hover:border-emerald-400 shadow-xs flex items-center justify-center transition-all duration-200 group cursor-pointer ${className}`}
+      title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+      aria-label="Toggle Theme"
+    >
+      {isDark ? (
+        <Moon className="w-5 h-5 text-emerald-400 group-hover:scale-110 transition-transform" />
+      ) : (
+        <Sun className="w-5 h-5 text-amber-500 group-hover:scale-110 transition-transform" />
+      )}
+    </button>
   )
 }

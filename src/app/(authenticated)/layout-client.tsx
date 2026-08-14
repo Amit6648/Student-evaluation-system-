@@ -41,13 +41,16 @@ export default function AuthenticatedLayoutClient({
             <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-extrabold uppercase tracking-wider block">Evaluation Portal</span>
           </div>
         </div>
-        <button
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="p-2 rounded-2xl bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/15 text-slate-700 dark:text-slate-200 transition-colors"
-          aria-label="Toggle navigation menu"
-        >
-          {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="p-2 rounded-2xl bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/15 text-slate-700 dark:text-slate-200 transition-colors"
+            aria-label="Toggle navigation menu"
+          >
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
       </header>
 
       {/* Mobile Menu Drawer Modal */}
@@ -83,8 +86,6 @@ export default function AuthenticatedLayoutClient({
             </nav>
 
             <div className="space-y-4 pt-6 border-t border-slate-100 dark:border-white/10">
-              <ThemeToggle />
-
               <div className="flex items-center gap-3.5 bg-slate-50 dark:bg-white/5 rounded-2xl p-4 border border-slate-200/80 dark:border-white/10 shadow-xs">
                 <div className="w-11 h-11 rounded-full bg-emerald-700 text-white flex items-center justify-center font-bold text-base shadow-xs shrink-0">
                   {currentUser?.name?.charAt(0) || 'U'}
@@ -149,10 +150,8 @@ export default function AuthenticatedLayoutClient({
           </div>
         </nav>
 
-        {/* Footer User Info & Theme Toggle */}
+        {/* Footer User Info */}
         <div className="p-4 border-t border-slate-100 dark:border-white/10 space-y-3">
-          <ThemeToggle />
-
           <div className="flex items-center gap-3.5 bg-slate-50/90 dark:bg-white/5 rounded-2xl p-3.5 border border-slate-200/80 dark:border-white/10 shadow-xs">
             <div className="w-10 h-10 rounded-full bg-emerald-700 text-white flex items-center justify-center text-sm font-bold shadow-xs shrink-0">
               {currentUser?.name?.charAt(0) || 'U'}

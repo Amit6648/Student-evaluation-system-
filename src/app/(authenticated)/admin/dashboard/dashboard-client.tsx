@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Home, Plus, ChevronRight, Loader2, BookOpen, Trash2, Users, Search, X, Calendar, GraduationCap } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
@@ -286,7 +287,7 @@ export default function DashboardPageClient({ currentUser }: { currentUser: Curr
     return (
         <div className="min-h-screen p-6 md:p-8 max-w-7xl mx-auto">
             <div className="relative z-0">
-                <header className="flex flex-col md:flex-row md:justify-between md:items-end mb-10 gap-6 sticky top-0 z-50 pt-4 pb-4 bg-[#F4F7F6]/80 dark:bg-[#080D0C]/80 backdrop-blur-xl border-b border-slate-200/70 dark:border-white/10">
+                <header className="flex flex-col md:flex-row md:justify-between md:items-center mb-10 gap-6 sticky top-0 z-50 pt-4 pb-4 bg-[#F4F7F6]/80 dark:bg-[#080D0C]/80 backdrop-blur-xl border-b border-slate-200/70 dark:border-white/10">
                     <div>
                         <h1 className="text-3xl sm:text-4xl font-extrabold text-[#11221F] dark:text-white tracking-tight">
                             {isAdmin ? 'Administrator Dashboard' : 'Teacher Dashboard'}
@@ -294,6 +295,10 @@ export default function DashboardPageClient({ currentUser }: { currentUser: Curr
                         <p className="text-slate-600 dark:text-slate-400 mt-1.5 text-base font-semibold">
                             Welcome back, {currentUser.name}
                         </p>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <ThemeToggle />
                     </div>
 
                     {isAdmin && (
