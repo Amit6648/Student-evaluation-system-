@@ -29,7 +29,12 @@ export default function AuthenticatedLayoutClient({
   const isSettingsActive = pathname === '/settings';
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen bg-[#F4F7F6] dark:bg-[#080D0C] font-sans antialiased text-slate-800 dark:text-slate-100 transition-colors duration-150">
+    <div className="flex flex-col md:flex-row min-h-screen bg-[#F4F7F6] dark:bg-[#080D0C] font-sans antialiased text-slate-800 dark:text-slate-100 transition-colors duration-150 relative">
+      {/* Fixed Top-Right Theme Toggle (Desktop & Tablet) */}
+      <div className="fixed top-5 right-6 sm:right-8 z-50 hidden md:block">
+        <ThemeToggle />
+      </div>
+
       {/* Mobile Top Navigation Header */}
       <header className="md:hidden flex items-center justify-between px-5 py-4 bg-white dark:bg-[#0E1513] border-b border-slate-200/80 dark:border-white/10 sticky top-0 z-50 shadow-xs">
         <div className="flex items-center gap-3">

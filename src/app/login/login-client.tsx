@@ -51,8 +51,8 @@ export default function LoginPageClient() {
 
     return (
         <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-[#F4F7F6] dark:bg-[#080D0C] transition-colors duration-150">
-            {/* Top Right Theme Toggle */}
-            <div className="absolute top-6 right-6 z-20">
+            {/* Top Right Fixed Theme Toggle */}
+            <div className="fixed top-5 right-6 sm:top-6 sm:right-8 z-50">
                 <ThemeToggle />
             </div>
 
