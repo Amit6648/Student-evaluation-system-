@@ -283,63 +283,63 @@ export default function DashboardPageClient({ currentUser }: { currentUser: Curr
     const isAdmin = currentUser.role === 'ADMIN';
 
     return (
-        <div className="min-h-screen p-8 max-w-7xl mx-auto relative pl-12 border-l-[4px] border-[#0088FF] shadow-[inset_1px_0_0_rgba(0,0,0,0.05)]">
+        <div className="min-h-screen p-8 max-w-7xl mx-auto relative pl-12 border-l-[4px] border-emerald-600 shadow-[inset_1px_0_0_rgba(0,0,0,0.03)]">
             <div className="relative z-0">
-                <header className="flex flex-col md:flex-row md:justify-between md:items-end mb-12 gap-6 sticky top-0 z-50 pt-4 pb-4 bg-[#F0F4F8]/80 backdrop-blur-xl border-b border-[#111827]/10">
+                <header className="flex flex-col md:flex-row md:justify-between md:items-end mb-10 gap-6 sticky top-0 z-50 pt-4 pb-4 bg-[#F4F7F6]/80 backdrop-blur-xl border-b border-slate-200/70">
                     <div>
-                        <h1 className="text-4xl font-extrabold text-[#111827]">
+                        <h1 className="text-3xl sm:text-4xl font-extrabold text-[#11221F] tracking-tight">
                             {isAdmin ? 'Administrator Dashboard' : 'Teacher Dashboard'}
                         </h1>
-                        <p className="text-[#111827]/70 mt-2 text-lg font-medium">
-                            Welcome, {currentUser.name}
+                        <p className="text-slate-600 mt-1.5 text-base font-semibold">
+                            Welcome back, {currentUser.name}
                         </p>
                     </div>
 
                     {isAdmin && (
                         <Dialog open={showModal} onOpenChange={setShowModal}>
-                            <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto rounded-[24px] p-8 md:p-10 border-none shadow-2xl bg-[#E8EEF4] relative">
-                                <div className="absolute top-0 left-0 bg-[#5D685C] text-white px-5 py-2.5 rounded-br-xl font-bold flex items-center gap-2 shadow-sm z-10">
-                                    <Home size={18} /> Flip Classroom
+                            <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl p-8 md:p-10 border border-slate-100 shadow-2xl bg-white relative">
+                                <div className="absolute top-0 left-0 bg-emerald-700 text-white px-5 py-2.5 rounded-br-2xl font-bold flex items-center gap-2 shadow-xs text-xs uppercase tracking-wider">
+                                    <Home size={16} /> New Classroom
                                 </div>
                                 
-                                <DialogHeader className="mb-6 mt-6 md:mt-2 text-center md:text-left border-b border-[#111827]/10 pb-4">
-                                    <DialogTitle className="text-3xl font-bold text-[#111827]">Administrator</DialogTitle>
-                                    <DialogDescription className="text-[#111827]/70 font-medium">Configure a new virtual classroom space.</DialogDescription>
+                                <DialogHeader className="mb-6 mt-6 md:mt-4 text-center md:text-left border-b border-slate-100 pb-4">
+                                    <DialogTitle className="text-2xl sm:text-3xl font-extrabold text-[#11221F]">Create Virtual Classroom</DialogTitle>
+                                    <DialogDescription className="text-slate-500 font-semibold text-xs mt-1">Configure subject, section, and assign an instructor.</DialogDescription>
                                 </DialogHeader>
                                 <form onSubmit={handleSubmit} className="space-y-6">
-                                    <div className="flex flex-col space-y-6">
+                                    <div className="flex flex-col space-y-5">
                                         {/* Row 1: Semester & Subject */}
-                                        <div className="space-y-3">
-                                            <label className="text-sm font-bold text-[#111827] uppercase tracking-wider ml-1">Semester</label>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-[#11221F] uppercase tracking-wider ml-1">Semester</label>
                                             <Select value={selectedSemester} onValueChange={(val) => {
                                                 setSelectedSemester(val);
                                                 setSelectedSubject("");
                                                 setSelectedSection("");
                                             }}>
-                                                <SelectTrigger className="w-full h-12 rounded-full bg-[#767472] text-white border-none focus:ring-2 focus:ring-[#0088FF] shadow-sm font-medium px-5 [&>svg]:text-white">
+                                                <SelectTrigger className="w-full h-12 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-800 border border-slate-200 focus:ring-2 focus:ring-emerald-500/20 shadow-xs font-semibold px-5">
                                                     <SelectValue placeholder="Select semester" />
                                                 </SelectTrigger>
-                                                <SelectContent className="bg-white border-[#111827]/10 rounded-xl overflow-hidden shadow-xl">
-                                                    <SelectItem value="ALL" className="font-bold focus:bg-[#E8EEF4] focus:text-[#111827]">All Semesters</SelectItem>
+                                                <SelectContent className="bg-white border-slate-200 rounded-2xl overflow-hidden shadow-xl">
+                                                    <SelectItem value="ALL" className="font-bold focus:bg-emerald-50 focus:text-emerald-900">All Semesters</SelectItem>
                                                     {availableSemesters.map(sem => (
-                                                        <SelectItem key={sem} value={sem.toString()} className="focus:bg-[#E8EEF4] focus:text-[#111827] font-medium">Semester {sem}</SelectItem>
+                                                        <SelectItem key={sem} value={sem.toString()} className="focus:bg-emerald-50 focus:text-emerald-900 font-medium">Semester {sem}</SelectItem>
                                                     ))}
                                                 </SelectContent>
                                             </Select>
                                         </div>
 
-                                        <div className="space-y-3">
-                                            <label className="text-sm font-bold text-[#111827] uppercase tracking-wider ml-1">Subject</label>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-[#11221F] uppercase tracking-wider ml-1">Subject</label>
                                             <Select value={selectedSubject} onValueChange={setSelectedSubject} disabled={!selectedSemester}>
-                                                <SelectTrigger className="w-full h-12 rounded-full bg-[#767472] text-white border-none focus:ring-2 focus:ring-[#0088FF] shadow-sm font-medium px-5 [&>svg]:text-white disabled:opacity-50">
+                                                <SelectTrigger className="w-full h-12 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-800 border border-slate-200 focus:ring-2 focus:ring-emerald-500/20 shadow-xs font-semibold px-5 disabled:opacity-50">
                                                     <SelectValue placeholder={selectedSemester ? "Select a subject" : "Select a semester first"} />
                                                 </SelectTrigger>
-                                                <SelectContent className="bg-white border-[#111827]/10 rounded-xl overflow-hidden shadow-xl">
+                                                <SelectContent className="bg-white border-slate-200 rounded-2xl overflow-hidden shadow-xl">
                                                     {filteredSubjectsForDropdown.map(sub => (
-                                                        <SelectItem key={sub.id} value={sub.id} className="focus:bg-[#E8EEF4] focus:text-[#111827] py-2">
+                                                        <SelectItem key={sub.id} value={sub.id} className="focus:bg-emerald-50 focus:text-emerald-900 py-2">
                                                             <div className="flex flex-col">
-                                                                <span className="font-bold text-[#111827]">{sub.name}</span>
-                                                                <span className="text-[10px] text-[#111827]/60 uppercase tracking-widest">{sub.courseName} • Sem {sub.semester_number}</span>
+                                                                <span className="font-bold text-slate-900">{sub.name}</span>
+                                                                <span className="text-[10px] text-slate-500 uppercase tracking-widest">{sub.courseName} • Sem {sub.semester_number}</span>
                                                             </div>
                                                         </SelectItem>
                                                     ))}
@@ -348,55 +348,55 @@ export default function DashboardPageClient({ currentUser }: { currentUser: Curr
                                         </div>
 
                                         {/* Row 2: Section & Assign Teacher */}
-                                        <div className="space-y-3">
-                                            <label className="text-sm font-bold text-[#111827] uppercase tracking-wider ml-1 flex justify-between">
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-[#11221F] uppercase tracking-wider ml-1 flex justify-between">
                                                 Section
-                                                {selectedSubject && sections.length === 0 && <span className="text-xs text-orange-600 font-bold bg-orange-100 px-2 py-0.5 rounded-full">No active sections</span>}
+                                                {selectedSubject && sections.length === 0 && <span className="text-xs text-amber-700 font-bold bg-amber-100 px-2.5 py-0.5 rounded-full">No active sections</span>}
                                             </label>
                                             <Select value={selectedSection} onValueChange={setSelectedSection} disabled={sections.length === 0}>
-                                                <SelectTrigger className="w-full h-12 rounded-full bg-[#767472] text-white border-none focus:ring-2 focus:ring-[#0088FF] shadow-sm font-medium px-5 [&>svg]:text-white disabled:opacity-50">
+                                                <SelectTrigger className="w-full h-12 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-800 border border-slate-200 focus:ring-2 focus:ring-emerald-500/20 shadow-xs font-semibold px-5 disabled:opacity-50">
                                                     <SelectValue placeholder="Select section..." />
                                                 </SelectTrigger>
-                                                <SelectContent className="bg-white border-[#111827]/10 rounded-xl overflow-hidden shadow-xl">
+                                                <SelectContent className="bg-white border-slate-200 rounded-2xl overflow-hidden shadow-xl">
                                                     {sections.map(sec => (
-                                                        <SelectItem key={sec} value={sec} className="focus:bg-[#E8EEF4] focus:text-[#111827] font-medium">Section {sec}</SelectItem>
+                                                        <SelectItem key={sec} value={sec} className="focus:bg-emerald-50 focus:text-emerald-900 font-medium">Section {sec}</SelectItem>
                                                     ))}
                                                 </SelectContent>
                                             </Select>
                                         </div>
 
-                                        <div className="space-y-3">
+                                        <div className="space-y-2">
                                             <div className="flex justify-between items-center ml-1">
-                                                <label className="text-sm font-bold text-[#111827] uppercase tracking-wider">Assign Teacher</label>
+                                                <label className="text-xs font-bold text-[#11221F] uppercase tracking-wider">Assign Teacher</label>
                                                 <div className="flex items-center gap-2">
                                                     <input
                                                         type="checkbox"
                                                         id="globalTeachers"
                                                         checked={showAllTeachers}
                                                         onChange={(e) => setShowAllTeachers(e.target.checked)}
-                                                        className="rounded text-[#0088FF] border-[#111827]/20 focus:ring-[#0088FF] w-4 h-4 cursor-pointer"
+                                                        className="rounded text-emerald-600 border-slate-300 focus:ring-emerald-500 w-4 h-4 cursor-pointer"
                                                     />
-                                                    <label htmlFor="globalTeachers" className="text-xs text-[#111827]/60 cursor-pointer font-bold uppercase">Global</label>
+                                                    <label htmlFor="globalTeachers" className="text-xs text-slate-600 cursor-pointer font-bold uppercase">All Teachers</label>
                                                 </div>
                                             </div>
                                             <Select value={selectedTeacher} onValueChange={setSelectedTeacher}>
-                                                <SelectTrigger className="w-full h-12 rounded-full bg-[#767472] text-white border-none focus:ring-2 focus:ring-[#0088FF] shadow-sm font-medium px-5 [&>svg]:text-white">
+                                                <SelectTrigger className="w-full h-12 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-800 border border-slate-200 focus:ring-2 focus:ring-emerald-500/20 shadow-xs font-semibold px-5">
                                                     <SelectValue placeholder="Select a teacher" />
                                                 </SelectTrigger>
-                                                <SelectContent className="bg-white border-[#111827]/10 rounded-xl overflow-hidden shadow-xl">
+                                                <SelectContent className="bg-white border-slate-200 rounded-2xl overflow-hidden shadow-xl">
                                                     {eligibleTeachers.map(t => (
-                                                        <SelectItem key={t.id} value={t.id} className="focus:bg-[#E8EEF4] font-medium focus:text-[#111827]">{t.name}</SelectItem>
+                                                        <SelectItem key={t.id} value={t.id} className="focus:bg-emerald-50 font-medium focus:text-emerald-900">{t.name}</SelectItem>
                                                     ))}
                                                 </SelectContent>
                                             </Select>
                                         </div>
                                     </div>
 
-                                    <DialogFooter className="pt-6 sm:justify-end gap-3 mt-4 border-t border-[#111827]/10">
-                                        <Button type="button" variant="ghost" onClick={() => setShowModal(false)} className="rounded-full h-12 px-6 text-[#111827]/60 font-bold hover:bg-white hover:text-[#111827] shadow-sm">
+                                    <DialogFooter className="pt-6 sm:justify-end gap-3 mt-4 border-t border-slate-100">
+                                        <Button type="button" variant="ghost" onClick={() => setShowModal(false)} className="rounded-full h-12 px-6 text-slate-600 font-bold hover:bg-slate-100 shadow-xs">
                                             Cancel
                                         </Button>
-                                        <Button type="submit" disabled={loading} className="rounded-full h-12 px-8 bg-[#767472] text-white font-bold hover:bg-[#5f5d5b] shadow-md transition-all">
+                                        <Button type="submit" disabled={loading} className="rounded-full h-12 px-8 bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-md shadow-emerald-600/20 transition-all hover:scale-[1.01]">
                                             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                             {loading ? 'Creating...' : 'Create Class'}
                                         </Button>
@@ -408,20 +408,20 @@ export default function DashboardPageClient({ currentUser }: { currentUser: Curr
                 </header>
 
                 {classes.length > 0 && (
-                    <div className="mb-8 flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between bg-[#E8EEF4] p-4 rounded-2xl shadow-sm border border-[#111827]/5">
+                    <div className="mb-8 flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between bg-white p-4 rounded-2xl shadow-xs border border-slate-200/80">
                         <div className="relative flex-1 max-w-md">
-                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#111827]/40" />
+                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                             <Input
                                 type="text"
                                 placeholder="Search classrooms, courses, teachers..."
                                 value={searchClassQuery}
                                 onChange={(e) => setSearchClassQuery(e.target.value)}
-                                className="h-10 pl-9 pr-8 bg-white border border-[#111827]/10 rounded-full text-xs font-semibold placeholder:text-[#111827]/40 focus-visible:ring-1 focus-visible:ring-[#0088FF] shadow-none w-full"
+                                className="h-10 pl-9 pr-8 bg-slate-50 border border-slate-200 rounded-full text-xs font-semibold placeholder:text-slate-400 focus-visible:ring-1 focus-visible:ring-emerald-500 shadow-none w-full"
                             />
                             {searchClassQuery && (
                                 <button
                                     onClick={() => setSearchClassQuery("")}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#111827]/40 hover:text-[#111827]"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
                                     aria-label="Clear search"
                                 >
                                     <X className="w-3.5 h-3.5" />
@@ -432,25 +432,25 @@ export default function DashboardPageClient({ currentUser }: { currentUser: Curr
                         {isAdmin && (
                             <div className="flex flex-wrap gap-3 items-center">
                                 <Select value={filterTeacher} onValueChange={setFilterTeacher}>
-                                    <SelectTrigger className="w-[180px] h-10 rounded-full bg-[#767472] text-white border-none focus:ring-2 focus:ring-[#0088FF] shadow-sm font-medium text-xs [&>svg]:text-white">
+                                    <SelectTrigger className="w-[180px] h-10 rounded-full bg-slate-100 hover:bg-slate-200/80 text-slate-800 border border-slate-200/60 shadow-xs font-semibold text-xs">
                                         <SelectValue placeholder="All Teachers" />
                                     </SelectTrigger>
-                                    <SelectContent className="rounded-xl border-none shadow-xl bg-white">
-                                        <SelectItem value="ALL" className="font-bold focus:bg-[#E8EEF4] focus:text-[#111827]">All Teachers</SelectItem>
+                                    <SelectContent className="rounded-2xl border-slate-200 shadow-xl bg-white">
+                                        <SelectItem value="ALL" className="font-bold focus:bg-emerald-50 focus:text-emerald-900">All Teachers</SelectItem>
                                         {uniqueClassTeachers.map(t => (
-                                            t ? <SelectItem key={t.id} value={t.id} className="focus:bg-[#E8EEF4] focus:text-[#111827] font-medium text-xs">{t.name}</SelectItem> : null
+                                            t ? <SelectItem key={t.id} value={t.id} className="focus:bg-emerald-50 focus:text-emerald-900 font-medium text-xs">{t.name}</SelectItem> : null
                                         ))}
                                     </SelectContent>
                                 </Select>
 
                                 <Select value={filterSubject} onValueChange={setFilterSubject}>
-                                    <SelectTrigger className="w-[200px] h-10 rounded-full bg-[#767472] text-white border-none focus:ring-2 focus:ring-[#0088FF] shadow-sm font-medium text-xs [&>svg]:text-white">
+                                    <SelectTrigger className="w-[200px] h-10 rounded-full bg-slate-100 hover:bg-slate-200/80 text-slate-800 border border-slate-200/60 shadow-xs font-semibold text-xs">
                                         <SelectValue placeholder="All Subjects" />
                                     </SelectTrigger>
-                                    <SelectContent className="rounded-xl border-none shadow-xl bg-white">
-                                        <SelectItem value="ALL" className="font-bold focus:bg-[#E8EEF4] focus:text-[#111827]">All Subjects</SelectItem>
+                                    <SelectContent className="rounded-2xl border-slate-200 shadow-xl bg-white">
+                                        <SelectItem value="ALL" className="font-bold focus:bg-emerald-50 focus:text-emerald-900">All Subjects</SelectItem>
                                         {uniqueClassSubjects.map(s => (
-                                            s ? <SelectItem key={s.id} value={s.id} className="focus:bg-[#E8EEF4] focus:text-[#111827] font-medium text-xs">{s.name || s.id}</SelectItem> : null
+                                            s ? <SelectItem key={s.id} value={s.id} className="focus:bg-emerald-50 focus:text-emerald-900 font-medium text-xs">{s.name || s.id}</SelectItem> : null
                                         ))}
                                     </SelectContent>
                                 </Select>
@@ -459,26 +459,26 @@ export default function DashboardPageClient({ currentUser }: { currentUser: Curr
                     </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {isAdmin && (
                         <Card
                             onClick={() => setShowModal(true)}
-                            className="bg-[#E8EEF4]/50 border-2 border-dashed border-[#111827]/20 rounded-2xl p-2 flex flex-col items-center justify-center text-center transition-all hover:bg-[#E8EEF4] hover:border-[#0088FF] aspect-[1.1] group cursor-pointer shadow-none h-full"
+                            className="bg-white/80 border-2 border-dashed border-emerald-300 hover:border-emerald-500 hover:bg-emerald-50/40 rounded-3xl p-4 flex flex-col items-center justify-center text-center transition-all duration-300 aspect-[1.15] group cursor-pointer shadow-xs hover:shadow-lg h-full"
                         >
                             <CardContent className="flex flex-col items-center justify-center h-full p-6">
-                                <div className="w-16 h-16 bg-[#767472] rounded-full shadow-sm flex items-center justify-center mb-4 text-white group-hover:bg-[#0088FF] transition-all duration-300">
-                                    <Plus size={32} strokeWidth={2.5} />
+                                <div className="w-16 h-16 bg-emerald-600 rounded-full shadow-md shadow-emerald-600/20 flex items-center justify-center mb-4 text-white group-hover:scale-110 group-hover:bg-emerald-700 transition-all duration-300">
+                                    <Plus size={30} strokeWidth={2.5} />
                                 </div>
-                                <CardTitle className="text-xl font-bold text-[#111827]">Create Class</CardTitle>
-                                <p className="text-xs text-[#111827]/50 font-semibold mt-1">Add a new virtual classroom</p>
+                                <CardTitle className="text-xl font-bold text-[#11221F]">Create Class</CardTitle>
+                                <p className="text-xs text-slate-500 font-semibold mt-1">Add a new virtual classroom</p>
                             </CardContent>
                         </Card>
                     )}
 
                     {displayedClasses.length === 0 ? (
-                        <div className="col-span-full py-20 text-center bg-[#E8EEF4] rounded-2xl border border-[#111827]/5">
-                            <BookOpen className="w-12 h-12 text-[#111827]/20 mx-auto mb-4" />
-                            <p className="text-[#111827]/70 font-semibold mb-2">
+                        <div className="col-span-full py-20 text-center bg-white rounded-3xl border border-slate-200/80 shadow-xs">
+                            <BookOpen className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                            <p className="text-slate-600 font-semibold mb-2">
                                 {classes.length === 0
                                     ? (isAdmin ? "No classrooms created yet" : "No classrooms have been assigned to you yet.")
                                     : "No classrooms match your search or filter criteria."}
@@ -492,12 +492,12 @@ export default function DashboardPageClient({ currentUser }: { currentUser: Curr
                                         setFilterTeacher("ALL");
                                         setFilterSubject("ALL");
                                     }}
-                                    className="rounded-full font-bold mt-2 text-xs"
+                                    className="rounded-full font-bold mt-2 text-xs border-slate-300 hover:bg-slate-50 text-slate-700"
                                 >
                                     Reset Filters
                                 </Button>
                             ) : isAdmin && (
-                                <Button variant="link" onClick={() => setShowModal(true)} className="text-[#0088FF] font-bold text-md h-auto p-0 hover:underline">
+                                <Button variant="link" onClick={() => setShowModal(true)} className="text-emerald-700 font-bold text-md h-auto p-0 hover:underline">
                                     Create your first class
                                 </Button>
                             )}
@@ -509,7 +509,7 @@ export default function DashboardPageClient({ currentUser }: { currentUser: Curr
                                 key={c.id}
                                 className="group relative block"
                             >
-                                <Card className="bg-[#E8EEF4] border-l-[4px] border-l-transparent hover:border-l-[#0088FF] border border-[#111827]/5 rounded-2xl p-2 transition-all hover:shadow-xl hover:shadow-[#111827]/5 flex flex-col justify-between aspect-[1.1] overflow-hidden shadow-sm h-full relative">
+                                <Card className="bg-white border border-slate-200/80 hover:border-emerald-500/50 rounded-3xl p-3 transition-all duration-300 hover:shadow-xl hover:shadow-emerald-950/5 flex flex-col justify-between aspect-[1.15] overflow-hidden shadow-xs h-full relative">
                                     
                                     {isAdmin && (
                                         <button
@@ -518,50 +518,50 @@ export default function DashboardPageClient({ currentUser }: { currentUser: Curr
                                                 e.stopPropagation();
                                                 setClassToDelete(c.id);
                                             }}
-                                            className="absolute top-4 right-4 z-20 w-8 h-8 rounded-full bg-[#111827]/5 text-[#111827]/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 hover:text-white"
+                                            className="absolute top-4 right-4 z-20 w-8 h-8 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-rose-500 hover:text-white"
                                             title="Delete Virtual Class"
                                         >
-                                            <Trash2 size={16} />
+                                            <Trash2 size={15} />
                                         </button>
                                     )}
 
                                     <CardHeader className="relative z-10 p-5 pb-2">
                                         <div className="flex justify-between items-start mb-3 gap-2">
                                             <div className="flex items-center gap-1.5 flex-wrap">
-                                                <Badge variant="secondary" className="bg-[#111827]/5 text-[#111827] font-bold uppercase tracking-wider text-[10px] px-2.5 py-1 rounded-sm border-none max-w-[150px] truncate">
+                                                <Badge variant="secondary" className="bg-emerald-50 text-emerald-800 font-bold uppercase tracking-wider text-[10px] px-2.5 py-1 rounded-lg border border-emerald-200/60 max-w-[150px] truncate">
                                                     {c.subject?.course?.name || 'Unknown Course'}
                                                 </Badge>
                                                 {c.subject?.semester_number && (
-                                                    <Badge variant="secondary" className="bg-white/80 text-[#111827]/70 font-bold text-[10px] px-2 py-0.5 rounded-sm border border-[#111827]/5">
+                                                    <Badge variant="secondary" className="bg-slate-100 text-slate-700 font-bold text-[10px] px-2 py-0.5 rounded-lg border border-slate-200">
                                                         Sem {c.subject.semester_number}
                                                     </Badge>
                                                 )}
                                             </div>
-                                            <Badge variant="outline" className="bg-white text-[#111827] font-bold flex gap-1.5 px-2.5 py-1 rounded-full border border-[#111827]/10 shadow-xs text-xs shrink-0">
-                                                <Users size={13} className="text-[#0088FF]" />
+                                            <Badge variant="outline" className="bg-slate-50 text-slate-800 font-bold flex gap-1.5 px-2.5 py-1 rounded-full border border-slate-200 shadow-xs text-xs shrink-0">
+                                                <Users size={13} className="text-emerald-600" />
                                                 {c._count?.enrollments || 0}
                                             </Badge>
                                         </div>
-                                        <CardTitle className="text-2xl font-black text-[#111827] leading-tight transition-all duration-300">
+                                        <CardTitle className="text-2xl font-extrabold text-[#11221F] leading-tight group-hover:text-emerald-800 transition-colors">
                                             {c.subject?.name || 'Unknown Subject'}
                                         </CardTitle>
-                                        <CardDescription className="font-semibold text-xs text-[#111827]/70 flex flex-col gap-1.5 mt-3">
+                                        <CardDescription className="font-semibold text-xs text-slate-500 flex flex-col gap-1.5 mt-3">
                                             {isAdmin && (
-                                                <span className="flex items-center gap-2">
-                                                    <span className="w-2 h-2 rounded-full bg-[#5D685C] block"></span>
+                                                <span className="flex items-center gap-2 text-slate-700">
+                                                    <span className="w-2 h-2 rounded-full bg-emerald-600 block"></span>
                                                     Teacher: {c.teacher?.name || 'Unassigned'}
                                                 </span>
                                             )}
-                                            <span className="flex items-center gap-2 opacity-80">
-                                                <span className="w-2 h-2 rounded-full bg-[#767472] block"></span>
+                                            <span className="flex items-center gap-2 text-slate-500">
+                                                <span className="w-2 h-2 rounded-full bg-slate-400 block"></span>
                                                 Section {c.section || 'N/A'} • {c.academic_year}
                                             </span>
                                         </CardDescription>
                                     </CardHeader>
 
-                                    <CardFooter className="relative z-10 p-5 pt-0 mt-auto flex items-center justify-between text-[#111827] font-bold">
-                                        <span className="text-sm tracking-wide text-[#0088FF] group-hover:underline">Enter Classroom</span>
-                                        <div className="w-10 h-10 rounded-full bg-white border border-[#0088FF]/20 flex items-center justify-center text-[#0088FF] group-hover:bg-[#0088FF] group-hover:text-white transition-all shadow-xs">
+                                    <CardFooter className="relative z-10 p-5 pt-0 mt-auto flex items-center justify-between text-[#11221F] font-bold">
+                                        <span className="text-sm tracking-wide text-emerald-700 group-hover:text-emerald-600 font-bold">Enter Classroom</span>
+                                        <div className="w-10 h-10 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 group-hover:bg-emerald-600 group-hover:text-white transition-all shadow-xs flex items-center justify-center">
                                             <ChevronRight size={18} />
                                         </div>
                                     </CardFooter>

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { Loader2, Mail, Lock } from "lucide-react";
+import { Loader2, Mail, Lock, Lightbulb, Shield, GraduationCap } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -49,50 +49,60 @@ export default function LoginPageClient() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-[#F8FAFC]">
-            {/* Subtle background rings replicating the light wave aesthetic */}
-            <div className="absolute top-[-10%] left-[-10%] w-[70vw] h-[70vw] rounded-full border-[1.5px] border-blue-50/50" />
-            <div className="absolute top-[0%] left-[0%] w-[50vw] h-[50vw] rounded-full border-[1.5px] border-blue-50/50" />
+        <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-[#F4F7F6]">
+            {/* Background subtle Nordic ripples */}
+            <div className="absolute top-[-15%] left-[-10%] w-[70vw] h-[70vw] rounded-full border border-emerald-900/5 pointer-events-none" />
+            <div className="absolute bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] rounded-full border border-emerald-900/5 pointer-events-none" />
             
-            <div className="relative z-10 w-full max-w-[440px] bg-white rounded-[32px] shadow-[0_12px_40px_rgba(0,0,0,0.06)] p-10">
-                <h1 className="text-[26px] font-bold text-[#1e293b] mb-8 tracking-tight">Welcome Back</h1>
+            <div className="relative z-10 w-full max-w-[440px] bg-white rounded-3xl shadow-xl shadow-emerald-950/5 border border-slate-200/80 p-8 sm:p-10">
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="w-11 h-11 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                        <Lightbulb className="text-emerald-700 w-6 h-6" />
+                    </div>
+                    <div>
+                        <h1 className="text-xl font-extrabold text-[#11221F] tracking-tight leading-none">Flip Classroom</h1>
+                        <span className="text-[10px] text-emerald-700 font-bold uppercase tracking-wider">Evaluation System</span>
+                    </div>
+                </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <h2 className="text-2xl font-extrabold text-[#11221F] mb-6 tracking-tight">Welcome Back</h2>
+
+                <form onSubmit={handleSubmit} className="space-y-5">
                     {error && (
-                        <div className="bg-red-50 border border-red-100 text-red-500 p-4 rounded-2xl text-sm font-semibold text-center">
+                        <div className="bg-rose-50 border border-rose-200 text-rose-700 p-3.5 rounded-2xl text-xs font-semibold text-center">
                             {error}
                         </div>
                     )}
 
-                    <div className="space-y-2">
-                        <label className="text-[11px] font-bold text-[#64748b] uppercase tracking-wider">Email or ID</label>
+                    <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider ml-1">Email or ID</label>
                         <div className="relative flex items-center">
-                            <Mail className="absolute left-4 w-5 h-5 text-[#94a3b8]" />
+                            <Mail className="absolute left-4 w-4 h-4 text-slate-400" />
                             <Input 
                                 required 
                                 type="text" 
                                 value={email} 
                                 onChange={(e) => setEmail(e.target.value)}
                                 placeholder="Email or ERP ID" 
-                                className="h-14 pl-12 bg-[#F1F5F9] border-transparent hover:border-[#e2e8f0] focus:border-[#3b82f6] text-[#334155] placeholder:text-[#94a3b8] rounded-2xl focus-visible:ring-0 font-medium transition-colors shadow-none" 
+                                className="h-12 pl-11 bg-slate-50 border-slate-200 hover:border-slate-300 focus:border-emerald-500 text-slate-800 placeholder:text-slate-400 rounded-full focus-visible:ring-1 focus-visible:ring-emerald-500 font-medium transition-colors shadow-none text-xs" 
                             />
                         </div>
                     </div>
 
-                    <div className="space-y-3">
-                        <div className="flex justify-between items-center">
-                            <label className="text-[11px] font-bold text-[#64748b] uppercase tracking-wider">Password</label>
-                            <a href="#" className="text-[12px] font-bold text-[#3b82f6] hover:text-[#2563eb] transition-colors">Forgot Password?</a>
+                    <div className="space-y-1.5">
+                        <div className="flex justify-between items-center ml-1">
+                            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Password</label>
+                            <a href="#" className="text-[11px] font-bold text-emerald-700 hover:text-emerald-800 transition-colors">Forgot?</a>
                         </div>
                         <div className="relative flex items-center">
-                            <Lock className="absolute left-4 w-5 h-5 text-[#94a3b8]" />
+                            <Lock className="absolute left-4 w-4 h-4 text-slate-400" />
                             <Input 
                                 required 
                                 type="password" 
                                 value={password} 
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder="••••••••" 
-                                className="h-14 pl-12 bg-[#F1F5F9] border-transparent hover:border-[#e2e8f0] focus:border-[#3b82f6] text-[#334155] placeholder:text-[#94a3b8] rounded-2xl focus-visible:ring-0 font-bold transition-colors shadow-none text-xl tracking-[0.2em]" 
+                                className="h-12 pl-11 bg-slate-50 border-slate-200 hover:border-slate-300 focus:border-emerald-500 text-slate-800 placeholder:text-slate-400 rounded-full focus-visible:ring-1 focus-visible:ring-emerald-500 font-bold transition-colors shadow-none text-lg tracking-[0.15em]" 
                             />
                         </div>
                     </div>
@@ -100,7 +110,7 @@ export default function LoginPageClient() {
                     <Button 
                         disabled={loading} 
                         type="submit" 
-                        className="w-full h-14 bg-[#3b82f6] hover:bg-[#2563eb] text-white rounded-2xl font-bold shadow-[0_8px_20px_-6px_rgba(59,130,246,0.6)] text-[15px] mt-4 transition-all"
+                        className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full font-bold shadow-md shadow-emerald-600/20 text-sm mt-4 transition-all hover:scale-[1.01]"
                     >
                         {loading ? <Loader2 className="animate-spin text-white mx-auto" /> : "Log In"}
                     </Button>
@@ -111,18 +121,19 @@ export default function LoginPageClient() {
                         <div className="w-full border-t border-slate-200" />
                     </div>
                     <div className="relative flex justify-center text-[10px] font-bold uppercase tracking-wider">
-                        <span className="bg-white px-3 text-[#64748b]">Or try a demo session</span>
+                        <span className="bg-white px-3 text-slate-400">Or try a demo session</span>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                     <Button 
                         type="button"
                         variant="outline"
                         disabled={loading}
                         onClick={() => handleDemoLogin('admin')}
-                        className="h-12 border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-700 rounded-2xl font-bold transition-all flex items-center justify-center gap-2"
+                        className="h-11 border-slate-200 hover:bg-emerald-50/60 hover:border-emerald-300 hover:text-emerald-900 text-slate-700 rounded-full font-bold transition-all flex items-center justify-center gap-1.5 text-xs shadow-xs"
                     >
+                        <Shield size={14} className="text-emerald-700" />
                         Admin Mode
                     </Button>
                     <Button 
@@ -130,8 +141,9 @@ export default function LoginPageClient() {
                         variant="outline"
                         disabled={loading}
                         onClick={() => handleDemoLogin('teacher')}
-                        className="h-12 border-slate-200 hover:bg-slate-50 hover:border-slate-300 text-slate-700 rounded-2xl font-bold transition-all flex items-center justify-center gap-2"
+                        className="h-11 border-slate-200 hover:bg-emerald-50/60 hover:border-emerald-300 hover:text-emerald-900 text-slate-700 rounded-full font-bold transition-all flex items-center justify-center gap-1.5 text-xs shadow-xs"
                     >
+                        <GraduationCap size={14} className="text-emerald-700" />
                         Teacher Mode
                     </Button>
                 </div>
