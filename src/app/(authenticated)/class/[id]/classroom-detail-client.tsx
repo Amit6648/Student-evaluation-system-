@@ -37,6 +37,15 @@ function getInitials(name: string) {
     return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
 }
 
+// Helper to get grade according to average marks (out of 40)
+function getGrade(score: number | null | undefined): string {
+    if (score === null || score === undefined || isNaN(score)) return "--";
+    if (score >= 32) return "A";
+    if (score >= 24) return "B";
+    if (score >= 16) return "C";
+    return "D";
+}
+
 // Helper to get a consistent color based on name string
 function getAvatarColor(name: string) {
     if (!name) return "bg-[#F8F9FA] text-gray-700";
@@ -203,6 +212,7 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                        row[dateLabel] = "-";
                    }
                 });
+                row["Grade"] = getGrade(s.averageMarks);
                 row["Overall Average"] = s.averageMarks !== null ? s.averageMarks : "-";
                 return row;
             });
@@ -216,6 +226,7 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                 };
                 
                 if(!s.evaluations || s.evaluations.length === 0) {
+                    row["Grade"] = "-";
                     row[`Top ${exportTopN} Average`] = "-";
                     return row;
                 }
@@ -225,8 +236,10 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                 totals.sort((a,b) => b - a); // descending
                 const topScores = totals.slice(0, exportTopN);
                 const sum = topScores.reduce((acc, val) => acc + val, 0);
-                const avg = topScores.length > 0 ? (sum / topScores.length).toFixed(2) : "-";
+                const avgNum = topScores.length > 0 ? (sum / topScores.length) : null;
+                const avg = avgNum !== null ? avgNum.toFixed(2) : "-";
                 
+                row["Grade"] = avgNum !== null ? getGrade(avgNum) : "-";
                 row[`Top ${exportTopN} Average`] = avg;
                 return row;
             });
@@ -568,19 +581,25 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                                             <div className="mt-4">
                                                 <h3 className="font-bold leading-tight line-clamp-2 text-[#111827]">{s.name}</h3>
                                             </div>
-                                            <div className="text-4xl font-black mt-2 self-end flex flex-col items-end text-[#111827]">
-                                                {s.averageMarks !== null ? s.averageMarks : '--'}
-                                                <span className="text-[10px] uppercase tracking-widest font-bold opacity-50 mt-1">Avg Score</span>
+                                            <div className="flex justify-between items-end mt-2 pt-2 border-t border-black/5">
+                                                <div className="flex flex-col items-start text-[#111827]">
+                                                    <span className="text-2xl sm:text-3xl font-black leading-none">{getGrade(s.averageMarks)}</span>
+                                                    <span className="text-[10px] uppercase tracking-widest font-bold opacity-50 mt-1">Grade</span>
+                                                </div>
+                                                <div className="text-2xl sm:text-3xl font-black flex flex-col items-end text-[#111827]">
+                                                    <span className="leading-none">{s.averageMarks !== null ? s.averageMarks : '--'}</span>
+                                                    <span className="text-[10px] uppercase tracking-widest font-bold opacity-50 mt-1">Avg Score</span>
+                                                </div>
                                             </div>
                                         </div>
                                     );
                                 })}
                             </div>
-                            <div className="mt-8 flex gap-6 text-xs font-bold text-[#111827]/60 items-center justify-center bg-[#F0F4F8]/80 py-3 rounded-full border border-[#111827]/5">
-                                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-emerald-100 border border-emerald-200"></div> &ge; 32 (High)</div>
-                                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-amber-100 border border-amber-200"></div> 24 - 31 (Average)</div>
-                                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-orange-100 border border-orange-200"></div> 16 - 23 (Low)</div>
-                                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-red-100 border border-red-200"></div> &lt; 16 (Critical)</div>
+                            <div className="mt-8 flex flex-wrap gap-4 md:gap-6 text-xs font-bold text-[#111827]/60 items-center justify-center bg-[#F0F4F8]/80 py-3 px-6 rounded-full border border-[#111827]/5">
+                                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-emerald-100 border border-emerald-200"></div> Grade A: &ge; 32 (High)</div>
+                                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-amber-100 border border-amber-200"></div> Grade B: 24 - 31 (Average)</div>
+                                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-orange-100 border border-orange-200"></div> Grade C: 16 - 23 (Low)</div>
+                                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-red-100 border border-red-200"></div> Grade D: &lt; 16 (Critical)</div>
                             </div>
                         </div>
                     ) : (
@@ -802,9 +821,14 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                                         {getInitials(evalHistoryStudent.name)}
                                     </div>
                                     <div>
-                                        <div className="flex items-center gap-3">
+                                        <div className="flex items-center gap-3 flex-wrap">
                                             <DialogTitle className="text-3xl font-black text-[#111827] leading-none">{evalHistoryStudent.name}</DialogTitle>
                                             <Badge variant="secondary" className="font-mono bg-white text-[#111827]/60 rounded-md py-0 shadow-sm border border-[#111827]/5">{evalHistoryStudent.roll_no}</Badge>
+                                            {evalHistoryStudent.averageMarks !== null && (
+                                                <Badge variant="secondary" className="bg-[#0088FF]/10 text-[#0088FF] font-bold border border-[#0088FF]/20 px-2.5 py-0.5">
+                                                    Grade {getGrade(evalHistoryStudent.averageMarks)} ({evalHistoryStudent.averageMarks} Avg)
+                                                </Badge>
+                                            )}
                                         </div>
                                         <DialogDescription className="font-bold text-[#111827]/50 mt-1 uppercase tracking-widest text-[10px]">Performance History</DialogDescription>
                                     </div>
