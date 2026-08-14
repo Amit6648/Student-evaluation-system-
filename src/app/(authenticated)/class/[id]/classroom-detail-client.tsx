@@ -424,41 +424,41 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
     });
 
     return (
-        <div className="min-h-screen p-6 md:p-10 max-w-6xl mx-auto">
-            <Link href="/" className="inline-flex items-center text-xs font-medium text-zinc-500 hover:text-zinc-900 mb-6 transition-colors">
-                <ChevronLeft size={16} className="mr-1" /> Back to Dashboard
+        <div className="min-h-screen p-6 md:p-8 max-w-7xl mx-auto">
+            <Link href="/" className="inline-flex items-center text-slate-600 hover:text-emerald-700 mb-8 font-bold transition-colors">
+                <ChevronLeft size={20} className="mr-1" /> Back to Dashboard
             </Link>
 
-            <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-5 border-b border-zinc-200/80">
+            <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 sticky top-0 z-50 pt-2 pb-4 backdrop-blur-xl bg-[#F4F7F6]/80 border-b border-slate-200/70">
                 <div>
-                    <span className="bg-zinc-100 text-zinc-700 border border-zinc-200/60 font-medium text-[11px] px-2.5 py-0.5 rounded-md mb-2 inline-block">
+                    <Badge variant="secondary" className="bg-emerald-50 text-emerald-800 border border-emerald-200/60 font-bold uppercase tracking-wider text-[10px] px-3 py-1 rounded-lg mb-3 inline-block">
                         {classroom.subject?.course?.school?.name || 'School'} • {classroom.subject?.course?.name || 'Course'}
-                    </span>
-                    <h1 className="text-2xl sm:text-3xl font-bold text-zinc-900 tracking-tight">{classroom.subject?.name}</h1>
-                    <p className="text-zinc-500 mt-1 text-xs font-normal flex items-center gap-3">
-                        <span>Teacher: {classroom.teacher?.name}</span>
-                        <span className="text-zinc-300">•</span>
-                        <span>Section {classroom.section || 'N/A'} • {classroom.academic_year}</span>
+                    </Badge>
+                    <h1 className="text-3xl sm:text-4xl font-extrabold text-[#11221F] leading-tight tracking-tight">{classroom.subject?.name}</h1>
+                    <p className="text-slate-600 mt-2 font-semibold text-base flex items-center gap-3">
+                        <span className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-emerald-600 block"></span> Teacher: {classroom.teacher?.name}</span>
+                        <span className="opacity-40">•</span>
+                        <span className="flex items-center gap-2 text-slate-500"><span className="w-2 h-2 rounded-full bg-slate-400 block"></span> Year: {classroom.academic_year}</span>
                     </p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3">
-                    {/* Date Picker */}
-                    <div className="flex items-center">
+                <div className="flex flex-col md:flex-row items-end gap-4 mt-4 md:mt-0">
+                    <div className="flex flex-col items-start gap-1.5 focus-within:ring-2 rounded-full focus-within:ring-emerald-500/20 transition-all">
+                        <label className="text-[10px] font-black tracking-widest uppercase text-slate-400 ml-2">Evaluation Date</label>
                         <Popover>
                             <PopoverTrigger asChild>
                                 <Button
                                     variant={"outline"}
                                     className={cn(
-                                        "w-[200px] justify-start text-left font-medium rounded-xl border border-zinc-200 text-xs h-9 bg-white hover:bg-zinc-50 transition-colors shadow-none",
+                                        "w-[240px] justify-start text-left font-normal rounded-full border border-slate-200 shadow-xs h-11 bg-white hover:bg-slate-50 transition-colors focus-visible:ring-0",
                                         !selectedDate && "text-muted-foreground"
                                     )}
                                 >
-                                    <CalendarIcon className="mr-2 h-3.5 w-3.5 text-zinc-500" />
-                                    {selectedDate ? <span className="font-semibold text-zinc-800">{format(selectedDate, "MMM d, yyyy")}</span> : <span>Pick a date</span>}
+                                    <CalendarIcon className="mr-3 h-4 w-4 text-emerald-600" />
+                                    {selectedDate ? <span className="font-bold text-slate-800">{format(selectedDate, "PPP")}</span> : <span>Pick a date</span>}
                                 </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0 rounded-2xl border border-zinc-200 shadow-xl bg-white" align="end">
+                            <PopoverContent className="w-auto p-0 rounded-3xl border border-slate-100 shadow-2xl bg-white" align="end">
                                 <Calendar
                                     mode="single"
                                     selected={selectedDate}
@@ -477,116 +477,115 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                         </Popover>
                     </div>
 
-                    {/* Group A / Group B Segmented Control */}
-                    <div className="flex bg-zinc-100 p-1 rounded-xl border border-zinc-200/60">
+                    {/* Group A / Group B Subnavigation Toggle */}
+                    <div className="flex bg-slate-200/60 p-1.5 rounded-full w-full md:w-auto shadow-xs border border-slate-200/50">
                         <button
                             onClick={() => setActiveGroup('A')}
-                            className={`py-1.5 px-4 rounded-lg text-xs font-semibold transition-all ${activeGroup === 'A' ? 'bg-white text-zinc-900 shadow-xs' : 'text-zinc-500 hover:text-zinc-900'}`}
+                            className={`flex-1 md:w-32 py-2.5 rounded-full text-sm font-bold transition-all ${activeGroup === 'A' ? 'bg-emerald-700 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
                         >
                             Group A
                         </button>
                         <button
                             onClick={() => setActiveGroup('B')}
-                            className={`py-1.5 px-4 rounded-lg text-xs font-semibold transition-all ${activeGroup === 'B' ? 'bg-white text-zinc-900 shadow-xs' : 'text-zinc-500 hover:text-zinc-900'}`}
+                            className={`flex-1 md:w-32 py-2.5 rounded-full text-sm font-bold transition-all ${activeGroup === 'B' ? 'bg-emerald-700 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
                         >
                             Group B
                         </button>
                     </div>
-
-                    {isAdmin && (
-                        <Button onClick={() => setShowEnrollModal(true)} className="bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl flex items-center gap-1.5 font-medium px-3.5 h-9 text-xs shadow-xs">
-                            <UserPlus size={14} />
-                            Enroll Students
-                        </Button>
-                    )}
                 </div>
+
+                {isAdmin && (
+                    <Button onClick={() => setShowEnrollModal(true)} className="mt-4 md:mt-0 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 rounded-full flex items-center gap-2 font-bold px-6 h-12 transition-all hover:scale-[1.02]">
+                        <UserPlus className="w-5 h-5" />
+                        Enroll Students
+                    </Button>
+                )}
             </header>
 
-            {/* Compact Stat Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-6">
-                <div className="bg-white border border-zinc-200/80 rounded-xl p-4 flex items-center gap-3.5 shadow-xs">
-                    <div className="w-9 h-9 rounded-lg bg-zinc-50 text-zinc-600 flex items-center justify-center shrink-0 border border-zinc-100">
-                        <Users size={16} />
+            {/* Compact Stat Cards for Active Group */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                <div className="bg-white border border-slate-200/80 rounded-2xl shadow-xs hover:shadow-md transition-all flex items-center gap-4 px-5 py-4">
+                    <div className="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0 border border-emerald-100">
+                        <Users size={20} />
                     </div>
                     <div>
-                        <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Group {activeGroup} Enrolled</p>
-                        <p className="text-xl font-bold text-zinc-900 leading-tight">{stats.totalStudents}</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Group {activeGroup} Enrolled</p>
+                        <p className="text-2xl font-black text-[#11221F] leading-tight">{stats.totalStudents}</p>
                     </div>
                 </div>
-                <div className="bg-white border border-zinc-200/80 rounded-xl p-4 flex items-center gap-3.5 shadow-xs">
-                    <div className="w-9 h-9 rounded-lg bg-zinc-50 text-zinc-600 flex items-center justify-center shrink-0 border border-zinc-100">
-                        <BarChart size={16} />
+                <div className="bg-white border border-slate-200/80 rounded-2xl shadow-xs hover:shadow-md transition-all flex items-center gap-4 px-5 py-4">
+                    <div className="w-11 h-11 rounded-2xl bg-teal-50 text-teal-700 flex items-center justify-center shrink-0 border border-teal-100">
+                        <BarChart size={20} />
                     </div>
                     <div>
-                        <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Group {activeGroup} Avg</p>
-                        <p className="text-xl font-bold text-zinc-900 leading-tight">{stats.classAvg}</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Group {activeGroup} Avg</p>
+                        <p className="text-2xl font-black text-[#11221F] leading-tight">{stats.classAvg}</p>
                     </div>
                 </div>
-                <div className="bg-white border border-zinc-200/80 rounded-xl p-4 flex items-center gap-3.5 shadow-xs">
-                    <div className="w-9 h-9 rounded-lg bg-zinc-50 text-zinc-600 flex items-center justify-center shrink-0 border border-zinc-100">
-                        <CheckCircle2 size={16} />
+                <div className="bg-white border border-slate-200/80 rounded-2xl shadow-xs hover:shadow-md transition-all flex items-center gap-4 px-5 py-4">
+                    <div className="w-11 h-11 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center shrink-0 border border-amber-100">
+                        <CheckCircle2 size={20} />
                     </div>
                     <div>
-                        <p className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Group {activeGroup} Top Score</p>
-                        <p className="text-xl font-bold text-zinc-900 leading-tight">{stats.topScore}</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Group {activeGroup} Top</p>
+                        <p className="text-2xl font-black text-[#11221F] leading-tight">{stats.topScore}</p>
                     </div>
                 </div>
-            </div>
+            </div >
 
-            {/* Main Table / Heatmap Container */}
-            <div className="bg-white border border-zinc-200/80 rounded-2xl shadow-xs flex flex-col mb-10 overflow-hidden">
+            <div className="bg-white border border-slate-200/80 rounded-3xl shadow-xs flex flex-col mb-12 overflow-hidden">
                 {/* Tabs & Search Header */}
-                <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center border-b border-zinc-100 px-5 bg-zinc-50/50 gap-3">
-                    <div className="flex shrink-0 overflow-x-auto gap-6">
+                <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center border-b border-slate-200/70 px-6 py-3 bg-slate-50/70 gap-4">
+                    <div className="flex shrink-0 overflow-x-auto">
                         <button
                             onClick={() => setActiveTab('roster')}
-                            className={`py-3 text-xs font-semibold tracking-wide flex items-center gap-1.5 border-b-2 transition-all ${activeTab === 'roster' ? 'border-zinc-900 text-zinc-900' : 'border-transparent text-zinc-500 hover:text-zinc-800'}`}
+                            className={`px-5 py-3 font-bold text-sm tracking-wide flex items-center gap-2 border-b-[3px] transition-all ${activeTab === 'roster' ? 'border-emerald-600 text-emerald-700 font-extrabold' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
                         >
-                            <Users size={14} />
+                            <Users size={18} className={activeTab === 'roster' ? 'text-emerald-600' : ''} />
                             Student Roster
                         </button>
                         <button
                             onClick={() => setActiveTab('gradebook')}
-                            className={`py-3 text-xs font-semibold tracking-wide flex items-center gap-1.5 border-b-2 transition-all ${activeTab === 'gradebook' ? 'border-zinc-900 text-zinc-900' : 'border-transparent text-zinc-500 hover:text-zinc-800'}`}
+                            className={`px-5 py-3 font-bold text-sm tracking-wide flex items-center gap-2 border-b-[3px] transition-all ${activeTab === 'gradebook' ? 'border-emerald-600 text-emerald-700 font-extrabold' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
                         >
-                            <BookOpen size={14} />
+                            <BookOpen size={18} className={activeTab === 'gradebook' ? 'text-emerald-600' : ''} />
                             Gradebook
                         </button>
                         <button
                             onClick={() => setActiveTab('heatmap')}
-                            className={`py-3 text-xs font-semibold tracking-wide flex items-center gap-1.5 border-b-2 transition-all ${activeTab === 'heatmap' ? 'border-zinc-900 text-zinc-900' : 'border-transparent text-zinc-500 hover:text-zinc-800'}`}
+                            className={`px-5 py-3 font-bold text-sm tracking-wide flex items-center gap-2 border-b-[3px] transition-all ${activeTab === 'heatmap' ? 'border-emerald-600 text-emerald-700 font-extrabold' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
                         >
-                            <BarChart size={14} />
+                            <BarChart size={18} className={activeTab === 'heatmap' ? 'text-emerald-600' : ''} />
                             Performance Heatmap
                         </button>
                     </div>
 
-                    <div className="flex items-center gap-2.5 py-2">
+                    <div className="flex items-center gap-3">
                         {/* Live Search Input */}
-                        <div className="relative flex-1 sm:w-56">
-                            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
+                        <div className="relative flex-1 sm:w-64">
+                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                             <Input
                                 type="text"
-                                placeholder="Search student..."
+                                placeholder="Search by name or roll..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="h-8.5 pl-8 pr-7 bg-white border border-zinc-200 rounded-lg text-xs font-medium placeholder:text-zinc-400 focus-visible:ring-1 focus-visible:ring-zinc-900 shadow-none w-full"
+                                className="h-9 pl-9 pr-8 bg-white border border-slate-200 rounded-full text-xs font-semibold placeholder:text-slate-400 focus-visible:ring-1 focus-visible:ring-emerald-500 shadow-none w-full"
                             />
                             {searchQuery && (
                                 <button
                                     onClick={() => setSearchQuery("")}
-                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700"
+                                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
                                     aria-label="Clear search"
                                 >
-                                    <X className="w-3 h-3" />
+                                    <X className="w-3.5 h-3.5" />
                                 </button>
                             )}
                         </div>
 
-                        {/* Excel Export Button */}
+                        {/* Excel Export Button Integration */}
                         {activeTab !== 'heatmap' && (
-                            <Button onClick={() => setShowExportModal(true)} variant="outline" className="h-8.5 rounded-lg font-medium shadow-none flex items-center gap-1.5 text-zinc-700 border-zinc-200 hover:bg-zinc-50 shrink-0 text-xs">
-                                <Download size={13} /> Export
+                            <Button onClick={() => setShowExportModal(true)} variant="outline" className="h-9 rounded-full font-bold shadow-xs flex items-center gap-2 text-emerald-700 border-emerald-300 hover:bg-emerald-50 shrink-0 text-xs">
+                                <Download size={14} /> Export
                             </Button>
                         )}
                     </div>
@@ -596,8 +595,10 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                 <div className="p-0 flex-1 flex flex-col">
                     {displayedStudents.length === 0 ? (
                         <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">
-                            <Users size={24} className="text-zinc-300 mb-2" />
-                            <p className="text-zinc-500 font-medium text-xs mb-2">
+                            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm">
+                                <Users size={24} className="text-[#111827]/30" />
+                            </div>
+                            <p className="text-[#111827]/80 font-bold mb-2">
                                 {searchQuery || (activeTab === 'heatmap' && selectedGradeFilter !== 'ALL')
                                     ? "No students match your search or filter criteria."
                                     : `No students enrolled in Group ${activeGroup} yet.`}
@@ -610,23 +611,23 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                                         setSearchQuery("");
                                         setSelectedGradeFilter("ALL");
                                     }}
-                                    className="rounded-lg font-medium text-xs h-7 border-zinc-200 text-zinc-700 hover:bg-zinc-50"
+                                    className="rounded-full font-bold mt-2 text-xs"
                                 >
                                     Reset Filters
                                 </Button>
                             )}
                         </div>
                     ) : activeTab === 'heatmap' ? (
-                        <div className="p-6">
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5">
+                        <div className="p-8">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                                 {displayedStudents.map((s) => {
-                                    let colorClass = "bg-zinc-50 text-zinc-700 border-zinc-200/80"; // No Marks
+                                    let colorClass = "bg-slate-50 text-slate-700 border-slate-200/80"; // No Marks
 
                                     if (s.averageMarks !== null && s.averageMarks !== undefined) {
-                                        if (s.averageMarks >= 32) colorClass = "bg-emerald-50/70 text-emerald-950 border-emerald-200/80 hover:border-emerald-300";
-                                        else if (s.averageMarks >= 24) colorClass = "bg-sky-50/70 text-sky-950 border-sky-200/80 hover:border-sky-300";
-                                        else if (s.averageMarks >= 16) colorClass = "bg-amber-50/70 text-amber-950 border-amber-200/80 hover:border-amber-300";
-                                        else colorClass = "bg-rose-50/70 text-rose-950 border-rose-200/80 hover:border-rose-300";
+                                        if (s.averageMarks >= 32) colorClass = "bg-emerald-50 text-emerald-950 border-emerald-200 hover:border-emerald-400";
+                                        else if (s.averageMarks >= 24) colorClass = "bg-teal-50 text-teal-950 border-teal-200 hover:border-teal-400";
+                                        else if (s.averageMarks >= 16) colorClass = "bg-amber-50 text-amber-950 border-amber-200 hover:border-amber-400";
+                                        else colorClass = "bg-rose-50 text-rose-950 border-rose-200 hover:border-rose-400";
                                     }
 
                                     const evalCount = s.evaluations?.length || 0;
@@ -636,45 +637,45 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                                         <div
                                             key={s.student_id}
                                             onClick={() => setEvalHistoryStudent(s)}
-                                            className={`p-4 rounded-2xl border ${colorClass} flex flex-col justify-between aspect-square transition-all duration-200 hover:shadow-md cursor-pointer`}
+                                            className={`p-5 rounded-3xl border ${colorClass} flex flex-col justify-between aspect-square transition-all duration-300 hover:scale-[1.03] hover:-translate-y-1 shadow-xs hover:shadow-xl cursor-pointer`}
                                         >
                                             <div className="flex justify-between items-start">
-                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${getAvatarColor(s.name)} shadow-none`}>
+                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${getAvatarColor(s.name)} shadow-xs`}>
                                                     {getInitials(s.name)}
                                                 </div>
-                                                <div className="flex flex-col items-end gap-0.5">
-                                                    <span className="text-[11px] font-semibold text-zinc-600 bg-white/90 px-1.5 py-0.5 rounded font-mono border border-black/5">{s.roll_no}</span>
-                                                    <div className="flex items-center gap-1 text-[9px] font-medium text-zinc-500 bg-white/60 px-1 py-0.5 rounded">
+                                                <div className="flex flex-col items-end gap-1">
+                                                    <span className="text-xs font-bold opacity-80 bg-white/80 px-2 py-0.5 rounded-md backdrop-blur-xs font-mono">{s.roll_no}</span>
+                                                    <div className="flex items-center gap-1 text-[9px] font-bold opacity-70 bg-white/60 px-1.5 py-0.5 rounded">
                                                         <span>{evalCount} {evalCount === 1 ? 'eval' : 'evals'}</span>
                                                         {trend && trend.direction === 'up' && (
                                                             <span title={`Recent eval increased by +${trend.diff}`}>
-                                                                <TrendingUp className="w-2.5 h-2.5 text-emerald-600" />
+                                                                <TrendingUp className="w-3 h-3 text-emerald-700" />
                                                             </span>
                                                         )}
                                                         {trend && trend.direction === 'down' && (
                                                             <span title={`Recent eval decreased by -${trend.diff}`}>
-                                                                <TrendingDown className="w-2.5 h-2.5 text-rose-600" />
+                                                                <TrendingDown className="w-3 h-3 text-rose-700" />
                                                             </span>
                                                         )}
                                                         {trend && trend.direction === 'same' && (
                                                             <span title="Performance steady">
-                                                                <Minus className="w-2.5 h-2.5 text-zinc-500" />
+                                                                <Minus className="w-3 h-3 text-slate-600" />
                                                             </span>
                                                         )}
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="my-1">
-                                                <h3 className="font-semibold leading-snug line-clamp-2 text-zinc-900 text-xs">{s.name}</h3>
+                                            <div className="mt-2">
+                                                <h3 className="font-bold leading-tight line-clamp-2 text-[#11221F] text-[15px]">{s.name}</h3>
                                             </div>
-                                            <div className="flex justify-between items-end pt-1.5 border-t border-black/5">
-                                                <div className="flex flex-col items-start">
-                                                    <span className="text-xl font-bold leading-none text-zinc-900">{getGrade(s.averageMarks)}</span>
-                                                    <span className="text-[8px] uppercase tracking-wider font-semibold text-zinc-400 mt-0.5">Grade</span>
+                                            <div className="flex justify-between items-end mt-2 pt-2 border-t border-black/5">
+                                                <div className="flex flex-col items-start text-[#11221F]">
+                                                    <span className="text-2xl sm:text-3xl font-black leading-none">{getGrade(s.averageMarks)}</span>
+                                                    <span className="text-[9px] uppercase tracking-widest font-bold opacity-50 mt-1">Grade</span>
                                                 </div>
-                                                <div className="flex flex-col items-end">
-                                                    <span className="text-xl font-bold leading-none text-zinc-900">{s.averageMarks !== null ? s.averageMarks : '--'}</span>
-                                                    <span className="text-[8px] uppercase tracking-wider font-semibold text-zinc-400 mt-0.5">Avg Score</span>
+                                                <div className="text-2xl sm:text-3xl font-black flex flex-col items-end text-[#11221F]">
+                                                    <span className="leading-none">{s.averageMarks !== null ? s.averageMarks : '--'}</span>
+                                                    <span className="text-[9px] uppercase tracking-widest font-bold opacity-50 mt-1">Avg Score</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -682,18 +683,18 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                                 })}
                             </div>
 
-                            {/* Minimal Filter Legend */}
-                            <div className="mt-6 flex flex-wrap gap-2 text-xs text-zinc-600 items-center justify-center bg-zinc-50 py-2.5 px-4 rounded-xl border border-zinc-200/80">
-                                <span className="text-[10px] uppercase tracking-wider font-semibold text-zinc-400 mr-1 flex items-center gap-1">
-                                    <Filter size={11} /> Filter:
+                            {/* Clickable Interactive Legend Filters */}
+                            <div className="mt-8 flex flex-wrap gap-2 sm:gap-3 text-xs font-bold text-slate-600 items-center justify-center bg-slate-50/80 py-3 px-6 rounded-full border border-slate-200">
+                                <span className="text-[10px] uppercase tracking-wider font-extrabold text-slate-400 mr-1 flex items-center gap-1">
+                                    <Filter size={12} /> Filter:
                                 </span>
                                 
                                 <button
                                     onClick={() => setSelectedGradeFilter('ALL')}
-                                    className={`px-2.5 py-1 rounded-lg transition-all text-xs font-medium ${
+                                    className={`px-3.5 py-1.5 rounded-full transition-all text-xs font-bold ${
                                         selectedGradeFilter === 'ALL'
-                                            ? 'bg-zinc-900 text-white shadow-xs'
-                                            : 'bg-white hover:bg-zinc-100 text-zinc-700 border border-zinc-200'
+                                            ? 'bg-[#11221F] text-white shadow-xs'
+                                            : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
                                     }`}
                                 >
                                     All ({groupStudents.length})
@@ -701,50 +702,50 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
 
                                 <button
                                     onClick={() => setSelectedGradeFilter(selectedGradeFilter === 'A' ? 'ALL' : 'A')}
-                                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all text-xs font-medium ${
+                                    className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full transition-all text-xs font-bold ${
                                         selectedGradeFilter === 'A'
-                                            ? 'bg-emerald-600 text-white shadow-xs'
-                                            : 'bg-white hover:bg-emerald-50 text-zinc-700 border border-zinc-200'
+                                            ? 'bg-emerald-600 text-white shadow-xs ring-2 ring-emerald-500/40'
+                                            : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200'
                                     }`}
                                 >
-                                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                                    Grade A (&ge;32)
+                                    <div className={`w-2.5 h-2.5 rounded-full ${selectedGradeFilter === 'A' ? 'bg-white' : 'bg-emerald-500'}`}></div>
+                                    Grade A: &ge; 32 (High)
                                 </button>
 
                                 <button
                                     onClick={() => setSelectedGradeFilter(selectedGradeFilter === 'B' ? 'ALL' : 'B')}
-                                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all text-xs font-medium ${
+                                    className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full transition-all text-xs font-bold ${
                                         selectedGradeFilter === 'B'
-                                            ? 'bg-sky-600 text-white shadow-xs'
-                                            : 'bg-white hover:bg-sky-50 text-zinc-700 border border-zinc-200'
+                                            ? 'bg-teal-600 text-white shadow-xs ring-2 ring-teal-500/40'
+                                            : 'bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200'
                                     }`}
                                 >
-                                    <span className="w-2 h-2 rounded-full bg-sky-500"></span>
-                                    Grade B (24-31)
+                                    <div className={`w-2.5 h-2.5 rounded-full ${selectedGradeFilter === 'B' ? 'bg-white' : 'bg-teal-500'}`}></div>
+                                    Grade B: 24 - 31 (Avg)
                                 </button>
 
                                 <button
                                     onClick={() => setSelectedGradeFilter(selectedGradeFilter === 'C' ? 'ALL' : 'C')}
-                                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all text-xs font-medium ${
+                                    className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full transition-all text-xs font-bold ${
                                         selectedGradeFilter === 'C'
-                                            ? 'bg-amber-600 text-white shadow-xs'
-                                            : 'bg-white hover:bg-amber-50 text-zinc-700 border border-zinc-200'
+                                            ? 'bg-amber-600 text-white shadow-xs ring-2 ring-amber-500/40'
+                                            : 'bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200'
                                     }`}
                                 >
-                                    <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                                    Grade C (16-23)
+                                    <div className={`w-2.5 h-2.5 rounded-full ${selectedGradeFilter === 'C' ? 'bg-white' : 'bg-amber-500'}`}></div>
+                                    Grade C: 16 - 23 (Low)
                                 </button>
 
                                 <button
                                     onClick={() => setSelectedGradeFilter(selectedGradeFilter === 'D' ? 'ALL' : 'D')}
-                                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all text-xs font-medium ${
+                                    className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full transition-all text-xs font-bold ${
                                         selectedGradeFilter === 'D'
-                                            ? 'bg-rose-600 text-white shadow-xs'
-                                            : 'bg-white hover:bg-rose-50 text-zinc-700 border border-zinc-200'
+                                            ? 'bg-rose-600 text-white shadow-xs ring-2 ring-rose-500/40'
+                                            : 'bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200'
                                     }`}
                                 >
-                                    <span className="w-2 h-2 rounded-full bg-rose-500"></span>
-                                    Grade D (&lt;16)
+                                    <div className={`w-2.5 h-2.5 rounded-full ${selectedGradeFilter === 'D' ? 'bg-white' : 'bg-rose-500'}`}></div>
+                                    Grade D: &lt; 16 (Critical)
                                 </button>
                             </div>
                         </div>
@@ -752,40 +753,40 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                         <div className="overflow-x-auto bg-white">
                             <Table className="w-full text-left">
                                 <TableHeader>
-                                    <TableRow className="bg-zinc-50/80 border-b border-zinc-100 hover:bg-zinc-50/80">
-                                        <TableHead className="py-3 px-6 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Roll No</TableHead>
-                                        <TableHead className="py-3 px-6 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">Student Name</TableHead>
+                                    <TableRow className="bg-slate-50/80 border-b border-slate-200/80 hover:bg-slate-50/80">
+                                        <TableHead className="py-4 px-8 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Roll No</TableHead>
+                                        <TableHead className="py-4 px-8 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Student Name</TableHead>
                                         {activeTab === 'roster' ? (
                                             <>
-                                                {isAdmin && <TableHead className="py-3 px-6 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider text-right">Action</TableHead>}
+                                                {isAdmin && <TableHead className="py-4 px-8 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Admin Action</TableHead>}
                                             </>
                                         ) : (
                                             <>
-                                                <TableHead className="py-3 px-6 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider text-center">Status</TableHead>
-                                                <TableHead className="py-3 px-6 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider text-center">Daily Score</TableHead>
-                                                {!isAdmin && <TableHead className="py-3 px-6 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider text-right">Evaluate</TableHead>}
+                                                <TableHead className="py-4 px-8 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Status</TableHead>
+                                                <TableHead className="py-4 px-8 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Daily Score</TableHead>
+                                                {!isAdmin && <TableHead className="py-4 px-8 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Evaluate</TableHead>}
                                             </>
                                         )}
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {displayedStudents.map((s) => (
-                                        <TableRow key={s.student_id} className="hover:bg-zinc-50/50 transition-colors border-b border-zinc-100 group">
-                                            <TableCell className="py-3 px-6 text-zinc-500 font-mono font-medium text-xs">{s.roll_no}</TableCell>
-                                            <TableCell className="py-3 px-6">
-                                                <div className="flex items-center gap-2.5">
-                                                    <div className={`w-7 h-7 rounded-full flex items-center justify-center font-semibold text-[11px] shrink-0 ${getAvatarColor(s.name)}`}>
+                                        <TableRow key={s.student_id} className="hover:bg-emerald-50/20 transition-colors border-b border-slate-100 group">
+                                            <TableCell className="py-4 px-8 text-slate-500 font-mono font-bold text-xs">{s.roll_no}</TableCell>
+                                            <TableCell className="py-4 px-8">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shadow-xs shrink-0 ${getAvatarColor(s.name)}`}>
                                                         {getInitials(s.name)}
                                                     </div>
-                                                    <span className="font-medium text-xs text-zinc-900">{s.name}</span>
+                                                    <span className="font-bold text-[#11221F]">{s.name}</span>
                                                 </div>
                                             </TableCell>
                                             {activeTab === 'roster' ? (
                                                 <>
                                                     {isAdmin && (
-                                                        <TableCell className="py-3 px-6 text-right">
-                                                            <Button variant="ghost" size="icon" onClick={() => setEnrollmentToDelete(s.enrollment_id)} className="text-zinc-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg w-7 h-7" title="Remove Student">
-                                                                <Trash2 size={14} />
+                                                        <TableCell className="py-4 px-8 text-right">
+                                                            <Button variant="ghost" size="icon" onClick={() => setEnrollmentToDelete(s.enrollment_id)} className="text-slate-400 hover:text-rose-600 transition-colors rounded-full hover:bg-rose-50" title="Remove Student">
+                                                                <Trash2 size={16} />
                                                             </Button>
                                                         </TableCell>
                                                     )}
@@ -798,33 +799,25 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                                                         
                                                         return (
                                                             <>
-                                                                <TableCell className="py-3 px-6 text-center font-medium text-zinc-500">
-                                                                    {evForDate ? (
-                                                                        <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md text-[11px] font-medium border border-emerald-200/60">
-                                                                            <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Graded
-                                                                        </span>
-                                                                    ) : (
-                                                                        <span className="text-zinc-400 text-xs font-normal">Pending</span>
-                                                                    )}
+                                                                <TableCell className="py-4 px-8 text-center font-bold text-slate-500">
+                                                                    {evForDate ? <div className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full text-xs font-bold border border-emerald-200"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Graded</div> : <div className="text-amber-600 text-xs font-semibold">Pending</div>}
                                                                 </TableCell>
-                                                                <TableCell className="py-3 px-6 text-center">
-                                                                    <span className="font-bold text-base text-zinc-900">{dateTotal !== null ? dateTotal : '--'}</span>
+                                                                <TableCell className="py-4 px-8 text-center">
+                                                                    <span className="font-black text-xl text-emerald-700">{dateTotal !== null ? dateTotal : '--'}</span>
                                                                 </TableCell>
                                                                 {!isAdmin && (
-                                                                    <TableCell className="py-3 px-6 text-right">
+                                                                    <TableCell className="py-4 px-8 text-right">
                                                                         {isInvalidDate ? (
-                                                                            <span className="text-[10px] font-medium text-zinc-400 uppercase tracking-wider bg-zinc-100 px-2 py-1 rounded-md inline-flex items-center gap-1">
-                                                                                <CalendarIcon size={11}/> {isFutureDate() ? 'Future Locked' : 'Weekend Locked'}
+                                                                            <span className="text-[10px] font-bold text-amber-600 uppercase tracking-widest bg-amber-50 px-3 py-1.5 rounded-full inline-flex items-center gap-1 border border-amber-200">
+                                                                                <CalendarIcon size={12}/> {isFutureDate() ? 'Future Locked' : 'Weekend Locked'}
                                                                             </span>
                                                                         ) : (
                                                                             <Button
                                                                                 size="sm"
                                                                                 onClick={() => { setEvalStudent(s); setShowEvalModal(true); }}
-                                                                                className={evForDate 
-                                                                                    ? "text-zinc-700 bg-white border border-zinc-200 hover:bg-zinc-50 rounded-lg font-medium text-xs h-7 px-2.5 shadow-none inline-flex items-center gap-1" 
-                                                                                    : "text-white bg-zinc-900 hover:bg-zinc-800 rounded-lg font-medium text-xs h-7 px-2.5 shadow-xs inline-flex items-center gap-1"}
+                                                                                className={evForDate ? "text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors rounded-full font-bold shadow-xs inline-flex items-center gap-1 px-4 text-xs" : "text-white bg-emerald-600 hover:bg-emerald-700 transition-all rounded-full font-bold shadow-sm shadow-emerald-600/20 inline-flex items-center gap-1 px-4 text-xs"}
                                                                             >
-                                                                                <Plus size={13} /> {evForDate ? 'Edit' : 'Add Eval'}
+                                                                                <Plus size={15} /> {evForDate ? 'Edit Eval' : 'Add Eval'}
                                                                             </Button>
                                                                         )}
                                                                     </TableCell>
@@ -843,63 +836,65 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                 </div>
             </div>
 
-            {/* Evaluation Entry Modal */}
             <Dialog open={showEvalModal} onOpenChange={(open) => { if (!open) { setShowEvalModal(false); setEvalStudent(null); } }}>
-                <DialogContent className="sm:max-w-sm rounded-2xl p-6 border border-zinc-200 shadow-xl bg-white">
-                    <DialogHeader className="mb-2 pb-3 border-b border-zinc-100">
-                        <DialogTitle className="text-lg font-bold text-zinc-900">Score Evaluation</DialogTitle>
+                <DialogContent className="sm:max-w-sm rounded-3xl p-8 border border-slate-100 shadow-2xl bg-white relative">
+                    <div className="absolute top-0 left-0 bg-emerald-700 text-white px-5 py-2.5 rounded-br-2xl font-bold flex items-center gap-2 shadow-xs text-xs uppercase tracking-wider">
+                        Evaluation
+                    </div>
+                    <DialogHeader className="mb-2 mt-6 border-b border-slate-100 pb-4">
+                        <DialogTitle className="text-2xl font-extrabold text-[#11221F]">Score Evaluation</DialogTitle>
                     </DialogHeader>
 
                     {evalStudent && (
-                        <div className="mb-2 bg-zinc-50 p-3 rounded-xl border border-zinc-100 flex items-center gap-3">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${getAvatarColor(evalStudent.name)}`}>
+                        <div className="mb-1 bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center gap-4">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shadow-xs ${getAvatarColor(evalStudent.name)}`}>
                                 {getInitials(evalStudent.name)}
                             </div>
                             <div>
-                                <p className="font-semibold text-xs text-zinc-900 line-clamp-1">{evalStudent.name}</p>
-                                <span className="text-[10px] text-zinc-400 font-mono">{evalStudent.roll_no}</span>
+                                <p className="font-bold text-[#11221F] line-clamp-1">{evalStudent.name}</p>
+                                <span className="text-xs uppercase font-bold text-slate-400 tracking-widest">{evalStudent.roll_no}</span>
                             </div>
                         </div>
                     )}
 
-                    <form key={(evalStudent?.student_id || '') + format(selectedDate, 'yyyy-MM-dd')} onSubmit={handleAddEval} className="space-y-4 pt-1">
+                    <form key={(evalStudent?.student_id || '') + format(selectedDate, 'yyyy-MM-dd')} onSubmit={handleAddEval} className="space-y-5 pt-2">
                         {(() => {
                             const currentEval = evalStudent ? getEvalForDate(evalStudent.evaluations) : null;
                             return (
                                 <>
-                                    <div className="space-y-1">
-                                        <label className="text-xs font-semibold text-zinc-700">Evaluation Title</label>
-                                        <Input required name="eval_name" defaultValue={currentEval?.eval_name || ''} placeholder={`e.g. Daily Evaluation - ${format(selectedDate, 'MMM d')}`} className="h-9 rounded-lg bg-zinc-50 border border-zinc-200 text-xs font-medium px-3 focus-visible:ring-1 focus-visible:ring-zinc-900" />
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-bold text-[#11221F] uppercase tracking-wider ml-1">Evaluation Title</label>
+                                        <Input required name="eval_name" defaultValue={currentEval?.eval_name || ''} placeholder={`e.g. Daily Evaluation - ${format(selectedDate, 'MMM d')}`} className="h-11 rounded-full bg-slate-50 border border-slate-200 shadow-xs focus-visible:ring-2 focus-visible:ring-emerald-500 font-semibold px-4 text-xs" />
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-2.5">
-                                        <div className="space-y-1">
-                                            <label className="block text-[10px] font-semibold text-zinc-500 uppercase tracking-wider line-clamp-1">Fundamental</label>
-                                            <Input required name="fundamental_knowledge" defaultValue={currentEval?.fundamental_knowledge ?? ''} type="number" step="0.5" max="10" min="0" placeholder="0-10" className="h-10 text-base font-bold bg-zinc-50 border border-zinc-200 rounded-lg text-center focus-visible:ring-1 focus-visible:ring-zinc-900" />
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="space-y-1.5 focus-within:text-emerald-700 transition-colors">
+                                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest line-clamp-1 ml-1" title="Fundamental Knowledge">Fundamental</label>
+                                            <Input required name="fundamental_knowledge" defaultValue={currentEval?.fundamental_knowledge ?? ''} type="number" step="0.5" max="10" min="0" placeholder="0-10" className="h-12 text-lg font-black bg-slate-50 border border-slate-200 shadow-xs rounded-2xl focus-visible:ring-2 focus-visible:ring-emerald-500 text-center" />
                                         </div>
-                                        <div className="space-y-1">
-                                            <label className="block text-[10px] font-semibold text-zinc-500 uppercase tracking-wider line-clamp-1">Core Skills</label>
-                                            <Input required name="core_skills" defaultValue={currentEval?.core_skills ?? ''} type="number" step="0.5" max="10" min="0" placeholder="0-10" className="h-10 text-base font-bold bg-zinc-50 border border-zinc-200 rounded-lg text-center focus-visible:ring-1 focus-visible:ring-zinc-900" />
+                                        <div className="space-y-1.5 focus-within:text-emerald-700 transition-colors">
+                                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest line-clamp-1 ml-1" title="Core/Technical Skills">Core Skills</label>
+                                            <Input required name="core_skills" defaultValue={currentEval?.core_skills ?? ''} type="number" step="0.5" max="10" min="0" placeholder="0-10" className="h-12 text-lg font-black bg-slate-50 border border-slate-200 shadow-xs rounded-2xl focus-visible:ring-2 focus-visible:ring-emerald-500 text-center" />
                                         </div>
-                                        <div className="space-y-1">
-                                            <label className="block text-[10px] font-semibold text-zinc-500 uppercase tracking-wider line-clamp-1">Communication</label>
-                                            <Input required name="communication_skills" defaultValue={currentEval?.communication_skills ?? ''} type="number" step="0.5" max="10" min="0" placeholder="0-10" className="h-10 text-base font-bold bg-zinc-50 border border-zinc-200 rounded-lg text-center focus-visible:ring-1 focus-visible:ring-zinc-900" />
+                                        <div className="space-y-1.5 focus-within:text-emerald-700 transition-colors">
+                                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest line-clamp-1 ml-1" title="Communication Skills">Communication</label>
+                                            <Input required name="communication_skills" defaultValue={currentEval?.communication_skills ?? ''} type="number" step="0.5" max="10" min="0" placeholder="0-10" className="h-12 text-lg font-black bg-slate-50 border border-slate-200 shadow-xs rounded-2xl focus-visible:ring-2 focus-visible:ring-emerald-500 text-center" />
                                         </div>
-                                        <div className="space-y-1">
-                                            <label className="block text-[10px] font-semibold text-zinc-500 uppercase tracking-wider line-clamp-1">Soft Skills</label>
-                                            <Input required name="soft_skills" defaultValue={currentEval?.soft_skills ?? ''} type="number" step="0.5" max="10" min="0" placeholder="0-10" className="h-10 text-base font-bold bg-zinc-50 border border-zinc-200 rounded-lg text-center focus-visible:ring-1 focus-visible:ring-zinc-900" />
+                                        <div className="space-y-1.5 focus-within:text-emerald-700 transition-colors">
+                                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest line-clamp-1 ml-1" title="Soft and Life Skills">Soft Skills</label>
+                                            <Input required name="soft_skills" defaultValue={currentEval?.soft_skills ?? ''} type="number" step="0.5" max="10" min="0" placeholder="0-10" className="h-12 text-lg font-black bg-slate-50 border border-slate-200 shadow-xs rounded-2xl focus-visible:ring-2 focus-visible:ring-emerald-500 text-center" />
                                         </div>
                                     </div>
                                 </>
                             );
                         })()}
 
-                        <DialogFooter className="pt-3 sm:justify-end gap-2 border-t border-zinc-100">
-                            <Button type="button" variant="ghost" onClick={() => { setShowEvalModal(false); setEvalStudent(null); }} className="rounded-lg h-9 px-3.5 text-zinc-600 font-medium text-xs hover:bg-zinc-100">
+                        <DialogFooter className="pt-6 sm:justify-end gap-3 mt-4 border-t border-slate-100">
+                            <Button type="button" variant="ghost" onClick={() => { setShowEvalModal(false); setEvalStudent(null); }} className="rounded-full h-11 px-6 text-slate-600 font-bold hover:bg-slate-100 shadow-xs text-xs">
                                 Cancel
                             </Button>
-                            <Button type="submit" disabled={loading} className="rounded-lg h-9 px-4 bg-zinc-900 hover:bg-zinc-800 text-white font-medium text-xs shadow-xs">
-                                {loading && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
+                            <Button type="submit" disabled={loading} className="rounded-full h-11 px-8 bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-md shadow-emerald-600/20 transition-all text-xs">
+                                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 {loading ? 'Saving...' : 'Save Evaluation'}
                             </Button>
                         </DialogFooter>
@@ -909,116 +904,120 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
 
             {/* Excel Export Configuration Modal */}
             <Dialog open={showExportModal} onOpenChange={setShowExportModal}>
-                <DialogContent className="sm:max-w-md rounded-2xl p-6 border border-zinc-200 shadow-xl bg-white">
-                    <DialogHeader className="mb-3 pb-2 border-b border-zinc-100">
-                        <DialogTitle className="text-lg font-bold text-zinc-900">Export to Excel</DialogTitle>
-                        <DialogDescription className="text-zinc-500 text-xs">Generate .XLSX spreadsheet data</DialogDescription>
+                <DialogContent className="sm:max-w-md rounded-3xl p-8 border border-slate-100 shadow-2xl bg-white">
+                    <DialogHeader className="mb-4">
+                        <DialogTitle className="text-2xl font-extrabold text-[#11221F]">Export Data to Excel</DialogTitle>
+                        <DialogDescription className="font-bold text-slate-400 mt-1 uppercase tracking-widest text-[10px]">Generate localized .XLSX spreadsheets</DialogDescription>
                     </DialogHeader>
 
-                    <div className="space-y-4">
-                        <div className="space-y-2">
-                            <label className="text-xs font-semibold text-zinc-700">Export Mode</label>
-                            <div className="grid grid-cols-2 gap-3">
-                                <label className={`border p-3 rounded-xl cursor-pointer transition-all ${exportMode === 'all' ? 'border-zinc-900 bg-zinc-50' : 'border-zinc-200 hover:bg-zinc-50'}`}>
-                                    <div className="flex items-center gap-2 mb-0.5">
-                                        <input type="radio" value="all" checked={exportMode === 'all'} onChange={() => setExportMode('all')} className="accent-zinc-900" />
-                                        <span className="font-semibold text-zinc-900 text-xs">Full Matrix</span>
+                    <div className="space-y-6">
+                        <div className="space-y-3">
+                            <label className="text-xs font-bold text-[#11221F] uppercase tracking-wider">Export Format Mode</label>
+                            <div className="flex gap-4">
+                                <label className={`flex-1 border p-4 rounded-2xl cursor-pointer transition-all ${exportMode === 'all' ? 'border-emerald-500 bg-emerald-50/60 shadow-xs ring-1 ring-emerald-400/40' : 'border-slate-200 hover:bg-slate-50'}`}>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <input type="radio" value="all" checked={exportMode === 'all'} onChange={() => setExportMode('all')} className="accent-emerald-600" />
+                                        <span className="font-bold text-[#11221F] text-sm">Full Matrix</span>
                                     </div>
-                                    <p className="text-[10px] text-zinc-500 ml-5">All evaluations parsed.</p>
+                                    <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider leading-tight ml-5">Every daily evaluation individually parsed.</p>
                                 </label>
-                                <label className={`border p-3 rounded-xl cursor-pointer transition-all ${exportMode === 'average' ? 'border-zinc-900 bg-zinc-50' : 'border-zinc-200 hover:bg-zinc-50'}`}>
-                                    <div className="flex items-center gap-2 mb-0.5">
-                                        <input type="radio" value="average" checked={exportMode === 'average'} onChange={() => setExportMode('average')} className="accent-zinc-900" />
-                                        <span className="font-semibold text-zinc-900 text-xs">Top-N Average</span>
+                                <label className={`flex-1 border p-4 rounded-2xl cursor-pointer transition-all ${exportMode === 'average' ? 'border-emerald-500 bg-emerald-50/60 shadow-xs ring-1 ring-emerald-400/40' : 'border-slate-200 hover:bg-slate-50'}`}>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <input type="radio" value="average" checked={exportMode === 'average'} onChange={() => setExportMode('average')} className="accent-emerald-600" />
+                                        <span className="font-bold text-[#11221F] text-sm">Top-N Average</span>
                                     </div>
-                                    <p className="text-[10px] text-zinc-500 ml-5">Averages top scores.</p>
+                                    <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider leading-tight ml-5">Averages specific highest scoring entries.</p>
                                 </label>
                             </div>
                         </div>
 
                         {exportMode === 'average' && (
-                            <div className="space-y-1.5 bg-zinc-50 p-3 rounded-xl border border-zinc-200">
-                                <label className="text-[10px] font-semibold text-zinc-500 uppercase block">Number of top evaluations</label>
+                            <div className="space-y-2 animate-in fade-in slide-in-from-top-2 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                                <label className="text-center text-[10px] font-black tracking-widest text-slate-500 uppercase block mb-2">Extract Highest 'N' Outcomes</label>
                                 <Input 
                                     type="number" 
                                     min="1" 
                                     value={exportTopN} 
                                     onChange={(e) => setExportTopN(parseInt(e.target.value) || 1)} 
-                                    className="h-9 rounded-lg bg-white border-zinc-200 text-center font-bold text-sm focus-visible:ring-1 focus-visible:ring-zinc-900"
+                                    className="h-12 rounded-xl bg-white border-slate-200 shadow-xs font-black text-center text-xl focus-visible:ring-2 focus-visible:ring-emerald-500 transition-all"
                                 />
+                                <p className="text-center text-[10px] font-bold text-slate-400 mt-2">Will structurally sort and average the {exportTopN || 1} highest evaluations per student.</p>
                             </div>
                         )}
                     </div>
                     
-                    <DialogFooter className="mt-5 pt-3 border-t border-zinc-100 gap-2">
-                        <Button variant="ghost" onClick={() => setShowExportModal(false)} className="rounded-lg h-9 px-3.5 font-medium text-zinc-600 hover:bg-zinc-100 text-xs">Cancel</Button>
-                        <Button onClick={handleExport} className="rounded-lg h-9 px-4 bg-zinc-900 text-white hover:bg-zinc-800 font-medium shadow-xs flex items-center gap-1.5 text-xs">
-                            <Download size={13} /> Generate .XLSX
+                    <DialogFooter className="mt-8 pt-5 border-t border-slate-100 gap-3">
+                        <Button variant="ghost" onClick={() => setShowExportModal(false)} className="rounded-full h-11 px-6 font-bold text-slate-600 hover:bg-slate-50 transition-colors text-xs">Cancel</Button>
+                        <Button onClick={handleExport} className="rounded-full h-11 px-8 bg-emerald-600 text-white hover:bg-emerald-700 font-bold shadow-md shadow-emerald-600/20 flex items-center gap-2 transition-all hover:scale-[1.02] text-xs">
+                            <Download size={15} /> Generate .XLSX
                         </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
 
-            {/* Student Evaluation History Modal */}
             <Dialog open={!!evalHistoryStudent} onOpenChange={(open) => { if (!open) setEvalHistoryStudent(null) }}>
-                <DialogContent className="sm:max-w-2xl rounded-2xl p-6 border border-zinc-200 shadow-xl overflow-hidden max-h-[85vh] flex flex-col bg-white">
+                <DialogContent className="sm:max-w-2xl rounded-3xl p-8 border border-slate-100 shadow-2xl overflow-hidden max-h-[85vh] flex flex-col bg-white relative">
+                    <div className="absolute top-0 right-0 bg-emerald-700 text-white px-5 py-2.5 rounded-bl-2xl font-bold flex items-center gap-2 shadow-xs text-xs uppercase tracking-wider">
+                        History
+                    </div>
                     {evalHistoryStudent && (
                         <>
-                            <DialogHeader className="flex flex-row justify-between items-start mb-2 shrink-0 border-b border-zinc-100 pb-4">
-                                <div className="flex items-center gap-3.5">
-                                    <div className={`w-11 h-11 rounded-full flex items-center justify-center font-bold text-sm ${getAvatarColor(evalHistoryStudent.name)}`}>
+                            <DialogHeader className="flex flex-row justify-between items-start mb-2 shrink-0 border-b border-slate-100 pb-6 mt-4">
+                                <div className="flex items-center gap-5">
+                                    <div className={`w-14 h-14 rounded-full flex items-center justify-center font-bold text-xl shadow-xs ${getAvatarColor(evalHistoryStudent.name)}`}>
                                         {getInitials(evalHistoryStudent.name)}
                                     </div>
                                     <div>
-                                        <div className="flex items-center gap-2 flex-wrap">
-                                            <DialogTitle className="text-xl font-bold text-zinc-900">{evalHistoryStudent.name}</DialogTitle>
-                                            <span className="font-mono text-xs bg-zinc-100 text-zinc-600 px-1.5 py-0.5 rounded border border-zinc-200">{evalHistoryStudent.roll_no}</span>
+                                        <div className="flex items-center gap-3 flex-wrap">
+                                            <DialogTitle className="text-2xl sm:text-3xl font-extrabold text-[#11221F] leading-none">{evalHistoryStudent.name}</DialogTitle>
+                                            <Badge variant="secondary" className="font-mono bg-slate-100 text-slate-600 rounded-md py-0 shadow-xs border border-slate-200">{evalHistoryStudent.roll_no}</Badge>
                                             {evalHistoryStudent.averageMarks !== null && (
-                                                <span className="bg-zinc-100 text-zinc-800 font-semibold text-xs border border-zinc-200 px-2 py-0.5 rounded-md">
+                                                <Badge variant="secondary" className="bg-emerald-50 text-emerald-800 font-bold border border-emerald-200 px-2.5 py-0.5">
                                                     Grade {getGrade(evalHistoryStudent.averageMarks)} ({evalHistoryStudent.averageMarks} Avg)
-                                                </span>
+                                                </Badge>
                                             )}
                                         </div>
-                                        <DialogDescription className="text-zinc-400 text-xs mt-0.5">Evaluation History</DialogDescription>
+                                        <DialogDescription className="font-bold text-slate-400 mt-1.5 uppercase tracking-widest text-[10px]">Performance History</DialogDescription>
                                     </div>
                                 </div>
                             </DialogHeader>
 
-                            <div className="overflow-y-auto pr-1 space-y-3 flex-1 mt-2">
+                            <div className="overflow-y-auto pr-2 space-y-4 flex-1 mt-4">
                                 {!evalHistoryStudent.evaluations || evalHistoryStudent.evaluations.length === 0 ? (
-                                    <div className="py-10 text-center text-zinc-400 font-medium text-xs bg-zinc-50 rounded-xl border border-dashed border-zinc-200">
+                                    <div className="py-12 text-center text-slate-400 font-bold bg-slate-50 rounded-2xl border border-dashed border-slate-200">
                                         No evaluations recorded for this student yet.
                                     </div>
                                 ) : (
                                     evalHistoryStudent.evaluations.map((ev, i) => {
                                         const total = (ev.fundamental_knowledge || 0) + (ev.core_skills || 0) + (ev.communication_skills || 0) + (ev.soft_skills || 0);
                                         return (
-                                            <Card key={ev.id || i} className="border border-zinc-200/80 bg-zinc-50/50 rounded-xl shadow-none p-3.5">
-                                                <CardHeader className="flex flex-row justify-between items-center pb-2 p-0 border-b border-zinc-100">
-                                                    <CardTitle className="text-xs font-semibold text-zinc-900">
+                                            <Card key={ev.id || i} className="border border-slate-200/80 bg-slate-50/50 rounded-2xl shadow-xs hover:shadow-md transition-all py-2 px-1">
+                                                <CardHeader className="flex flex-row justify-between items-center pb-3 border-b border-slate-100">
+                                                    <CardTitle className="text-base font-extrabold text-[#11221F] flex items-center gap-3 m-0 p-0">
+                                                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
                                                         {ev.eval_name}
                                                     </CardTitle>
-                                                    <div className="flex items-baseline gap-1 text-zinc-900 bg-white px-2.5 py-0.5 rounded-md border border-zinc-200">
-                                                        <span className="font-bold text-sm text-zinc-900">{total.toFixed(1)}</span>
-                                                        <span className="text-[10px] text-zinc-400">/ 40</span>
+                                                    <div className="flex items-baseline gap-1 text-[#11221F] bg-white px-3 py-1 rounded-full border border-slate-200 shadow-xs">
+                                                        <span className="font-extrabold text-lg text-emerald-700">{total.toFixed(1)}</span>
+                                                        <span className="text-xs font-bold text-slate-400">/ 40</span>
                                                     </div>
                                                 </CardHeader>
-                                                <CardContent className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-3 pb-0 p-0">
-                                                    <div className="bg-white rounded-lg p-2 border border-zinc-100">
-                                                        <p className="text-[9px] font-semibold text-zinc-400 uppercase">Fundamental</p>
-                                                        <p className="font-bold text-xs text-zinc-900 mt-0.5">{ev.fundamental_knowledge || 0} <span className="text-zinc-400 font-normal text-[10px]">/ 10</span></p>
+                                                <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-4 pb-2">
+                                                    <div className="bg-white rounded-xl p-3 border border-slate-100 shadow-xs">
+                                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Fundamental</p>
+                                                        <p className="font-black text-base text-[#11221F]">{ev.fundamental_knowledge || 0} <span className="text-slate-400 font-bold text-xs">/ 10</span></p>
                                                     </div>
-                                                    <div className="bg-white rounded-lg p-2 border border-zinc-100">
-                                                        <p className="text-[9px] font-semibold text-zinc-400 uppercase">Core Skills</p>
-                                                        <p className="font-bold text-xs text-zinc-900 mt-0.5">{ev.core_skills || 0} <span className="text-zinc-400 font-normal text-[10px]">/ 10</span></p>
+                                                    <div className="bg-white rounded-xl p-3 border border-slate-100 shadow-xs">
+                                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Core Skills</p>
+                                                        <p className="font-black text-base text-[#11221F]">{ev.core_skills || 0} <span className="text-slate-400 font-bold text-xs">/ 10</span></p>
                                                     </div>
-                                                    <div className="bg-white rounded-lg p-2 border border-zinc-100">
-                                                        <p className="text-[9px] font-semibold text-zinc-400 uppercase">Communication</p>
-                                                        <p className="font-bold text-xs text-zinc-900 mt-0.5">{ev.communication_skills || 0} <span className="text-zinc-400 font-normal text-[10px]">/ 10</span></p>
+                                                    <div className="bg-white rounded-xl p-3 border border-slate-100 shadow-xs">
+                                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Communication</p>
+                                                        <p className="font-black text-base text-[#11221F]">{ev.communication_skills || 0} <span className="text-slate-400 font-bold text-xs">/ 10</span></p>
                                                     </div>
-                                                    <div className="bg-white rounded-lg p-2 border border-zinc-100">
-                                                        <p className="text-[9px] font-semibold text-zinc-400 uppercase">Soft Skills</p>
-                                                        <p className="font-bold text-xs text-zinc-900 mt-0.5">{ev.soft_skills || 0} <span className="text-zinc-400 font-normal text-[10px]">/ 10</span></p>
+                                                    <div className="bg-white rounded-xl p-3 border border-slate-100 shadow-xs">
+                                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Soft Skills</p>
+                                                        <p className="font-black text-base text-[#11221F]">{ev.soft_skills || 0} <span className="text-slate-400 font-bold text-xs">/ 10</span></p>
                                                     </div>
                                                 </CardContent>
                                             </Card>
@@ -1030,64 +1029,69 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                     )}
                 </DialogContent>
             </Dialog>
-
-            {/* Batch Enrollment Modal */}
             <Dialog open={showEnrollModal} onOpenChange={(open) => {
                 setShowEnrollModal(open);
                 if (!open) setSelectedStudentIds([]);
             }}>
-                <DialogContent className="sm:max-w-lg rounded-2xl p-6 md:p-8 border border-zinc-200 shadow-xl bg-white">
-                    <DialogHeader className="border-b border-zinc-100 pb-3">
-                        <DialogTitle className="text-xl font-bold text-zinc-900 flex items-center gap-2">
-                            <Users size={20} className="text-zinc-700" />
-                            Batch Enroll Students
+                <DialogContent className="sm:max-w-xl rounded-3xl p-8 md:p-10 border border-slate-100 shadow-2xl bg-white relative">
+                    <div className="absolute top-0 left-0 bg-emerald-700 text-white px-5 py-2.5 rounded-br-2xl font-bold flex items-center gap-2 shadow-xs text-xs uppercase tracking-wider">
+                        Enrollment
+                    </div>
+                    <DialogHeader className="mt-6 border-b border-slate-100 pb-4">
+                        <DialogTitle className="text-2xl sm:text-3xl font-extrabold text-[#11221F] flex items-center gap-3">
+                            <Users size={26} className="text-emerald-600" />
+                            Batch Enroll
                         </DialogTitle>
-                        <DialogDescription className="text-zinc-500 text-xs">
-                            Manage student roster for Section {classroom?.section}.
+                        <DialogDescription className="pt-1.5 text-slate-500 font-semibold text-xs">
+                            Administer student roster for Section {classroom?.section}.
                         </DialogDescription>
                     </DialogHeader>
 
-                    <form onSubmit={handleEnrollSubmit} className="space-y-4 mt-3">
-                        <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-zinc-700">1. Target Enrollment Group</label>
-                            <div className="flex bg-zinc-100 p-1 rounded-xl w-full border border-zinc-200/60">
+                    <form onSubmit={handleEnrollSubmit} className="space-y-6 mt-4">
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-[#11221F] uppercase tracking-widest ml-1">1. Target Enrollment Group</label>
+                            <div className="flex bg-slate-100 p-1.5 rounded-full w-full shadow-xs border border-slate-200">
                                 <button
                                     type="button"
                                     onClick={() => setBatchGroup('A')}
-                                    className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${batchGroup === 'A' ? 'bg-white text-zinc-900 shadow-xs' : 'text-zinc-500 hover:text-zinc-900'}`}
+                                    className={`flex-1 py-2.5 rounded-full text-sm font-bold transition-all ${batchGroup === 'A' ? 'bg-emerald-700 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
                                 >
                                     Group A
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setBatchGroup('B')}
-                                    className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${batchGroup === 'B' ? 'bg-white text-zinc-900 shadow-xs' : 'text-zinc-500 hover:text-zinc-900'}`}
+                                    className={`flex-1 py-2.5 rounded-full text-sm font-bold transition-all ${batchGroup === 'B' ? 'bg-emerald-700 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
                                 >
                                     Group B
                                 </button>
                             </div>
                         </div>
 
-                        <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-zinc-700 flex justify-between">
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-[#11221F] uppercase tracking-widest ml-1 flex justify-between">
                                 2. Select Students
-                                <span className="text-[10px] text-zinc-400 font-normal">{eligibleStudents.length} available</span>
+                                <span className="text-[10px] opacity-60 text-slate-500 font-bold">{eligibleStudents.length} available</span>
                             </label>
-                            <div className="bg-zinc-50 border border-zinc-200 rounded-xl p-3 max-h-[260px] overflow-y-auto">
+                            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 max-h-[300px] overflow-y-auto shadow-xs">
                                 {eligibleStudents.length === 0 ? (
-                                    <p className="text-zinc-400 text-xs text-center py-4 italic">No eligible students found in the system for this course and semester.</p>
+                                    <p className="text-slate-400 text-sm text-center py-4 italic">No eligible students found in the system for this course and semester.</p>
                                 ) : (
-                                    <div className="space-y-2">
+                                    <div className="space-y-2.5">
                                         {eligibleStudents.map((student) => {
                                             const existingEnrollment = students.find(s => s.student_id === student.id);
                                             const isAssigned = !!existingEnrollment;
 
+                                            const containerClasses = isAssigned
+                                                ? "bg-emerald-50/80 border-emerald-200"
+                                                : "bg-white border-slate-200 hover:border-emerald-400";
+
                                             return (
-                                                <div key={student.id} className={`flex justify-between items-center p-2.5 rounded-lg border transition-colors ${isAssigned ? 'bg-zinc-100/80 border-zinc-200' : 'bg-white border-zinc-200 hover:border-zinc-300'}`}>
-                                                    <div className="flex items-center gap-2.5">
+                                                <div key={student.id} className={`flex justify-between items-center p-3 rounded-2xl shadow-xs border transition-colors ${containerClasses}`}>
+                                                    <div className="flex items-center gap-3">
                                                         <input
                                                             type="checkbox"
-                                                            className="w-3.5 h-3.5 rounded text-zinc-900 border-zinc-300 focus:ring-zinc-900 cursor-pointer"
+                                                            className="w-4 h-4 rounded text-emerald-600 border-slate-300 focus:ring-emerald-500 cursor-pointer"
                                                             checked={selectedStudentIds.includes(student.id)}
                                                             onChange={(e) => {
                                                                 if (e.target.checked) setSelectedStudentIds(prev => [...prev, student.id]);
@@ -1095,14 +1099,14 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                                                             }}
                                                         />
                                                         <div>
-                                                            <p className="font-semibold text-xs text-zinc-900">{student.name}</p>
-                                                            <p className="text-[10px] text-zinc-400 font-mono">{student.roll_no}</p>
+                                                            <p className={`font-bold text-sm ${isAssigned ? 'text-emerald-900' : 'text-slate-800'}`}>{student.name}</p>
+                                                            <p className={`text-xs ${isAssigned ? 'text-emerald-700' : 'text-slate-500'}`}>{student.roll_no}</p>
                                                         </div>
                                                     </div>
                                                     {isAssigned && (
-                                                        <span className="bg-zinc-200 text-zinc-700 text-[10px] font-medium px-2 py-0.5 rounded">
-                                                            Group {existingEnrollment.group_label}
-                                                        </span>
+                                                        <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 border border-emerald-200 font-bold shadow-xs text-[10px]">
+                                                            Currently: Group {existingEnrollment.group_label}
+                                                        </Badge>
                                                     )}
                                                 </div>
                                             );
@@ -1112,43 +1116,41 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                             </div>
                         </div>
 
-                        <DialogFooter className="gap-2 sm:justify-end pt-4 border-t border-zinc-100">
-                            <Button type="button" variant="ghost" className="rounded-lg h-9 px-3.5 text-zinc-600 font-medium text-xs hover:bg-zinc-100" onClick={() => setShowEnrollModal(false)}>
+                        <DialogFooter className="gap-3 sm:justify-end pt-6 mt-4 border-t border-slate-100">
+                            <Button type="button" variant="ghost" className="rounded-full h-11 px-6 text-slate-600 font-bold hover:bg-slate-100 shadow-xs text-xs" onClick={() => setShowEnrollModal(false)}>
                                 Cancel
                             </Button>
-                            <Button type="submit" disabled={loading || selectedStudentIds.length === 0} className="rounded-lg h-9 px-4 bg-zinc-900 text-white font-medium text-xs hover:bg-zinc-800 shadow-xs">
-                                {loading ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : null}
+                            <Button type="submit" disabled={loading || selectedStudentIds.length === 0} className="rounded-full h-11 px-8 bg-emerald-600 text-white font-bold hover:bg-emerald-700 shadow-md shadow-emerald-600/20 transition-all text-xs">
+                                {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                                 Save {selectedStudentIds.length > 0 ? `(${selectedStudentIds.length})` : ''} Enrollments
                             </Button>
                         </DialogFooter>
                     </form>
                 </DialogContent>
             </Dialog>
-
-            {/* Remove Student Confirmation Modal */}
             <Dialog open={!!enrollmentToDelete} onOpenChange={(open) => !open && setEnrollmentToDelete(null)}>
-                <DialogContent className="sm:max-w-md rounded-2xl p-6 text-center border border-zinc-200 shadow-xl bg-white">
+                <DialogContent className="sm:max-w-md rounded-3xl p-6 text-center border border-slate-100 shadow-2xl bg-white">
                     <DialogHeader>
-                        <div className="mx-auto w-10 h-10 bg-rose-50 text-rose-600 rounded-full flex items-center justify-center mb-3">
-                            <Trash2 size={18} />
+                        <div className="mx-auto w-14 h-14 bg-rose-50 text-rose-600 rounded-full flex items-center justify-center mb-4 shadow-xs border border-rose-100">
+                            <Trash2 size={24} />
                         </div>
-                        <DialogTitle className="text-lg font-bold text-zinc-900">Remove Student?</DialogTitle>
-                        <DialogDescription className="pt-1 text-zinc-500 text-xs font-normal pb-3">
-                            Are you sure you want to remove this student from the classroom? <br />
-                            <span className="text-rose-600 font-medium">All recorded marks for this student will be lost.</span>
+                        <DialogTitle className="text-2xl font-extrabold text-[#11221F]">Remove Student?</DialogTitle>
+                        <DialogDescription className="pt-2 text-slate-600 font-medium pb-4 text-xs">
+                            Are you sure you want to remove this student from the classroom? <br /><br />
+                            <span className="text-rose-600 font-bold bg-rose-50 px-3 py-1.5 rounded-xl border border-rose-100 inline-block">All recorded marks and evaluation history will be permanently lost!</span>
                         </DialogDescription>
                     </DialogHeader>
-                    <DialogFooter className="flex sm:justify-center gap-2 border-t border-zinc-100 pt-4">
-                        <Button type="button" variant="ghost" className="rounded-lg px-4 h-9 font-medium text-zinc-600 text-xs hover:bg-zinc-100" onClick={() => setEnrollmentToDelete(null)}>
+                    <DialogFooter className="flex sm:justify-center gap-3 border-t border-slate-100 pt-5">
+                        <Button type="button" variant="ghost" className="rounded-full px-6 h-11 font-bold hover:bg-slate-50 text-slate-600 text-xs" onClick={() => setEnrollmentToDelete(null)}>
                             Cancel
                         </Button>
                         <Button
                             type="button"
                             variant="destructive"
                             onClick={() => enrollmentToDelete && executeRemoveStudent(enrollmentToDelete)}
-                            className="bg-rose-600 hover:bg-rose-700 rounded-lg px-4 h-9 font-medium text-white text-xs shadow-xs"
+                            className="bg-rose-600 hover:bg-rose-700 rounded-full px-8 h-11 font-bold shadow-md shadow-rose-600/20 transition-all hover:scale-[1.02] text-white text-xs"
                         >
-                            Remove
+                            Yes, Remove
                         </Button>
                     </DialogFooter>
                 </DialogContent>
