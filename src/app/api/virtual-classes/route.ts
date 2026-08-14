@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
+import { createVirtualClassSchema } from '@/lib/validations';
 
 export async function GET(req: Request) {
   try {
@@ -37,6 +38,9 @@ export async function GET(req: Request) {
         _count: {
           select: { enrollments: true }
         }
+      },
+      orderBy: {
+        id: 'desc'
       }
     });
 
@@ -51,10 +55,20 @@ export async function POST(req: Request) {
   try {
     const sessionUser = await getCurrentUser();
     if (!sessionUser || sessionUser.role !== 'ADMIN') {
-      return NextResponse.json({ error: "Not authorized" }, { status: 401 });
+      return NextResponse.json({ error: "Not authorized: Admin privileges required" }, { status: 401 });
     }
 
-    const { subject_id, teacher_id, academic_year, section, enrollments } = await req.json();
+    const body = await req.json();
+    const validation = createVirtualClassSchema.safeParse(body);
+
+    if (!validation.success) {
+      return NextResponse.json({ 
+        error: "Validation failed", 
+        details: validation.error.issues.map(e => e.message) 
+      }, { status: 400 });
+    }
+
+    const { subject_id, teacher_id, academic_year, section, enrollments } = validation.data;
 
     const virtualClass = await prisma.virtualClass.create({
       data: {
@@ -63,7 +77,7 @@ export async function POST(req: Request) {
         academic_year,
         section,
         enrollments: {
-          create: enrollments.map((e: any) => ({
+          create: enrollments.map((e) => ({
             student_id: e.student_id,
             group_label: e.group_label
           }))

@@ -11,8 +11,6 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-
-
 model School {
   id      String   @id @default(uuid())
   name    String
@@ -28,8 +26,6 @@ model Course {
   users     User[]
 }
 
-
-
 model Subject {
   id                String           @id @default(uuid())
   course_id         String
@@ -37,6 +33,8 @@ model Subject {
   semester_number   Int
   course            Course           @relation(fields: [course_id], references: [id])
   virtual_classes   VirtualClass[]
+
+  @@index([course_id, semester_number])
 }
 
 model User {
@@ -52,6 +50,8 @@ model User {
   course           Course?           @relation(fields: [course_id], references: [id])
   taught_classes   VirtualClass[]    @relation("TeacherClasses")
   enrollments      ClassEnrollment[]
+
+  @@index([role, course_id])
 }
 
 model VirtualClass {
@@ -63,6 +63,9 @@ model VirtualClass {
   subject       Subject           @relation(fields: [subject_id], references: [id])
   teacher       User              @relation("TeacherClasses", fields: [teacher_id], references: [id])
   enrollments   ClassEnrollment[]
+
+  @@index([teacher_id, academic_year])
+  @@index([subject_id])
 }
 
 model ClassEnrollment {
@@ -75,6 +78,8 @@ model ClassEnrollment {
   evaluations      Evaluation[]
 
   @@unique([virtual_class_id, student_id])
+  @@index([virtual_class_id, group_label])
+  @@index([student_id])
 }
 
 model Evaluation {
@@ -90,4 +95,5 @@ model Evaluation {
   enrollment            ClassEnrollment @relation(fields: [enrollment_id], references: [id])
 
   @@unique([enrollment_id, evaluation_date])
+  @@index([enrollment_id, evaluation_date])
 }

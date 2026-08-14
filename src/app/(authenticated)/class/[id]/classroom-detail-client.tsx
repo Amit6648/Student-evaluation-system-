@@ -3,7 +3,11 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ChevronLeft, Plus, Users, BookOpen, Trash2, CheckCircle2, BarChart, Loader2, UserPlus, Calendar as CalendarIcon, Download, Search, X, TrendingUp, TrendingDown, Minus, Filter } from "lucide-react";
+import { 
+    ChevronLeft, Plus, Users, BookOpen, Trash2, CheckCircle2, BarChart, 
+    Loader2, UserPlus, Calendar as CalendarIcon, Download, Search, X, 
+    TrendingUp, TrendingDown, Minus, Filter, FileSpreadsheet, FileUp, AlertTriangle, Check
+} from "lucide-react";
 import { format } from "date-fns";
 import * as XLSX from 'xlsx';
 import { Calendar } from "@/components/ui/calendar";
@@ -56,9 +60,15 @@ function getPerformanceTrend(evaluations: Evaluation[]) {
     const latestTotal = (latest.fundamental_knowledge || 0) + (latest.core_skills || 0) + (latest.communication_skills || 0) + (latest.soft_skills || 0);
     const prevTotal = (prev.fundamental_knowledge || 0) + (prev.core_skills || 0) + (prev.communication_skills || 0) + (prev.soft_skills || 0);
     const diff = latestTotal - prevTotal;
-    if (diff > 0) return { direction: 'up' as const, diff: diff.toFixed(1) };
-    if (diff < 0) return { direction: 'down' as const, diff: Math.abs(diff).toFixed(1) };
+    if (diff > 0.1) return { direction: 'up' as const, diff: diff.toFixed(1) };
+    if (diff < -0.1) return { direction: 'down' as const, diff: Math.abs(diff).toFixed(1) };
     return { direction: 'same' as const, diff: '0' };
+}
+
+// Helper to identify at-risk students (< 16 points or Grade D)
+function isStudentAtRisk(student: Student): boolean {
+    if (student.averageMarks === null || student.averageMarks === undefined) return false;
+    return student.averageMarks < 16;
 }
 
 // Helper to get a consistent color based on name string
@@ -145,7 +155,7 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
     const [activeGroup, setActiveGroup] = useState('A');
     const [activeTab, setActiveTab] = useState("roster");
     const [searchQuery, setSearchQuery] = useState("");
-    const [selectedGradeFilter, setSelectedGradeFilter] = useState<'ALL' | 'A' | 'B' | 'C' | 'D'>('ALL');
+    const [selectedGradeFilter, setSelectedGradeFilter] = useState<'ALL' | 'A' | 'B' | 'C' | 'D' | 'AT_RISK'>('ALL');
     const [selectedDate, setSelectedDate] = useState<Date>(() => {
         const td = new Date();
         if (td.getDay() === 0) return new Date(td.getTime() - 86400000 * 2); // Force to Friday if Sunday
@@ -172,7 +182,6 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
         const targetDateStr = format(selectedDate, 'yyyy-MM-dd');
         return studentEvals.find(ev => {
             if (!ev.evaluation_date) return false;
-            // Native string-slice isolates identical Date strings bypassing all local browser UTC cast anomalies
             return ev.evaluation_date.split('T')[0] === targetDateStr;
         });
     };
@@ -190,86 +199,229 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
     const [batchGroup, setBatchGroup] = useState('A');
     const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
 
+    // Bulk CSV / Excel Import State
+    const [showBulkImportModal, setShowBulkImportModal] = useState(false);
+    const [importFile, setImportFile] = useState<File | null>(null);
+    const [parsedStudents, setParsedStudents] = useState<Array<{ name: string; roll_no: string; email?: string; section?: string; group_label: 'A' | 'B' }>>([]);
+    const [importLoading, setImportLoading] = useState(false);
+    const [importError, setImportError] = useState("");
+    const [importSuccess, setImportSuccess] = useState("");
+
     // Export state
     const [showExportModal, setShowExportModal] = useState(false);
     const [exportMode, setExportMode] = useState('all'); // 'all' or 'average'
     const [exportTopN, setExportTopN] = useState(3);
 
+    // Multi-Sheet Structured Excel Export
     const handleExport = () => {
-        let exportData: any[] = [];
-        // Export the entirety of the classroom un-filtered by the current UI Tab
         const displayed = students;
 
-        if (exportMode === 'all') {
-            // Collect all unique dates across all students to form columns
-            const allDates = new Set<string>();
-            displayed.forEach(s => {
-                if(s.evaluations) {
-                    s.evaluations.forEach(ev => {
-                        const d = format(new Date(ev.evaluation_date), 'MMM d, yyyy');
-                        allDates.add(d);
-                    });
-                }
-            });
-            const dateColumns = Array.from(allDates).sort();
+        // Sheet 1: Executive Summary & Distribution
+        const summaryData = [
+            { "Metric": "Subject / Classroom", "Value": classroom?.subject?.name || "N/A" },
+            { "Metric": "Course & Department", "Value": `${classroom?.subject?.course?.school?.name || ''} - ${classroom?.subject?.course?.name || ''}` },
+            { "Metric": "Assigned Instructor", "Value": classroom?.teacher?.name || "N/A" },
+            { "Metric": "Academic Year", "Value": classroom?.academic_year || "N/A" },
+            { "Metric": "Export Timestamp", "Value": format(new Date(), 'yyyy-MM-dd HH:mm:ss') },
+            { "Metric": "Total Students Enrolled", "Value": displayed.length },
+            { "Metric": "Group A Count", "Value": displayed.filter(s => s.group_label === 'A').length },
+            { "Metric": "Group B Count", "Value": displayed.filter(s => s.group_label === 'B').length },
+            { "Metric": "Grade A Students (32-40 pts)", "Value": displayed.filter(s => getGrade(s.averageMarks) === 'A').length },
+            { "Metric": "Grade B Students (24-31 pts)", "Value": displayed.filter(s => getGrade(s.averageMarks) === 'B').length },
+            { "Metric": "Grade C Students (16-23 pts)", "Value": displayed.filter(s => getGrade(s.averageMarks) === 'C').length },
+            { "Metric": "Grade D / At-Risk (<16 pts)", "Value": displayed.filter(s => getGrade(s.averageMarks) === 'D').length },
+        ];
 
-            exportData = displayed.map(s => {
+        // Sheet 2: Comprehensive Evaluation Matrix
+        const allDates = new Set<string>();
+        displayed.forEach(s => {
+            if (s.evaluations) {
+                s.evaluations.forEach(ev => {
+                    const d = format(new Date(ev.evaluation_date), 'MMM d, yyyy');
+                    allDates.add(d);
+                });
+            }
+        });
+        const dateColumns = Array.from(allDates).sort();
+
+        let gradebookData: any[] = [];
+
+        if (exportMode === 'all') {
+            gradebookData = displayed.map(s => {
                 const row: any = {
                     "Roll No": s.roll_no,
                     "Student Name": s.name,
                     "Group": s.group_label,
                 };
                 
-                // Fill individual marks for every logged date
                 dateColumns.forEach(dateLabel => {
-                   const ev = s.evaluations?.find(e => format(new Date(e.evaluation_date), 'MMM d, yyyy') === dateLabel);
-                   if(ev) {
-                       row[dateLabel] = (ev.fundamental_knowledge || 0) + (ev.core_skills || 0) + (ev.communication_skills || 0) + (ev.soft_skills || 0);
-                   } else {
-                       row[dateLabel] = "-";
-                   }
+                    const ev = s.evaluations?.find(e => format(new Date(e.evaluation_date), 'MMM d, yyyy') === dateLabel);
+                    if (ev) {
+                        row[dateLabel] = (ev.fundamental_knowledge || 0) + (ev.core_skills || 0) + (ev.communication_skills || 0) + (ev.soft_skills || 0);
+                    } else {
+                        row[dateLabel] = "-";
+                    }
                 });
+
+                const trend = getPerformanceTrend(s.evaluations);
+                const trendLabel = trend ? (trend.direction === 'up' ? `Improving (+${trend.diff})` : trend.direction === 'down' ? `Declining (-${trend.diff})` : 'Stable') : 'No History';
+
                 row["Grade"] = getGrade(s.averageMarks);
-                row["Overall Average"] = s.averageMarks !== null ? s.averageMarks : "-";
+                row["Overall Average"] = s.averageMarks !== null ? s.averageMarks.toFixed(2) : "-";
+                row["Trajectory"] = trendLabel;
+                row["At-Risk Status"] = isStudentAtRisk(s) ? "AT-RISK" : "Normal";
                 return row;
             });
-
-        } else if (exportMode === 'average') {
-            exportData = displayed.map(s => {
+        } else {
+            gradebookData = displayed.map(s => {
                 const row: any = {
                     "Roll No": s.roll_no,
                     "Student Name": s.name,
                     "Group": s.group_label,
                 };
-                
-                if(!s.evaluations || s.evaluations.length === 0) {
+
+                if (!s.evaluations || s.evaluations.length === 0) {
                     row["Grade"] = "-";
                     row[`Top ${exportTopN} Average`] = "-";
+                    row["At-Risk Status"] = "Unassessed";
                     return row;
                 }
 
-                // Parse topological arrays mathematically sorting values
                 const totals = s.evaluations.map(ev => (ev.fundamental_knowledge || 0) + (ev.core_skills || 0) + (ev.communication_skills || 0) + (ev.soft_skills || 0));
-                totals.sort((a,b) => b - a); // descending
+                totals.sort((a, b) => b - a);
                 const topScores = totals.slice(0, exportTopN);
                 const sum = topScores.reduce((acc, val) => acc + val, 0);
                 const avgNum = topScores.length > 0 ? (sum / topScores.length) : null;
-                const avg = avgNum !== null ? avgNum.toFixed(2) : "-";
                 
                 row["Grade"] = avgNum !== null ? getGrade(avgNum) : "-";
-                row[`Top ${exportTopN} Average`] = avg;
+                row[`Top ${exportTopN} Average`] = avgNum !== null ? avgNum.toFixed(2) : "-";
+                row["At-Risk Status"] = isStudentAtRisk(s) ? "AT-RISK" : "Normal";
                 return row;
             });
         }
 
-        const ws = XLSX.utils.json_to_sheet(exportData);
         const wb = XLSX.utils.book_new();
-        const sheetName = exportMode === 'all' ? 'All Data' : `Top ${exportTopN} Avg`;
-        XLSX.utils.book_append_sheet(wb, ws, sheetName);
+        const wsSummary = XLSX.utils.json_to_sheet(summaryData);
+        const wsGradebook = XLSX.utils.json_to_sheet(gradebookData);
+
+        XLSX.utils.book_append_sheet(wb, wsSummary, "Summary & Distribution");
+        XLSX.utils.book_append_sheet(wb, wsGradebook, "Evaluation Matrix");
         
-        const fileName = `${classroom?.subject?.name || 'Class'}_Full_Roster_Export.xlsx`;
+        const fileName = `${classroom?.subject?.name || 'Class'}_Evaluation_Report.xlsx`;
         XLSX.writeFile(wb, fileName);
         setShowExportModal(false);
+    };
+
+    // Bulk File Upload Parser
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setImportFile(file);
+        setImportError("");
+        setImportSuccess("");
+
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+            try {
+                const bstr = evt.target?.result;
+                const wb = XLSX.read(bstr, { type: 'binary' });
+                const wsname = wb.SheetNames[0];
+                const ws = wb.Sheets[wsname];
+                const data: any[] = XLSX.utils.sheet_to_json(ws);
+
+                if (!data || data.length === 0) {
+                    setImportError("File is empty or contains no readable rows.");
+                    setParsedStudents([]);
+                    return;
+                }
+
+                const valid: Array<{ name: string; roll_no: string; email?: string; section?: string; group_label: 'A' | 'B' }> = [];
+                
+                data.forEach((row, idx) => {
+                    const name = row.Name || row.name || row["Student Name"] || row["student_name"] || row.FullName;
+                    const roll_no = row["Roll No"] || row["RollNo"] || row["roll_no"] || row.Roll || row.roll || row.ID || row.Id;
+                    const email = row.Email || row.email || row["Email Address"];
+                    const section = row.Section || row.section;
+                    let group = (row.Group || row.group || row.GroupLabel || row.group_label || "").toString().toUpperCase();
+                    if (group !== 'A' && group !== 'B') {
+                        group = idx % 2 === 0 ? 'A' : 'B';
+                    }
+
+                    if (name && roll_no) {
+                        valid.push({
+                            name: String(name).trim(),
+                            roll_no: String(roll_no).trim(),
+                            email: email ? String(email).trim() : undefined,
+                            section: section ? String(section).trim() : undefined,
+                            group_label: group as 'A' | 'B'
+                        });
+                    }
+                });
+
+                if (valid.length === 0) {
+                    setImportError("No valid rows found. Ensure spreadsheet headers contain 'Name' and 'Roll No'.");
+                    setParsedStudents([]);
+                } else {
+                    setParsedStudents(valid);
+                }
+            } catch (err: any) {
+                setImportError("Failed to parse spreadsheet: " + (err.message || "Invalid file format"));
+                setParsedStudents([]);
+            }
+        };
+        reader.readAsBinaryString(file);
+    };
+
+    const downloadSampleCSV = () => {
+        const csvContent = "data:text/csv;charset=utf-8," + 
+            "Name,Roll No,Email,Section,Group\n" +
+            "Alexander Hayes,2026CS101,alex.hayes@school.com,A,A\n" +
+            "Beatriz Ramos,2026CS102,beatriz.ramos@school.com,A,B\n" +
+            "Chen Wei,2026CS103,chen.wei@school.com,A,A\n" +
+            "Devon Patel,2026CS104,devon.patel@school.com,A,B";
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `${classroom?.subject?.name || 'Class'}_Roster_Sample_Template.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    const handleBulkImportSubmit = async () => {
+        if (parsedStudents.length === 0) return;
+        setImportLoading(true);
+        setImportError("");
+        setImportSuccess("");
+
+        try {
+            const res = await fetch('/api/enroll-bulk-csv', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    virtual_class_id: classId,
+                    students: parsedStudents
+                })
+            });
+
+            const result = await res.json();
+            if (!res.ok) {
+                throw new Error(result.error || "Failed to import students");
+            }
+
+            setImportSuccess(result.message || "Roster imported successfully!");
+            await fetchClassroomData();
+            setTimeout(() => {
+                setShowBulkImportModal(false);
+                setParsedStudents([]);
+                setImportFile(null);
+                setImportSuccess("");
+            }, 1200);
+        } catch (err: any) {
+            setImportError(err.message || "Bulk import failed");
+        } finally {
+            setImportLoading(false);
+        }
     };
 
     const fetchClassroomData = async () => {
@@ -315,59 +467,101 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
         fetchEligibleStudents();
     }, [classId]);
 
+    // Recalculate stats dynamically for the active group
     useEffect(() => {
-        // Calculate stats for whatever the current group filter is
-        const displayed = students.filter(s => s.group_label === activeGroup);
+        const groupStudents = students.filter(s => s.group_label === activeGroup);
+        const total = groupStudents.length;
 
-        let totalClassScore = 0;
-        let maxScore = 0;
-        let studentsWithScore = 0;
+        if (total === 0) {
+            setStats({ totalStudents: 0, classAvg: '--', topScore: '--' });
+            return;
+        }
 
-        displayed.forEach(s => {
-            if (s.averageMarks !== null) {
-                totalClassScore += s.averageMarks;
-                maxScore = Math.max(maxScore, s.averageMarks);
-                studentsWithScore++;
-            }
+        const scoredStudents = groupStudents.filter(s => s.averageMarks !== null && s.averageMarks !== undefined);
+        if (scoredStudents.length === 0) {
+            setStats({ totalStudents: total, classAvg: '--', topScore: '--' });
+            return;
+        }
+
+        const avg = scoredStudents.reduce((acc, curr) => acc + (curr.averageMarks || 0), 0) / scoredStudents.length;
+        const max = Math.max(...scoredStudents.map(s => s.averageMarks || 0));
+
+        setStats({
+            totalStudents: total,
+            classAvg: `${avg.toFixed(1)}/40`,
+            topScore: `${max.toFixed(1)}/40`
         });
-
-        const classAvg = studentsWithScore > 0 ? (totalClassScore / studentsWithScore).toFixed(1) : '--';
-        const topScore = studentsWithScore > 0 ? maxScore.toFixed(1) : '--';
-        setStats({ totalStudents: displayed.length, classAvg, topScore });
     }, [students, activeGroup]);
 
+    // Optimistic Evaluation Save with zero visual lag
     async function handleAddEval(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
         if (!evalStudent) return;
         
-        setLoading(true);
         const formData = new FormData(e.currentTarget);
-        
-        // Pass standard noon UTC equivalent preventing day-shifting
         const evalDateStr = format(selectedDate, "yyyy-MM-dd'T'12:00:00.000'Z'");
 
+        const fund = parseFloat(formData.get("fundamental_knowledge") as string) || 0;
+        const core = parseFloat(formData.get("core_skills") as string) || 0;
+        const comm = parseFloat(formData.get("communication_skills") as string) || 0;
+        const soft = parseFloat(formData.get("soft_skills") as string) || 0;
+        const evalName = (formData.get("eval_name") as string) || "Daily Evaluation";
+
+        const optimisticEval: Evaluation = {
+            id: `temp-${Date.now()}`,
+            enrollment_id: evalStudent.enrollment_id,
+            eval_name: evalName,
+            fundamental_knowledge: fund,
+            core_skills: core,
+            communication_skills: comm,
+            soft_skills: soft,
+            evaluation_date: evalDateStr,
+            remarks: "Evaluated on " + format(selectedDate, 'MMM d, yyyy')
+        };
+
+        // Snapshot previous state for rollback on network failure
+        const prevStudents = [...students];
+
+        // Optimistically update local state immediately
+        setStudents(prev => prev.map(s => {
+            if (s.enrollment_id !== evalStudent.enrollment_id) return s;
+            const existingEvals = s.evaluations || [];
+            const targetDateStr = format(selectedDate, 'yyyy-MM-dd');
+            const filteredEvals = existingEvals.filter(ev => ev.evaluation_date?.split('T')[0] !== targetDateStr);
+            const newEvals = [...filteredEvals, optimisticEval];
+            const sum = newEvals.reduce((acc, ev) => acc + (ev.fundamental_knowledge || 0) + (ev.core_skills || 0) + (ev.communication_skills || 0) + (ev.soft_skills || 0), 0);
+            const newAvg = newEvals.length > 0 ? (sum / newEvals.length) : null;
+            return { ...s, evaluations: newEvals, averageMarks: newAvg };
+        }));
+
+        setShowEvalModal(false);
+        setEvalStudent(null);
+
+        // Perform background server sync
         try {
-            await fetch('/api/evaluations', {
+            const res = await fetch('/api/evaluations', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     enrollment_id: evalStudent.enrollment_id,
                     evaluation_date: evalDateStr,
-                    eval_name: formData.get("eval_name"),
-                    fundamental_knowledge: formData.get("fundamental_knowledge"),
-                    core_skills: formData.get("core_skills"),
-                    communication_skills: formData.get("communication_skills"),
-                    soft_skills: formData.get("soft_skills"),
+                    eval_name: evalName,
+                    fundamental_knowledge: fund,
+                    core_skills: core,
+                    communication_skills: comm,
+                    soft_skills: soft,
                     remarks: "Evaluated on " + format(selectedDate, 'MMM d, yyyy')
                 })
             });
-            await fetchClassroomData();
-            setShowEvalModal(false);
-            setEvalStudent(null);
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setLoading(false);
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || "Server failed to save evaluation");
+            }
+        } catch (err: any) {
+            console.error("Evaluation sync error:", err);
+            setStudents(prevStudents);
+            alert(err.message || "Failed to save score. Restored previous values.");
         }
     }
 
@@ -400,9 +594,9 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                 })
             });
             await fetchClassroomData();
-            await fetchEligibleStudents(); // Refresh lists
+            await fetchEligibleStudents();
             setShowEnrollModal(false);
-            setSelectedStudentIds([]); // Clear selection
+            setSelectedStudentIds([]);
         } catch (err) {
             console.error("Failed to batch enroll students", err);
         } finally {
@@ -420,7 +614,15 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
         const matchesSearch = !searchQuery.trim() ||
             s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             (s.roll_no && s.roll_no.toLowerCase().includes(searchQuery.toLowerCase()));
-        const matchesGrade = activeTab !== 'heatmap' || selectedGradeFilter === 'ALL' || getGrade(s.averageMarks) === selectedGradeFilter;
+        
+        let matchesGrade = true;
+        if (activeTab === 'heatmap' || selectedGradeFilter !== 'ALL') {
+            if (selectedGradeFilter === 'AT_RISK') {
+                matchesGrade = isStudentAtRisk(s);
+            } else if (selectedGradeFilter !== 'ALL') {
+                matchesGrade = getGrade(s.averageMarks) === selectedGradeFilter;
+            }
+        }
         return matchesSearch && matchesGrade;
     });
 
@@ -430,7 +632,7 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                 <ChevronLeft size={20} className="mr-1" /> Back to Dashboard
             </Link>
 
-            <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 sticky top-0 z-50 pt-2 pb-4 backdrop-blur-xl bg-[#F4F7F6]/80 dark:bg-[#080D0C]/80 border-b border-slate-200/70 dark:border-white/10">
+            <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 sticky top-0 z-40 pt-2 pb-4 backdrop-blur-xl bg-[#F4F7F6]/80 dark:bg-[#080D0C]/80 border-b border-slate-200/70 dark:border-white/10">
                 <div>
                     <Badge variant="secondary" className="bg-emerald-50 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/40 font-bold uppercase tracking-wider text-[10px] px-3 py-1 rounded-lg mb-3 inline-block">
                         {classroom.subject?.course?.school?.name || 'School'} • {classroom.subject?.course?.name || 'Course'}
@@ -496,10 +698,23 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                 </div>
 
                 {isAdmin && (
-                    <Button onClick={() => setShowEnrollModal(true)} className="mt-4 md:mt-0 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 rounded-full flex items-center gap-2 font-bold px-6 h-12 transition-all hover:scale-[1.02]">
-                        <UserPlus className="w-5 h-5" />
-                        Enroll Students
-                    </Button>
+                    <div className="flex flex-wrap items-center gap-2.5 mt-4 md:mt-0">
+                        <Button 
+                            onClick={() => setShowBulkImportModal(true)} 
+                            variant="outline" 
+                            className="bg-white dark:bg-[#111A17] border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-200 shadow-xs rounded-full flex items-center gap-2 font-bold px-5 h-11 text-xs transition-all hover:scale-[1.02]"
+                        >
+                            <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                            Import Roster (CSV)
+                        </Button>
+                        <Button 
+                            onClick={() => setShowEnrollModal(true)} 
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20 rounded-full flex items-center gap-2 font-bold px-6 h-11 transition-all hover:scale-[1.02] text-xs"
+                        >
+                            <UserPlus className="w-4 h-4" />
+                            Enroll Students
+                        </Button>
+                    </div>
                 )}
             </header>
 
@@ -532,7 +747,7 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                         <p className="text-2xl font-black text-[#11221F] dark:text-white leading-tight">{stats.topScore}</p>
                     </div>
                 </div>
-            </div >
+            </div>
 
             <div className="bg-white dark:bg-[#111A17] border border-slate-200/80 dark:border-white/10 rounded-3xl shadow-xs flex flex-col mb-12 overflow-hidden">
                 {/* Tabs & Search Header */}
@@ -584,11 +799,9 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                         </div>
 
                         {/* Excel Export Button Integration */}
-                        {activeTab !== 'heatmap' && (
-                            <Button onClick={() => setShowExportModal(true)} variant="outline" className="h-9 rounded-full font-bold shadow-xs flex items-center gap-2 text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-700/50 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 shrink-0 text-xs">
-                                <Download size={14} /> Export
-                            </Button>
-                        )}
+                        <Button onClick={() => setShowExportModal(true)} variant="outline" className="h-9 rounded-full font-bold shadow-xs flex items-center gap-2 text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-700/50 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 shrink-0 text-xs">
+                            <Download size={14} /> Export
+                        </Button>
                     </div>
                 </div>
 
@@ -600,11 +813,11 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                                 <Users size={24} className="text-[#111827]/30 dark:text-white/30" />
                             </div>
                             <p className="text-[#111827]/80 dark:text-white/80 font-bold mb-2">
-                                {searchQuery || (activeTab === 'heatmap' && selectedGradeFilter !== 'ALL')
+                                {searchQuery || (selectedGradeFilter !== 'ALL')
                                     ? "No students match your search or filter criteria."
                                     : `No students enrolled in Group ${activeGroup} yet.`}
                             </p>
-                            {(searchQuery || (activeTab === 'heatmap' && selectedGradeFilter !== 'ALL')) && (
+                            {(searchQuery || (selectedGradeFilter !== 'ALL')) && (
                                 <Button
                                     variant="outline"
                                     size="sm"
@@ -622,7 +835,7 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                         <div className="p-8">
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                                 {displayedStudents.map((s) => {
-                                    let colorClass = "bg-slate-50 dark:bg-white/5 text-slate-700 dark:text-slate-300 border-slate-200/80 dark:border-white/10"; // No Marks
+                                    let colorClass = "bg-slate-50 dark:bg-white/5 text-slate-700 dark:text-slate-300 border-slate-200/80 dark:border-white/10";
 
                                     if (s.averageMarks !== null && s.averageMarks !== undefined) {
                                         if (s.averageMarks >= 32) colorClass = "bg-emerald-50/90 dark:bg-emerald-950/60 text-emerald-950 dark:text-emerald-200 border-emerald-200 dark:border-emerald-800/50 hover:border-emerald-400";
@@ -633,13 +846,20 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
 
                                     const evalCount = s.evaluations?.length || 0;
                                     const trend = getPerformanceTrend(s.evaluations);
+                                    const atRisk = isStudentAtRisk(s);
 
                                     return (
                                         <div
                                             key={s.student_id}
                                             onClick={() => setEvalHistoryStudent(s)}
-                                            className={`p-5 rounded-3xl border ${colorClass} flex flex-col justify-between aspect-square transition-all duration-300 hover:scale-[1.03] hover:-translate-y-1 shadow-xs hover:shadow-xl cursor-pointer`}
+                                            className={`p-5 rounded-3xl border ${colorClass} flex flex-col justify-between aspect-square transition-all duration-300 hover:scale-[1.03] hover:-translate-y-1 shadow-xs hover:shadow-xl cursor-pointer relative overflow-hidden`}
                                         >
+                                            {atRisk && (
+                                                <div className="absolute top-0 right-0 bg-rose-600 text-white text-[8px] font-black uppercase px-2 py-0.5 rounded-bl-xl shadow-xs">
+                                                    At Risk
+                                                </div>
+                                            )}
+
                                             <div className="flex justify-between items-start">
                                                 <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${getAvatarColor(s.name)} shadow-xs`}>
                                                     {getInitials(s.name)}
@@ -675,7 +895,7 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                                                     <span className="text-[9px] uppercase tracking-widest font-bold opacity-50 mt-1">Grade</span>
                                                 </div>
                                                 <div className="text-2xl sm:text-3xl font-black flex flex-col items-end text-[#11221F] dark:text-white">
-                                                    <span className="leading-none">{s.averageMarks !== null ? s.averageMarks : '--'}</span>
+                                                    <span className="leading-none">{s.averageMarks !== null ? s.averageMarks.toFixed(1) : '--'}</span>
                                                     <span className="text-[9px] uppercase tracking-widest font-bold opacity-50 mt-1">Avg Score</span>
                                                 </div>
                                             </div>
@@ -698,7 +918,7 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                                             : 'bg-white dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/15 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10'
                                     }`}
                                 >
-                                    All ({groupStudents.length})
+                                    All Students
                                 </button>
 
                                 <button
@@ -709,8 +929,8 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                                             : 'bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-950/90 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40'
                                     }`}
                                 >
-                                    <div className={`w-2.5 h-2.5 rounded-full ${selectedGradeFilter === 'A' ? 'bg-white' : 'bg-emerald-500'}`}></div>
-                                    Grade A: &ge; 32 (High)
+                                    <div className={`w-2.5 h-2.5 rounded-full ${selectedGradeFilter === 'A' ? 'bg-white' : 'bg-emerald-600'}`}></div>
+                                    Grade A (32-40)
                                 </button>
 
                                 <button
@@ -721,8 +941,8 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                                             : 'bg-teal-50 dark:bg-teal-950/60 hover:bg-teal-100 dark:hover:bg-teal-950/90 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-800/40'
                                     }`}
                                 >
-                                    <div className={`w-2.5 h-2.5 rounded-full ${selectedGradeFilter === 'B' ? 'bg-white' : 'bg-teal-500'}`}></div>
-                                    Grade B: 24 - 31 (Avg)
+                                    <div className={`w-2.5 h-2.5 rounded-full ${selectedGradeFilter === 'B' ? 'bg-white' : 'bg-teal-600'}`}></div>
+                                    Grade B (24-31)
                                 </button>
 
                                 <button
@@ -734,7 +954,7 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                                     }`}
                                 >
                                     <div className={`w-2.5 h-2.5 rounded-full ${selectedGradeFilter === 'C' ? 'bg-white' : 'bg-amber-500'}`}></div>
-                                    Grade C: 16 - 23 (Low)
+                                    Grade C (16-23)
                                 </button>
 
                                 <button
@@ -746,7 +966,19 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                                     }`}
                                 >
                                     <div className={`w-2.5 h-2.5 rounded-full ${selectedGradeFilter === 'D' ? 'bg-white' : 'bg-rose-500'}`}></div>
-                                    Grade D: &lt; 16 (Critical)
+                                    Grade D (&lt; 16)
+                                </button>
+
+                                <button
+                                    onClick={() => setSelectedGradeFilter(selectedGradeFilter === 'AT_RISK' ? 'ALL' : 'AT_RISK')}
+                                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full transition-all text-xs font-bold ${
+                                        selectedGradeFilter === 'AT_RISK'
+                                            ? 'bg-rose-700 text-white shadow-xs ring-2 ring-rose-600/40'
+                                            : 'bg-rose-100 dark:bg-rose-950 text-rose-900 dark:text-rose-300 border border-rose-300 dark:border-rose-700/50'
+                                    }`}
+                                >
+                                    <AlertTriangle size={13} className="text-rose-600 dark:text-rose-400" />
+                                    At-Risk
                                 </button>
                             </div>
                         </div>
@@ -759,6 +991,9 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                                         <TableHead className="py-4 px-8 text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest">Student Name</TableHead>
                                         {activeTab === 'roster' ? (
                                             <>
+                                                <TableHead className="py-4 px-8 text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest text-center">Evaluations</TableHead>
+                                                <TableHead className="py-4 px-8 text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest text-center">Grade & Avg</TableHead>
+                                                <TableHead className="py-4 px-8 text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest text-center">Trajectory</TableHead>
                                                 {isAdmin && <TableHead className="py-4 px-8 text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest text-right">Admin Action</TableHead>}
                                             </>
                                         ) : (
@@ -771,65 +1006,120 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {displayedStudents.map((s) => (
-                                        <TableRow key={s.student_id} className="hover:bg-emerald-50/20 dark:hover:bg-white/5 transition-colors border-b border-slate-100 dark:border-white/5 group">
-                                            <TableCell className="py-4 px-8 text-slate-500 dark:text-slate-400 font-mono font-bold text-xs">{s.roll_no}</TableCell>
-                                            <TableCell className="py-4 px-8">
-                                                <div className="flex items-center gap-3">
-                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shadow-xs shrink-0 ${getAvatarColor(s.name)}`}>
-                                                        {getInitials(s.name)}
-                                                    </div>
-                                                    <span className="font-bold text-[#11221F] dark:text-white">{s.name}</span>
-                                                </div>
-                                            </TableCell>
-                                            {activeTab === 'roster' ? (
-                                                <>
-                                                    {isAdmin && (
-                                                        <TableCell className="py-4 px-8 text-right">
-                                                            <Button variant="ghost" size="icon" onClick={() => setEnrollmentToDelete(s.enrollment_id)} className="text-slate-400 hover:text-rose-600 transition-colors rounded-full hover:bg-rose-50 dark:hover:bg-rose-950/40" title="Remove Student">
-                                                                <Trash2 size={16} />
-                                                            </Button>
-                                                        </TableCell>
-                                                    )}
-                                                </>
-                                            ) : (
-                                                <>
-                                                    {(() => {
-                                                        const evForDate = getEvalForDate(s.evaluations);
-                                                        const dateTotal = evForDate ? ((evForDate.fundamental_knowledge || 0) + (evForDate.core_skills || 0) + (evForDate.communication_skills || 0) + (evForDate.soft_skills || 0)) : null;
-                                                        
-                                                        return (
-                                                            <>
-                                                                <TableCell className="py-4 px-8 text-center font-bold text-slate-500 dark:text-slate-400">
-                                                                    {evForDate ? <div className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1 rounded-full text-xs font-bold border border-emerald-200 dark:border-emerald-800/40"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> Graded</div> : <div className="text-amber-600 dark:text-amber-400 text-xs font-semibold">Pending</div>}
-                                                                </TableCell>
-                                                                <TableCell className="py-4 px-8 text-center">
-                                                                    <span className="font-black text-xl text-emerald-700 dark:text-emerald-400">{dateTotal !== null ? dateTotal : '--'}</span>
-                                                                </TableCell>
-                                                                {!isAdmin && (
-                                                                    <TableCell className="py-4 px-8 text-right">
-                                                                        {isInvalidDate ? (
-                                                                            <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest bg-amber-50 dark:bg-amber-950/60 px-3 py-1.5 rounded-full inline-flex items-center gap-1 border border-amber-200 dark:border-amber-800/40">
-                                                                                <CalendarIcon size={12}/> {isFutureDate() ? 'Future Locked' : 'Weekend Locked'}
-                                                                            </span>
-                                                                        ) : (
-                                                                            <Button
-                                                                                size="sm"
-                                                                                onClick={() => { setEvalStudent(s); setShowEvalModal(true); }}
-                                                                                className={evForDate ? "text-slate-700 dark:text-slate-200 bg-white dark:bg-[#111A17] border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors rounded-full font-bold shadow-xs inline-flex items-center gap-1 px-4 text-xs" : "text-white bg-emerald-600 hover:bg-emerald-700 transition-all rounded-full font-bold shadow-sm shadow-emerald-600/20 inline-flex items-center gap-1 px-4 text-xs"}
-                                                                            >
-                                                                                <Plus size={15} /> {evForDate ? 'Edit Eval' : 'Add Eval'}
-                                                                            </Button>
-                                                                        )}
-                                                                    </TableCell>
+                                    {displayedStudents.map((s) => {
+                                        const atRisk = isStudentAtRisk(s);
+                                        const trend = getPerformanceTrend(s.evaluations);
+
+                                        return (
+                                            <TableRow key={s.student_id} className="hover:bg-emerald-50/20 dark:hover:bg-white/5 transition-colors border-b border-slate-100 dark:border-white/5 group">
+                                                <TableCell className="py-4 px-8 text-slate-500 dark:text-slate-400 font-mono font-bold text-xs">{s.roll_no}</TableCell>
+                                                <TableCell className="py-4 px-8">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shadow-xs shrink-0 ${getAvatarColor(s.name)}`}>
+                                                            {getInitials(s.name)}
+                                                        </div>
+                                                        <div>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="font-bold text-[#11221F] dark:text-white">{s.name}</span>
+                                                                {atRisk && (
+                                                                    <Badge className="bg-rose-50 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/40 text-[9px] font-black px-1.5 py-0">
+                                                                        At-Risk
+                                                                    </Badge>
                                                                 )}
-                                                            </>
-                                                        );
-                                                    })()}
-                                                </>
-                                            )}
-                                        </TableRow>
-                                    ))}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </TableCell>
+                                                {activeTab === 'roster' ? (
+                                                    <>
+                                                        <TableCell className="py-4 px-8 text-center text-xs font-bold text-slate-600 dark:text-slate-400">
+                                                            {s.evaluations?.length || 0} sessions
+                                                        </TableCell>
+                                                        <TableCell className="py-4 px-8 text-center">
+                                                            <div className="inline-flex items-center gap-2">
+                                                                <Badge className={`font-bold text-xs ${
+                                                                    getGrade(s.averageMarks) === 'A' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300' :
+                                                                    getGrade(s.averageMarks) === 'B' ? 'bg-teal-100 text-teal-800 dark:bg-teal-950/70 dark:text-teal-300' :
+                                                                    getGrade(s.averageMarks) === 'C' ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300' :
+                                                                    'bg-rose-100 text-rose-800 dark:bg-rose-950/70 dark:text-rose-300'
+                                                                }`}>
+                                                                    Grade {getGrade(s.averageMarks)}
+                                                                </Badge>
+                                                                <span className="font-mono font-bold text-slate-700 dark:text-slate-300 text-xs">
+                                                                    {s.averageMarks !== null ? s.averageMarks.toFixed(1) : '--'}
+                                                                </span>
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="py-4 px-8 text-center">
+                                                            {trend ? (
+                                                                <div className="inline-flex items-center gap-1 text-xs font-bold">
+                                                                    {trend.direction === 'up' && (
+                                                                        <span className="text-emerald-600 dark:text-emerald-400 inline-flex items-center gap-0.5">
+                                                                            <TrendingUp size={14} /> +{trend.diff}
+                                                                        </span>
+                                                                    )}
+                                                                    {trend.direction === 'down' && (
+                                                                        <span className="text-rose-600 dark:text-rose-400 inline-flex items-center gap-0.5">
+                                                                            <TrendingDown size={14} /> -{trend.diff}
+                                                                        </span>
+                                                                    )}
+                                                                    {trend.direction === 'same' && (
+                                                                        <span className="text-slate-400 dark:text-slate-500 inline-flex items-center gap-0.5">
+                                                                            <Minus size={14} /> Stable
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-slate-400 text-xs">--</span>
+                                                            )}
+                                                        </TableCell>
+                                                        {isAdmin && (
+                                                            <TableCell className="py-4 px-8 text-right">
+                                                                <Button variant="ghost" size="icon" onClick={() => setEnrollmentToDelete(s.enrollment_id)} className="text-slate-400 hover:text-rose-600 transition-colors rounded-full hover:bg-rose-50 dark:hover:bg-rose-950/40" title="Remove Student">
+                                                                    <Trash2 size={16} />
+                                                                </Button>
+                                                            </TableCell>
+                                                        )}
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        {(() => {
+                                                            const evForDate = getEvalForDate(s.evaluations);
+                                                            const dateTotal = evForDate ? ((evForDate.fundamental_knowledge || 0) + (evForDate.core_skills || 0) + (evForDate.communication_skills || 0) + (evForDate.soft_skills || 0)) : null;
+                                                            
+                                                            return (
+                                                                <>
+                                                                    <TableCell className="py-4 px-8 text-center font-bold text-slate-500 dark:text-slate-400">
+                                                                        {evForDate ? <div className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1 rounded-full text-xs font-bold border border-emerald-200 dark:border-emerald-800/40"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> Graded</div> : <div className="text-amber-600 dark:text-amber-400 text-xs font-semibold">Pending</div>}
+                                                                    </TableCell>
+                                                                    <TableCell className="py-4 px-8 text-center">
+                                                                        <span className="font-black text-xl text-emerald-700 dark:text-emerald-400">{dateTotal !== null ? dateTotal : '--'}</span>
+                                                                    </TableCell>
+                                                                    {!isAdmin && (
+                                                                        <TableCell className="py-4 px-8 text-right">
+                                                                            {isInvalidDate ? (
+                                                                                <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest bg-amber-50 dark:bg-amber-950/60 px-3 py-1.5 rounded-full inline-flex items-center gap-1 border border-amber-200 dark:border-amber-800/40">
+                                                                                    <CalendarIcon size={12}/> {isFutureDate() ? 'Future Locked' : 'Weekend Locked'}
+                                                                                </span>
+                                                                            ) : (
+                                                                                <Button
+                                                                                    size="sm"
+                                                                                    onClick={() => { setEvalStudent(s); setShowEvalModal(true); }}
+                                                                                    className={evForDate ? "text-slate-700 dark:text-slate-200 bg-white dark:bg-[#111A17] border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors rounded-full font-bold shadow-xs inline-flex items-center gap-1 px-4 text-xs" : "text-white bg-emerald-600 hover:bg-emerald-700 transition-all rounded-full font-bold shadow-sm shadow-emerald-600/20 inline-flex items-center gap-1 px-4 text-xs"}
+                                                                                >
+                                                                                    <Plus size={15} /> {evForDate ? 'Edit Eval' : 'Add Eval'}
+                                                                                </Button>
+                                                                            )}
+                                                                        </TableCell>
+                                                                    )}
+                                                                </>
+                                                            );
+                                                        })()}
+                                                    </>
+                                                )}
+                                            </TableRow>
+                                        );
+                                    })}
                                 </TableBody>
                             </Table>
                         </div>
@@ -837,6 +1127,7 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                 </div>
             </div>
 
+            {/* Score Evaluation Modal */}
             <Dialog open={showEvalModal} onOpenChange={(open) => { if (!open) { setShowEvalModal(false); setEvalStudent(null); } }}>
                 <DialogContent className="sm:max-w-sm rounded-3xl p-8 border border-slate-100 dark:border-white/10 shadow-2xl bg-white dark:bg-[#111A17] text-slate-900 dark:text-white relative">
                     <div className="absolute top-0 left-0 bg-emerald-700 text-white px-5 py-2.5 rounded-br-2xl font-bold flex items-center gap-2 shadow-xs text-xs uppercase tracking-wider">
@@ -894,12 +1185,79 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                             <Button type="button" variant="ghost" onClick={() => { setShowEvalModal(false); setEvalStudent(null); }} className="rounded-full h-11 px-6 text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-100 dark:hover:bg-white/5 shadow-xs text-xs">
                                 Cancel
                             </Button>
-                            <Button type="submit" disabled={loading} className="rounded-full h-11 px-8 bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-md shadow-emerald-600/20 transition-all text-xs">
-                                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                {loading ? 'Saving...' : 'Save Evaluation'}
+                            <Button type="submit" className="rounded-full h-11 px-8 bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-md shadow-emerald-600/20 transition-all text-xs">
+                                Save Evaluation
                             </Button>
                         </DialogFooter>
                     </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* Evaluation History Modal */}
+            <Dialog open={!!evalHistoryStudent} onOpenChange={(open) => !open && setEvalHistoryStudent(null)}>
+                <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto rounded-3xl p-8 border border-slate-100 dark:border-white/10 shadow-2xl bg-white dark:bg-[#111A17] text-slate-900 dark:text-white relative">
+                    <DialogHeader className="mb-4 border-b border-slate-100 dark:border-white/10 pb-4">
+                        <div className="flex items-center gap-3">
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-base shadow-xs shrink-0 ${evalHistoryStudent ? getAvatarColor(evalHistoryStudent.name) : ''}`}>
+                                {evalHistoryStudent ? getInitials(evalHistoryStudent.name) : ''}
+                            </div>
+                            <div>
+                                <DialogTitle className="text-xl font-extrabold text-[#11221F] dark:text-white">{evalHistoryStudent?.name}</DialogTitle>
+                                <DialogDescription className="font-mono text-xs font-bold text-slate-400">
+                                    {evalHistoryStudent?.roll_no} • Group {evalHistoryStudent?.group_label}
+                                </DialogDescription>
+                            </div>
+                        </div>
+                    </DialogHeader>
+
+                    {evalHistoryStudent && (
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                                <div>
+                                    <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Overall Average</span>
+                                    <p className="text-2xl font-black text-emerald-700 dark:text-emerald-400">
+                                        {evalHistoryStudent.averageMarks !== null ? evalHistoryStudent.averageMarks.toFixed(1) : '--'}/40
+                                    </p>
+                                </div>
+                                <div>
+                                    <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Assigned Grade</span>
+                                    <p className="text-2xl font-black text-[#11221F] dark:text-white">
+                                        {getGrade(evalHistoryStudent.averageMarks)}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <h4 className="text-xs font-bold uppercase text-slate-400 tracking-wider">Logged Evaluation Sessions ({evalHistoryStudent.evaluations?.length || 0})</h4>
+                            
+                            {(!evalHistoryStudent.evaluations || evalHistoryStudent.evaluations.length === 0) ? (
+                                <p className="text-sm text-slate-400 italic text-center py-6">No evaluations recorded yet.</p>
+                            ) : (
+                                <div className="space-y-2.5 max-h-60 overflow-y-auto">
+                                    {evalHistoryStudent.evaluations.map((ev) => {
+                                        const total = (ev.fundamental_knowledge || 0) + (ev.core_skills || 0) + (ev.communication_skills || 0) + (ev.soft_skills || 0);
+                                        return (
+                                            <div key={ev.id} className="p-3.5 rounded-2xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 flex justify-between items-center text-xs">
+                                                <div>
+                                                    <span className="font-bold text-slate-800 dark:text-white block">{ev.eval_name || 'Evaluation'}</span>
+                                                    <span className="text-[10px] text-slate-400 font-medium">{format(new Date(ev.evaluation_date), 'PPP')}</span>
+                                                </div>
+                                                <div className="text-right">
+                                                    <span className="font-black text-base text-emerald-700 dark:text-emerald-400 block">{total}/40</span>
+                                                    <span className="text-[9px] text-slate-400 font-bold">F:{ev.fundamental_knowledge || 0} C:{ev.core_skills || 0} CM:{ev.communication_skills || 0} S:{ev.soft_skills || 0}</span>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    <DialogFooter className="mt-4 pt-4 border-t border-slate-100 dark:border-white/10">
+                        <Button type="button" variant="ghost" onClick={() => setEvalHistoryStudent(null)} className="rounded-full px-6 text-xs font-bold">
+                            Close
+                        </Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
 
@@ -908,7 +1266,7 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                 <DialogContent className="sm:max-w-md rounded-3xl p-8 border border-slate-100 dark:border-white/10 shadow-2xl bg-white dark:bg-[#111A17] text-slate-900 dark:text-white">
                     <DialogHeader className="mb-4">
                         <DialogTitle className="text-2xl font-extrabold text-[#11221F] dark:text-white">Export Data to Excel</DialogTitle>
-                        <DialogDescription className="font-bold text-slate-400 dark:text-slate-400 mt-1 uppercase tracking-widest text-[10px]">Generate localized .XLSX spreadsheets</DialogDescription>
+                        <DialogDescription className="font-bold text-slate-400 dark:text-slate-400 mt-1 uppercase tracking-widest text-[10px]">Multi-Sheet XLSX with Summary & Matrix</DialogDescription>
                     </DialogHeader>
 
                     <div className="space-y-6">
@@ -920,14 +1278,14 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                                         <input type="radio" value="all" checked={exportMode === 'all'} onChange={() => setExportMode('all')} className="accent-emerald-600" />
                                         <span className="font-bold text-[#11221F] dark:text-white text-sm">Full Matrix</span>
                                     </div>
-                                    <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider leading-tight ml-5">Every daily evaluation individually parsed.</p>
+                                    <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider leading-tight ml-5">Every daily session & trajectory.</p>
                                 </label>
                                 <label className={`flex-1 border p-4 rounded-2xl cursor-pointer transition-all ${exportMode === 'average' ? 'border-emerald-500 bg-emerald-50/60 dark:bg-emerald-950/50 shadow-xs ring-1 ring-emerald-400/40' : 'border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5'}`}>
                                     <div className="flex items-center gap-2 mb-1">
                                         <input type="radio" value="average" checked={exportMode === 'average'} onChange={() => setExportMode('average')} className="accent-emerald-600" />
                                         <span className="font-bold text-[#11221F] dark:text-white text-sm">Top-N Average</span>
                                     </div>
-                                    <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider leading-tight ml-5">Averages specific highest scoring entries.</p>
+                                    <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider leading-tight ml-5">Highest scoring session averages.</p>
                                 </label>
                             </div>
                         </div>
@@ -942,162 +1300,217 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                                     onChange={(e) => setExportTopN(parseInt(e.target.value) || 1)} 
                                     className="h-12 rounded-xl bg-white dark:bg-[#0B1110] text-slate-800 dark:text-white border-slate-200 dark:border-white/10 shadow-xs font-black text-center text-xl focus-visible:ring-2 focus-visible:ring-emerald-500 transition-all"
                                 />
-                                <p className="text-center text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-2">Will structurally sort and average the {exportTopN || 1} highest evaluations per student.</p>
+                                <p className="text-center text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-2">Sorts and averages the {exportTopN || 1} highest evaluations per student.</p>
                             </div>
                         )}
                     </div>
                     
                     <DialogFooter className="mt-8 pt-5 border-t border-slate-100 dark:border-white/10 gap-3">
-                        <Button variant="ghost" onClick={() => setShowExportModal(false)} className="rounded-full h-11 px-6 font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-xs">Cancel</Button>
-                        <Button onClick={handleExport} className="rounded-full h-11 px-8 bg-emerald-600 text-white hover:bg-emerald-700 font-bold shadow-md shadow-emerald-600/20 flex items-center gap-2 transition-all hover:scale-[1.02] text-xs">
-                            <Download size={15} /> Generate .XLSX
+                        <Button type="button" variant="ghost" onClick={() => setShowExportModal(false)} className="rounded-full px-6 text-xs font-bold">
+                            Cancel
+                        </Button>
+                        <Button type="button" onClick={handleExport} className="rounded-full px-8 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-600/20">
+                            <Download size={14} className="mr-2" /> Download Report (.xlsx)
                         </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
 
-            <Dialog open={!!evalHistoryStudent} onOpenChange={(open) => { if (!open) setEvalHistoryStudent(null) }}>
-                <DialogContent className="sm:max-w-2xl rounded-3xl p-8 border border-slate-100 dark:border-white/10 shadow-2xl overflow-hidden max-h-[85vh] flex flex-col bg-white dark:bg-[#111A17] text-slate-900 dark:text-white relative">
-                    <div className="absolute top-0 right-0 bg-emerald-700 text-white px-5 py-2.5 rounded-bl-2xl font-bold flex items-center gap-2 shadow-xs text-xs uppercase tracking-wider">
-                        History
-                    </div>
-                    {evalHistoryStudent && (
-                        <>
-                            <DialogHeader className="flex flex-row justify-between items-start mb-2 shrink-0 border-b border-slate-100 dark:border-white/10 pb-6 mt-4">
-                                <div className="flex items-center gap-5">
-                                    <div className={`w-14 h-14 rounded-full flex items-center justify-center font-bold text-xl shadow-xs ${getAvatarColor(evalHistoryStudent.name)}`}>
-                                        {getInitials(evalHistoryStudent.name)}
-                                    </div>
-                                    <div>
-                                        <div className="flex items-center gap-3 flex-wrap">
-                                            <DialogTitle className="text-2xl sm:text-3xl font-extrabold text-[#11221F] dark:text-white leading-none">{evalHistoryStudent.name}</DialogTitle>
-                                            <Badge variant="secondary" className="font-mono bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 rounded-md py-0 shadow-xs border border-slate-200 dark:border-white/10">{evalHistoryStudent.roll_no}</Badge>
-                                            {evalHistoryStudent.averageMarks !== null && (
-                                                <Badge variant="secondary" className="bg-emerald-50 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 font-bold border border-emerald-200 dark:border-emerald-800/40 px-2.5 py-0.5">
-                                                    Grade {getGrade(evalHistoryStudent.averageMarks)} ({evalHistoryStudent.averageMarks} Avg)
-                                                </Badge>
-                                            )}
-                                        </div>
-                                        <DialogDescription className="font-bold text-slate-400 dark:text-slate-400 mt-1.5 uppercase tracking-widest text-[10px]">Performance History</DialogDescription>
-                                    </div>
-                                </div>
-                            </DialogHeader>
-
-                            <div className="overflow-y-auto pr-2 space-y-4 flex-1 mt-4">
-                                {!evalHistoryStudent.evaluations || evalHistoryStudent.evaluations.length === 0 ? (
-                                    <div className="py-12 text-center text-slate-400 dark:text-slate-500 font-bold bg-slate-50 dark:bg-white/5 rounded-2xl border border-dashed border-slate-200 dark:border-white/10">
-                                        No evaluations recorded for this student yet.
-                                    </div>
-                                ) : (
-                                    evalHistoryStudent.evaluations.map((ev, i) => {
-                                        const total = (ev.fundamental_knowledge || 0) + (ev.core_skills || 0) + (ev.communication_skills || 0) + (ev.soft_skills || 0);
-                                        return (
-                                            <Card key={ev.id || i} className="border border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-white/5 rounded-2xl shadow-xs hover:shadow-md transition-all py-2 px-1 text-slate-900 dark:text-white">
-                                                <CardHeader className="flex flex-row justify-between items-center pb-3 border-b border-slate-100 dark:border-white/10">
-                                                    <CardTitle className="text-base font-extrabold text-[#11221F] dark:text-white flex items-center gap-3 m-0 p-0">
-                                                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
-                                                        {ev.eval_name}
-                                                    </CardTitle>
-                                                    <div className="flex items-baseline gap-1 text-[#11221F] dark:text-white bg-white dark:bg-[#111A17] px-3 py-1 rounded-full border border-slate-200 dark:border-white/10 shadow-xs">
-                                                        <span className="font-extrabold text-lg text-emerald-700 dark:text-emerald-400">{total.toFixed(1)}</span>
-                                                        <span className="text-xs font-bold text-slate-400">/ 40</span>
-                                                    </div>
-                                                </CardHeader>
-                                                <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-4 pb-2">
-                                                    <div className="bg-white dark:bg-[#111A17] rounded-xl p-3 border border-slate-100 dark:border-white/10 shadow-xs">
-                                                        <p className="text-[9px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-widest mb-1.5">Fundamental</p>
-                                                        <p className="font-black text-base text-[#11221F] dark:text-white">{ev.fundamental_knowledge || 0} <span className="text-slate-400 font-bold text-xs">/ 10</span></p>
-                                                    </div>
-                                                    <div className="bg-white dark:bg-[#111A17] rounded-xl p-3 border border-slate-100 dark:border-white/10 shadow-xs">
-                                                        <p className="text-[9px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-widest mb-1.5">Core Skills</p>
-                                                        <p className="font-black text-base text-[#11221F] dark:text-white">{ev.core_skills || 0} <span className="text-slate-400 font-bold text-xs">/ 10</span></p>
-                                                    </div>
-                                                    <div className="bg-white dark:bg-[#111A17] rounded-xl p-3 border border-slate-100 dark:border-white/10 shadow-xs">
-                                                        <p className="text-[9px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-widest mb-1.5">Communication</p>
-                                                        <p className="font-black text-base text-[#11221F] dark:text-white">{ev.communication_skills || 0} <span className="text-slate-400 font-bold text-xs">/ 10</span></p>
-                                                    </div>
-                                                    <div className="bg-white dark:bg-[#111A17] rounded-xl p-3 border border-slate-100 dark:border-white/10 shadow-xs">
-                                                        <p className="text-[9px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-widest mb-1.5">Soft Skills</p>
-                                                        <p className="font-black text-base text-[#11221F] dark:text-white">{ev.soft_skills || 0} <span className="text-slate-400 font-bold text-xs">/ 10</span></p>
-                                                    </div>
-                                                </CardContent>
-                                            </Card>
-                                        );
-                                    })
-                                )}
+            {/* Bulk Roster CSV/Excel Import Modal */}
+            <Dialog open={showBulkImportModal} onOpenChange={(open) => { if (!open) { setShowBulkImportModal(false); setParsedStudents([]); setImportFile(null); setImportError(""); setImportSuccess(""); } }}>
+                <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl p-8 border border-slate-100 dark:border-white/10 shadow-2xl bg-white dark:bg-[#111A17] text-slate-900 dark:text-white">
+                    <DialogHeader className="border-b border-slate-100 dark:border-white/10 pb-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div>
+                                <DialogTitle className="text-2xl font-extrabold text-[#11221F] dark:text-white flex items-center gap-2">
+                                    <FileSpreadsheet className="text-emerald-600 dark:text-emerald-400 w-6 h-6" />
+                                    Bulk Roster Import
+                                </DialogTitle>
+                                <DialogDescription className="text-slate-500 dark:text-slate-400 font-semibold text-xs mt-1">
+                                    Upload an Excel (.xlsx) or CSV file containing student roster data.
+                                </DialogDescription>
                             </div>
-                        </>
-                    )}
-                </DialogContent>
-            </Dialog>
-            <Dialog open={showEnrollModal} onOpenChange={(open) => {
-                setShowEnrollModal(open);
-                if (!open) setSelectedStudentIds([]);
-            }}>
-                <DialogContent className="sm:max-w-xl rounded-3xl p-8 md:p-10 border border-slate-100 dark:border-white/10 shadow-2xl bg-white dark:bg-[#111A17] text-slate-900 dark:text-white relative">
-                    <div className="absolute top-0 left-0 bg-emerald-700 text-white px-5 py-2.5 rounded-br-2xl font-bold flex items-center gap-2 shadow-xs text-xs uppercase tracking-wider">
-                        Enrollment
-                    </div>
-                    <DialogHeader className="mt-6 border-b border-slate-100 dark:border-white/10 pb-4">
-                        <DialogTitle className="text-2xl sm:text-3xl font-extrabold text-[#11221F] dark:text-white flex items-center gap-3">
-                            <Users size={26} className="text-emerald-600 dark:text-emerald-400" />
-                            Batch Enroll
-                        </DialogTitle>
-                        <DialogDescription className="pt-1.5 text-slate-500 dark:text-slate-400 font-semibold text-xs">
-                            Administer student roster for Section {classroom?.section}.
-                        </DialogDescription>
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={downloadSampleCSV} 
+                                className="rounded-full text-xs font-bold text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700/50 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 shrink-0"
+                            >
+                                <Download size={14} className="mr-1" /> Sample CSV
+                            </Button>
+                        </div>
                     </DialogHeader>
 
-                    <form onSubmit={handleEnrollSubmit} className="space-y-6 mt-4">
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-[#11221F] dark:text-slate-200 uppercase tracking-widest ml-1">1. Target Enrollment Group</label>
-                            <div className="flex bg-slate-100 dark:bg-white/10 p-1.5 rounded-full w-full shadow-xs border border-slate-200 dark:border-white/10">
-                                <button
-                                    type="button"
-                                    onClick={() => setBatchGroup('A')}
-                                    className={`flex-1 py-2.5 rounded-full text-sm font-bold transition-all ${batchGroup === 'A' ? 'bg-emerald-700 text-white shadow-sm' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}
-                                >
-                                    Group A
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setBatchGroup('B')}
-                                    className={`flex-1 py-2.5 rounded-full text-sm font-bold transition-all ${batchGroup === 'B' ? 'bg-emerald-700 text-white shadow-sm' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}
-                                >
-                                    Group B
-                                </button>
+                    <div className="space-y-5 py-4">
+                        {importError && (
+                            <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-300 text-xs font-bold">
+                                {importError}
                             </div>
+                        )}
+
+                        {importSuccess && (
+                            <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-xs font-bold">
+                                {importSuccess}
+                            </div>
+                        )}
+
+                        {/* Dropzone Area */}
+                        <div className="border-2 border-dashed border-slate-200 dark:border-white/15 rounded-3xl p-8 text-center hover:border-emerald-500 transition-colors bg-slate-50/50 dark:bg-white/5 relative">
+                            <input 
+                                type="file" 
+                                accept=".csv, .xlsx, .xls" 
+                                onChange={handleFileChange}
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                            />
+                            <FileUp className="w-10 h-10 mx-auto text-emerald-600 dark:text-emerald-400 mb-3" />
+                            <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                                {importFile ? importFile.name : "Click or drag & drop student roster file here"}
+                            </p>
+                            <p className="text-xs text-slate-400 dark:text-slate-500 font-medium mt-1">
+                                Supports .xlsx, .xls, and .csv (Columns: Name, Roll No, Email, Section, Group)
+                            </p>
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-[#11221F] dark:text-slate-200 uppercase tracking-widest ml-1 flex justify-between">
-                                2. Select Students
-                                <span className="text-[10px] opacity-60 text-slate-500 dark:text-slate-400 font-bold">{eligibleStudents.length} available</span>
-                            </label>
-                            <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 max-h-[300px] overflow-y-auto shadow-xs">
+                        {/* Preview Table */}
+                        {parsedStudents.length > 0 && (
+                            <div className="space-y-2">
+                                <div className="flex justify-between items-center text-xs font-bold px-1">
+                                    <span className="text-slate-600 dark:text-slate-400">
+                                        Parsed Preview: <strong className="text-emerald-700 dark:text-emerald-400">{parsedStudents.length} Students</strong>
+                                    </span>
+                                    <span className="text-[11px] text-slate-400">
+                                        Group A: {parsedStudents.filter(s => s.group_label === 'A').length} | Group B: {parsedStudents.filter(s => s.group_label === 'B').length}
+                                    </span>
+                                </div>
+                                <div className="max-h-56 overflow-y-auto border border-slate-200 dark:border-white/10 rounded-2xl">
+                                    <Table className="text-xs">
+                                        <TableHeader>
+                                            <TableRow className="bg-slate-50 dark:bg-white/5">
+                                                <TableHead className="font-bold">Roll No</TableHead>
+                                                <TableHead className="font-bold">Student Name</TableHead>
+                                                <TableHead className="font-bold">Section</TableHead>
+                                                <TableHead className="font-bold text-right">Assigned Group</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {parsedStudents.slice(0, 100).map((st, i) => (
+                                                <TableRow key={i} className="border-b border-slate-100 dark:border-white/5">
+                                                    <TableCell className="font-mono font-bold">{st.roll_no}</TableCell>
+                                                    <TableCell className="font-bold">{st.name}</TableCell>
+                                                    <TableCell className="text-slate-500">{st.section || '-'}</TableCell>
+                                                    <TableCell className="text-right">
+                                                        <Badge variant="outline" className={`font-bold ${st.group_label === 'A' ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300' : 'bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300'}`}>
+                                                            Group {st.group_label}
+                                                        </Badge>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <DialogFooter className="gap-3 sm:justify-end pt-4 border-t border-slate-100 dark:border-white/10">
+                        <Button 
+                            type="button" 
+                            variant="ghost" 
+                            onClick={() => setShowBulkImportModal(false)}
+                            className="rounded-full px-6 text-xs font-bold"
+                        >
+                            Cancel
+                        </Button>
+                        <Button 
+                            type="button" 
+                            disabled={importLoading || parsedStudents.length === 0}
+                            onClick={handleBulkImportSubmit}
+                            className="rounded-full px-8 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-600/20"
+                        >
+                            {importLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                            Import & Enroll ({parsedStudents.length})
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Existing Single/Multiple Manual Enroll Modal */}
+            <Dialog open={showEnrollModal} onOpenChange={setShowEnrollModal}>
+                <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto rounded-3xl p-8 border border-slate-100 dark:border-white/10 shadow-2xl bg-white dark:bg-[#111A17] text-slate-900 dark:text-white">
+                    <DialogHeader className="mb-2 border-b border-slate-100 dark:border-white/10 pb-4">
+                        <DialogTitle className="text-2xl font-extrabold text-[#11221F] dark:text-white">Enroll Students</DialogTitle>
+                        <DialogDescription className="text-slate-500 dark:text-slate-400 font-semibold text-xs mt-1">Assign eligible registered students into this virtual classroom cohort.</DialogDescription>
+                    </DialogHeader>
+
+                    <form onSubmit={handleEnrollSubmit} className="space-y-6 pt-2">
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-[#11221F] dark:text-slate-200 uppercase tracking-wider ml-1">Target Group Assignment</label>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setBatchGroup('A')}
+                                        className={`py-3 rounded-2xl font-bold border transition-all text-xs ${batchGroup === 'A' ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-600 text-emerald-900 dark:text-emerald-200 shadow-xs ring-2 ring-emerald-500/20' : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300'}`}
+                                    >
+                                        Group A
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setBatchGroup('B')}
+                                        className={`py-3 rounded-2xl font-bold border transition-all text-xs ${batchGroup === 'B' ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-600 text-emerald-900 dark:text-emerald-200 shadow-xs ring-2 ring-emerald-500/20' : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300'}`}
+                                    >
+                                        Group B
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <div className="flex justify-between items-center ml-1">
+                                    <label className="text-xs font-bold text-[#11221F] dark:text-slate-200 uppercase tracking-wider">Eligible Course Students</label>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (selectedStudentIds.length === eligibleStudents.length) {
+                                                setSelectedStudentIds([]);
+                                            } else {
+                                                setSelectedStudentIds(eligibleStudents.map(s => s.id));
+                                            }
+                                        }}
+                                        className="text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:underline"
+                                    >
+                                        {selectedStudentIds.length === eligibleStudents.length ? 'Deselect All' : 'Select All'}
+                                    </button>
+                                </div>
+
                                 {eligibleStudents.length === 0 ? (
-                                    <p className="text-slate-400 dark:text-slate-500 text-sm text-center py-4 italic">No eligible students found in the system for this course and semester.</p>
+                                    <div className="text-center py-8 text-slate-400 text-xs font-medium border border-dashed rounded-2xl dark:border-white/10">
+                                        No registered students found for this course/semester.
+                                    </div>
                                 ) : (
-                                    <div className="space-y-2.5">
+                                    <div className="max-h-60 overflow-y-auto space-y-2 pr-1 border border-slate-200 dark:border-white/10 rounded-2xl p-2 bg-slate-50/50 dark:bg-white/5">
                                         {eligibleStudents.map((student) => {
+                                            const isSelected = selectedStudentIds.includes(student.id);
                                             const existingEnrollment = students.find(s => s.student_id === student.id);
                                             const isAssigned = !!existingEnrollment;
 
-                                            const containerClasses = isAssigned
-                                                ? "bg-emerald-50/80 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800/40"
-                                                : "bg-white dark:bg-[#111A17] border-slate-200 dark:border-white/10 hover:border-emerald-400 dark:hover:border-emerald-500/50";
-
                                             return (
-                                                <div key={student.id} className={`flex justify-between items-center p-3 rounded-2xl shadow-xs border transition-colors ${containerClasses}`}>
+                                                <div
+                                                    key={student.id}
+                                                    onClick={() => {
+                                                        if (isSelected) {
+                                                            setSelectedStudentIds(selectedStudentIds.filter(id => id !== student.id));
+                                                        } else {
+                                                            setSelectedStudentIds([...selectedStudentIds, student.id]);
+                                                        }
+                                                    }}
+                                                    className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${isSelected ? 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-500 shadow-xs' : 'bg-white dark:bg-[#111A17] border-slate-200 dark:border-white/10 hover:border-slate-300'}`}
+                                                >
                                                     <div className="flex items-center gap-3">
                                                         <input
                                                             type="checkbox"
-                                                            className="w-4 h-4 rounded text-emerald-600 border-slate-300 dark:border-white/20 focus:ring-emerald-500 cursor-pointer"
-                                                            checked={selectedStudentIds.includes(student.id)}
-                                                            onChange={(e) => {
-                                                                if (e.target.checked) setSelectedStudentIds(prev => [...prev, student.id]);
-                                                                else setSelectedStudentIds(prev => prev.filter(id => id !== student.id));
-                                                            }}
+                                                            checked={isSelected}
+                                                            onChange={() => {}}
+                                                            className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500"
                                                         />
                                                         <div>
                                                             <p className={`font-bold text-sm ${isAssigned ? 'text-emerald-900 dark:text-emerald-200' : 'text-slate-800 dark:text-white'}`}>{student.name}</p>
@@ -1129,6 +1542,8 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                     </form>
                 </DialogContent>
             </Dialog>
+
+            {/* Remove Student Confirmation Modal */}
             <Dialog open={!!enrollmentToDelete} onOpenChange={(open) => !open && setEnrollmentToDelete(null)}>
                 <DialogContent className="sm:max-w-md rounded-3xl p-6 text-center border border-slate-100 dark:border-white/10 shadow-2xl bg-white dark:bg-[#111A17] text-slate-900 dark:text-white">
                     <DialogHeader>
