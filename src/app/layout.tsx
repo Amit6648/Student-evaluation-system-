@@ -1,5 +1,6 @@
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
+import { ThemeProvider } from '@/components/theme-provider';
 
 export const metadata = {
   title: 'Flip Classroom - Student Evaluation System',
@@ -12,11 +13,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className="antialiased">
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+    <html lang="en" suppressHydrationWarning>
+      <body className="antialiased bg-[#F4F7F6] dark:bg-[#0B1110] text-slate-900 dark:text-slate-100 transition-colors duration-200">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

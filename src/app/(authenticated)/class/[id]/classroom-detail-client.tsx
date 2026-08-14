@@ -425,40 +425,40 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
 
     return (
         <div className="min-h-screen p-6 md:p-8 max-w-7xl mx-auto">
-            <Link href="/" className="inline-flex items-center text-slate-600 hover:text-emerald-700 mb-8 font-bold transition-colors">
+            <Link href="/" className="inline-flex items-center text-slate-600 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-400 mb-8 font-bold transition-colors">
                 <ChevronLeft size={20} className="mr-1" /> Back to Dashboard
             </Link>
 
-            <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 sticky top-0 z-50 pt-2 pb-4 backdrop-blur-xl bg-[#F4F7F6]/80 border-b border-slate-200/70">
+            <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 sticky top-0 z-50 pt-2 pb-4 backdrop-blur-xl bg-[#F4F7F6]/80 dark:bg-[#080D0C]/80 border-b border-slate-200/70 dark:border-white/10">
                 <div>
-                    <Badge variant="secondary" className="bg-emerald-50 text-emerald-800 border border-emerald-200/60 font-bold uppercase tracking-wider text-[10px] px-3 py-1 rounded-lg mb-3 inline-block">
+                    <Badge variant="secondary" className="bg-emerald-50 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/40 font-bold uppercase tracking-wider text-[10px] px-3 py-1 rounded-lg mb-3 inline-block">
                         {classroom.subject?.course?.school?.name || 'School'} • {classroom.subject?.course?.name || 'Course'}
                     </Badge>
-                    <h1 className="text-3xl sm:text-4xl font-extrabold text-[#11221F] leading-tight tracking-tight">{classroom.subject?.name}</h1>
-                    <p className="text-slate-600 mt-2 font-semibold text-base flex items-center gap-3">
+                    <h1 className="text-3xl sm:text-4xl font-extrabold text-[#11221F] dark:text-white leading-tight tracking-tight">{classroom.subject?.name}</h1>
+                    <p className="text-slate-600 dark:text-slate-400 mt-2 font-semibold text-base flex items-center gap-3">
                         <span className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-emerald-600 block"></span> Teacher: {classroom.teacher?.name}</span>
                         <span className="opacity-40">•</span>
-                        <span className="flex items-center gap-2 text-slate-500"><span className="w-2 h-2 rounded-full bg-slate-400 block"></span> Year: {classroom.academic_year}</span>
+                        <span className="flex items-center gap-2 text-slate-500 dark:text-slate-400"><span className="w-2 h-2 rounded-full bg-slate-400 block"></span> Year: {classroom.academic_year}</span>
                     </p>
                 </div>
 
                 <div className="flex flex-col md:flex-row items-end gap-4 mt-4 md:mt-0">
                     <div className="flex flex-col items-start gap-1.5 focus-within:ring-2 rounded-full focus-within:ring-emerald-500/20 transition-all">
-                        <label className="text-[10px] font-black tracking-widest uppercase text-slate-400 ml-2">Evaluation Date</label>
+                        <label className="text-[10px] font-black tracking-widest uppercase text-slate-400 dark:text-slate-500 ml-2">Evaluation Date</label>
                         <Popover>
                             <PopoverTrigger asChild>
                                 <Button
                                     variant={"outline"}
                                     className={cn(
-                                        "w-[240px] justify-start text-left font-normal rounded-full border border-slate-200 shadow-xs h-11 bg-white hover:bg-slate-50 transition-colors focus-visible:ring-0",
+                                        "w-[240px] justify-start text-left font-normal rounded-full border border-slate-200 dark:border-white/10 shadow-xs h-11 bg-white dark:bg-[#111A17] hover:bg-slate-50 dark:hover:bg-white/5 text-slate-800 dark:text-white transition-colors focus-visible:ring-0",
                                         !selectedDate && "text-muted-foreground"
                                     )}
                                 >
-                                    <CalendarIcon className="mr-3 h-4 w-4 text-emerald-600" />
-                                    {selectedDate ? <span className="font-bold text-slate-800">{format(selectedDate, "PPP")}</span> : <span>Pick a date</span>}
+                                    <CalendarIcon className="mr-3 h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                                    {selectedDate ? <span className="font-bold text-slate-800 dark:text-white">{format(selectedDate, "PPP")}</span> : <span>Pick a date</span>}
                                 </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0 rounded-3xl border border-slate-100 shadow-2xl bg-white" align="end">
+                            <PopoverContent className="w-auto p-0 rounded-3xl border border-slate-100 dark:border-white/10 shadow-2xl bg-white dark:bg-[#111A17] text-slate-800 dark:text-white" align="end">
                                 <Calendar
                                     mode="single"
                                     selected={selectedDate}
@@ -478,16 +478,16 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                     </div>
 
                     {/* Group A / Group B Subnavigation Toggle */}
-                    <div className="flex bg-slate-200/60 p-1.5 rounded-full w-full md:w-auto shadow-xs border border-slate-200/50">
+                    <div className="flex bg-slate-200/60 dark:bg-white/10 p-1.5 rounded-full w-full md:w-auto shadow-xs border border-slate-200/50 dark:border-white/10">
                         <button
                             onClick={() => setActiveGroup('A')}
-                            className={`flex-1 md:w-32 py-2.5 rounded-full text-sm font-bold transition-all ${activeGroup === 'A' ? 'bg-emerald-700 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+                            className={`flex-1 md:w-32 py-2.5 rounded-full text-sm font-bold transition-all ${activeGroup === 'A' ? 'bg-emerald-700 text-white shadow-sm' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}
                         >
                             Group A
                         </button>
                         <button
                             onClick={() => setActiveGroup('B')}
-                            className={`flex-1 md:w-32 py-2.5 rounded-full text-sm font-bold transition-all ${activeGroup === 'B' ? 'bg-emerald-700 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+                            className={`flex-1 md:w-32 py-2.5 rounded-full text-sm font-bold transition-all ${activeGroup === 'B' ? 'bg-emerald-700 text-white shadow-sm' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}
                         >
                             Group B
                         </button>
@@ -504,58 +504,58 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
 
             {/* Compact Stat Cards for Active Group */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                <div className="bg-white border border-slate-200/80 rounded-2xl shadow-xs hover:shadow-md transition-all flex items-center gap-4 px-5 py-4">
-                    <div className="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0 border border-emerald-100">
+                <div className="bg-white dark:bg-[#111A17] border border-slate-200/80 dark:border-white/10 rounded-2xl shadow-xs hover:shadow-md transition-all flex items-center gap-4 px-5 py-4">
+                    <div className="w-11 h-11 rounded-2xl bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 flex items-center justify-center shrink-0 border border-emerald-100 dark:border-emerald-800/40">
                         <Users size={20} />
                     </div>
                     <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Group {activeGroup} Enrolled</p>
-                        <p className="text-2xl font-black text-[#11221F] leading-tight">{stats.totalStudents}</p>
+                        <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Group {activeGroup} Enrolled</p>
+                        <p className="text-2xl font-black text-[#11221F] dark:text-white leading-tight">{stats.totalStudents}</p>
                     </div>
                 </div>
-                <div className="bg-white border border-slate-200/80 rounded-2xl shadow-xs hover:shadow-md transition-all flex items-center gap-4 px-5 py-4">
-                    <div className="w-11 h-11 rounded-2xl bg-teal-50 text-teal-700 flex items-center justify-center shrink-0 border border-teal-100">
+                <div className="bg-white dark:bg-[#111A17] border border-slate-200/80 dark:border-white/10 rounded-2xl shadow-xs hover:shadow-md transition-all flex items-center gap-4 px-5 py-4">
+                    <div className="w-11 h-11 rounded-2xl bg-teal-50 dark:bg-teal-950/70 text-teal-700 dark:text-teal-300 flex items-center justify-center shrink-0 border border-teal-100 dark:border-teal-800/40">
                         <BarChart size={20} />
                     </div>
                     <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Group {activeGroup} Avg</p>
-                        <p className="text-2xl font-black text-[#11221F] leading-tight">{stats.classAvg}</p>
+                        <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Group {activeGroup} Avg</p>
+                        <p className="text-2xl font-black text-[#11221F] dark:text-white leading-tight">{stats.classAvg}</p>
                     </div>
                 </div>
-                <div className="bg-white border border-slate-200/80 rounded-2xl shadow-xs hover:shadow-md transition-all flex items-center gap-4 px-5 py-4">
-                    <div className="w-11 h-11 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center shrink-0 border border-amber-100">
+                <div className="bg-white dark:bg-[#111A17] border border-slate-200/80 dark:border-white/10 rounded-2xl shadow-xs hover:shadow-md transition-all flex items-center gap-4 px-5 py-4">
+                    <div className="w-11 h-11 rounded-2xl bg-amber-50 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 flex items-center justify-center shrink-0 border border-amber-100 dark:border-amber-800/40">
                         <CheckCircle2 size={20} />
                     </div>
                     <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Group {activeGroup} Top</p>
-                        <p className="text-2xl font-black text-[#11221F] leading-tight">{stats.topScore}</p>
+                        <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Group {activeGroup} Top</p>
+                        <p className="text-2xl font-black text-[#11221F] dark:text-white leading-tight">{stats.topScore}</p>
                     </div>
                 </div>
             </div >
 
-            <div className="bg-white border border-slate-200/80 rounded-3xl shadow-xs flex flex-col mb-12 overflow-hidden">
+            <div className="bg-white dark:bg-[#111A17] border border-slate-200/80 dark:border-white/10 rounded-3xl shadow-xs flex flex-col mb-12 overflow-hidden">
                 {/* Tabs & Search Header */}
-                <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center border-b border-slate-200/70 px-6 py-3 bg-slate-50/70 gap-4">
+                <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center border-b border-slate-200/70 dark:border-white/10 px-6 py-3 bg-slate-50/70 dark:bg-white/5 gap-4">
                     <div className="flex shrink-0 overflow-x-auto">
                         <button
                             onClick={() => setActiveTab('roster')}
-                            className={`px-5 py-3 font-bold text-sm tracking-wide flex items-center gap-2 border-b-[3px] transition-all ${activeTab === 'roster' ? 'border-emerald-600 text-emerald-700 font-extrabold' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
+                            className={`px-5 py-3 font-bold text-sm tracking-wide flex items-center gap-2 border-b-[3px] transition-all ${activeTab === 'roster' ? 'border-emerald-600 text-emerald-700 dark:text-emerald-400 font-extrabold' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'}`}
                         >
-                            <Users size={18} className={activeTab === 'roster' ? 'text-emerald-600' : ''} />
+                            <Users size={18} className={activeTab === 'roster' ? 'text-emerald-600 dark:text-emerald-400' : ''} />
                             Student Roster
                         </button>
                         <button
                             onClick={() => setActiveTab('gradebook')}
-                            className={`px-5 py-3 font-bold text-sm tracking-wide flex items-center gap-2 border-b-[3px] transition-all ${activeTab === 'gradebook' ? 'border-emerald-600 text-emerald-700 font-extrabold' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
+                            className={`px-5 py-3 font-bold text-sm tracking-wide flex items-center gap-2 border-b-[3px] transition-all ${activeTab === 'gradebook' ? 'border-emerald-600 text-emerald-700 dark:text-emerald-400 font-extrabold' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'}`}
                         >
-                            <BookOpen size={18} className={activeTab === 'gradebook' ? 'text-emerald-600' : ''} />
+                            <BookOpen size={18} className={activeTab === 'gradebook' ? 'text-emerald-600 dark:text-emerald-400' : ''} />
                             Gradebook
                         </button>
                         <button
                             onClick={() => setActiveTab('heatmap')}
-                            className={`px-5 py-3 font-bold text-sm tracking-wide flex items-center gap-2 border-b-[3px] transition-all ${activeTab === 'heatmap' ? 'border-emerald-600 text-emerald-700 font-extrabold' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
+                            className={`px-5 py-3 font-bold text-sm tracking-wide flex items-center gap-2 border-b-[3px] transition-all ${activeTab === 'heatmap' ? 'border-emerald-600 text-emerald-700 dark:text-emerald-400 font-extrabold' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white'}`}
                         >
-                            <BarChart size={18} className={activeTab === 'heatmap' ? 'text-emerald-600' : ''} />
+                            <BarChart size={18} className={activeTab === 'heatmap' ? 'text-emerald-600 dark:text-emerald-400' : ''} />
                             Performance Heatmap
                         </button>
                     </div>
@@ -563,18 +563,18 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                     <div className="flex items-center gap-3">
                         {/* Live Search Input */}
                         <div className="relative flex-1 sm:w-64">
-                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
                             <Input
                                 type="text"
                                 placeholder="Search by name or roll..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="h-9 pl-9 pr-8 bg-white border border-slate-200 rounded-full text-xs font-semibold placeholder:text-slate-400 focus-visible:ring-1 focus-visible:ring-emerald-500 shadow-none w-full"
+                                className="h-9 pl-9 pr-8 bg-white dark:bg-[#0B1110] border border-slate-200 dark:border-white/10 rounded-full text-xs font-semibold text-slate-800 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus-visible:ring-1 focus-visible:ring-emerald-500 shadow-none w-full"
                             />
                             {searchQuery && (
                                 <button
                                     onClick={() => setSearchQuery("")}
-                                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
+                                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
                                     aria-label="Clear search"
                                 >
                                     <X className="w-3.5 h-3.5" />
@@ -584,7 +584,7 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
 
                         {/* Excel Export Button Integration */}
                         {activeTab !== 'heatmap' && (
-                            <Button onClick={() => setShowExportModal(true)} variant="outline" className="h-9 rounded-full font-bold shadow-xs flex items-center gap-2 text-emerald-700 border-emerald-300 hover:bg-emerald-50 shrink-0 text-xs">
+                            <Button onClick={() => setShowExportModal(true)} variant="outline" className="h-9 rounded-full font-bold shadow-xs flex items-center gap-2 text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-700/50 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 shrink-0 text-xs">
                                 <Download size={14} /> Export
                             </Button>
                         )}
@@ -595,10 +595,10 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                 <div className="p-0 flex-1 flex flex-col">
                     {displayedStudents.length === 0 ? (
                         <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">
-                            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm">
-                                <Users size={24} className="text-[#111827]/30" />
+                            <div className="w-16 h-16 bg-white dark:bg-white/5 rounded-full flex items-center justify-center mb-4 shadow-sm">
+                                <Users size={24} className="text-[#111827]/30 dark:text-white/30" />
                             </div>
-                            <p className="text-[#111827]/80 font-bold mb-2">
+                            <p className="text-[#111827]/80 dark:text-white/80 font-bold mb-2">
                                 {searchQuery || (activeTab === 'heatmap' && selectedGradeFilter !== 'ALL')
                                     ? "No students match your search or filter criteria."
                                     : `No students enrolled in Group ${activeGroup} yet.`}
@@ -611,7 +611,7 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                                         setSearchQuery("");
                                         setSelectedGradeFilter("ALL");
                                     }}
-                                    className="rounded-full font-bold mt-2 text-xs"
+                                    className="rounded-full font-bold mt-2 text-xs border-slate-300 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300"
                                 >
                                     Reset Filters
                                 </Button>
@@ -621,13 +621,13 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                         <div className="p-8">
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                                 {displayedStudents.map((s) => {
-                                    let colorClass = "bg-slate-50 text-slate-700 border-slate-200/80"; // No Marks
+                                    let colorClass = "bg-slate-50 dark:bg-white/5 text-slate-700 dark:text-slate-300 border-slate-200/80 dark:border-white/10"; // No Marks
 
                                     if (s.averageMarks !== null && s.averageMarks !== undefined) {
-                                        if (s.averageMarks >= 32) colorClass = "bg-emerald-50 text-emerald-950 border-emerald-200 hover:border-emerald-400";
-                                        else if (s.averageMarks >= 24) colorClass = "bg-teal-50 text-teal-950 border-teal-200 hover:border-teal-400";
-                                        else if (s.averageMarks >= 16) colorClass = "bg-amber-50 text-amber-950 border-amber-200 hover:border-amber-400";
-                                        else colorClass = "bg-rose-50 text-rose-950 border-rose-200 hover:border-rose-400";
+                                        if (s.averageMarks >= 32) colorClass = "bg-emerald-50/90 dark:bg-emerald-950/60 text-emerald-950 dark:text-emerald-200 border-emerald-200 dark:border-emerald-800/50 hover:border-emerald-400";
+                                        else if (s.averageMarks >= 24) colorClass = "bg-teal-50/90 dark:bg-teal-950/60 text-teal-950 dark:text-teal-200 border-teal-200 dark:border-teal-800/50 hover:border-teal-400";
+                                        else if (s.averageMarks >= 16) colorClass = "bg-amber-50/90 dark:bg-amber-950/60 text-amber-950 dark:text-amber-200 border-amber-200 dark:border-amber-800/50 hover:border-amber-400";
+                                        else colorClass = "bg-rose-50/90 dark:bg-rose-950/60 text-rose-950 dark:text-rose-200 border-rose-200 dark:border-rose-800/50 hover:border-rose-400";
                                     }
 
                                     const evalCount = s.evaluations?.length || 0;
@@ -644,36 +644,36 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                                                     {getInitials(s.name)}
                                                 </div>
                                                 <div className="flex flex-col items-end gap-1">
-                                                    <span className="text-xs font-bold opacity-80 bg-white/80 px-2 py-0.5 rounded-md backdrop-blur-xs font-mono">{s.roll_no}</span>
-                                                    <div className="flex items-center gap-1 text-[9px] font-bold opacity-70 bg-white/60 px-1.5 py-0.5 rounded">
+                                                    <span className="text-xs font-bold opacity-80 bg-white/80 dark:bg-black/40 text-slate-800 dark:text-slate-200 px-2 py-0.5 rounded-md backdrop-blur-xs font-mono">{s.roll_no}</span>
+                                                    <div className="flex items-center gap-1 text-[9px] font-bold opacity-70 bg-white/60 dark:bg-black/30 text-slate-700 dark:text-slate-300 px-1.5 py-0.5 rounded">
                                                         <span>{evalCount} {evalCount === 1 ? 'eval' : 'evals'}</span>
                                                         {trend && trend.direction === 'up' && (
                                                             <span title={`Recent eval increased by +${trend.diff}`}>
-                                                                <TrendingUp className="w-3 h-3 text-emerald-700" />
+                                                                <TrendingUp className="w-3 h-3 text-emerald-700 dark:text-emerald-400" />
                                                             </span>
                                                         )}
                                                         {trend && trend.direction === 'down' && (
                                                             <span title={`Recent eval decreased by -${trend.diff}`}>
-                                                                <TrendingDown className="w-3 h-3 text-rose-700" />
+                                                                <TrendingDown className="w-3 h-3 text-rose-700 dark:text-rose-400" />
                                                             </span>
                                                         )}
                                                         {trend && trend.direction === 'same' && (
                                                             <span title="Performance steady">
-                                                                <Minus className="w-3 h-3 text-slate-600" />
+                                                                <Minus className="w-3 h-3 text-slate-600 dark:text-slate-400" />
                                                             </span>
                                                         )}
                                                     </div>
                                                 </div>
                                             </div>
                                             <div className="mt-2">
-                                                <h3 className="font-bold leading-tight line-clamp-2 text-[#11221F] text-[15px]">{s.name}</h3>
+                                                <h3 className="font-bold leading-tight line-clamp-2 text-[#11221F] dark:text-white text-[15px]">{s.name}</h3>
                                             </div>
-                                            <div className="flex justify-between items-end mt-2 pt-2 border-t border-black/5">
-                                                <div className="flex flex-col items-start text-[#11221F]">
+                                            <div className="flex justify-between items-end mt-2 pt-2 border-t border-black/5 dark:border-white/5">
+                                                <div className="flex flex-col items-start text-[#11221F] dark:text-white">
                                                     <span className="text-2xl sm:text-3xl font-black leading-none">{getGrade(s.averageMarks)}</span>
                                                     <span className="text-[9px] uppercase tracking-widest font-bold opacity-50 mt-1">Grade</span>
                                                 </div>
-                                                <div className="text-2xl sm:text-3xl font-black flex flex-col items-end text-[#11221F]">
+                                                <div className="text-2xl sm:text-3xl font-black flex flex-col items-end text-[#11221F] dark:text-white">
                                                     <span className="leading-none">{s.averageMarks !== null ? s.averageMarks : '--'}</span>
                                                     <span className="text-[9px] uppercase tracking-widest font-bold opacity-50 mt-1">Avg Score</span>
                                                 </div>
@@ -684,8 +684,8 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                             </div>
 
                             {/* Clickable Interactive Legend Filters */}
-                            <div className="mt-8 flex flex-wrap gap-2 sm:gap-3 text-xs font-bold text-slate-600 items-center justify-center bg-slate-50/80 py-3 px-6 rounded-full border border-slate-200">
-                                <span className="text-[10px] uppercase tracking-wider font-extrabold text-slate-400 mr-1 flex items-center gap-1">
+                            <div className="mt-8 flex flex-wrap gap-2 sm:gap-3 text-xs font-bold text-slate-600 dark:text-slate-300 items-center justify-center bg-slate-50/80 dark:bg-white/5 py-3 px-6 rounded-full border border-slate-200 dark:border-white/10">
+                                <span className="text-[10px] uppercase tracking-wider font-extrabold text-slate-400 dark:text-slate-500 mr-1 flex items-center gap-1">
                                     <Filter size={12} /> Filter:
                                 </span>
                                 
@@ -693,8 +693,8 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                                     onClick={() => setSelectedGradeFilter('ALL')}
                                     className={`px-3.5 py-1.5 rounded-full transition-all text-xs font-bold ${
                                         selectedGradeFilter === 'ALL'
-                                            ? 'bg-[#11221F] text-white shadow-xs'
-                                            : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
+                                            ? 'bg-[#11221F] dark:bg-white text-white dark:text-slate-900 shadow-xs'
+                                            : 'bg-white dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/15 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10'
                                     }`}
                                 >
                                     All ({groupStudents.length})
@@ -705,7 +705,7 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                                     className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full transition-all text-xs font-bold ${
                                         selectedGradeFilter === 'A'
                                             ? 'bg-emerald-600 text-white shadow-xs ring-2 ring-emerald-500/40'
-                                            : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                            : 'bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-950/90 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40'
                                     }`}
                                 >
                                     <div className={`w-2.5 h-2.5 rounded-full ${selectedGradeFilter === 'A' ? 'bg-white' : 'bg-emerald-500'}`}></div>
@@ -717,7 +717,7 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                                     className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full transition-all text-xs font-bold ${
                                         selectedGradeFilter === 'B'
                                             ? 'bg-teal-600 text-white shadow-xs ring-2 ring-teal-500/40'
-                                            : 'bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200'
+                                            : 'bg-teal-50 dark:bg-teal-950/60 hover:bg-teal-100 dark:hover:bg-teal-950/90 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-800/40'
                                     }`}
                                 >
                                     <div className={`w-2.5 h-2.5 rounded-full ${selectedGradeFilter === 'B' ? 'bg-white' : 'bg-teal-500'}`}></div>
@@ -729,7 +729,7 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                                     className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full transition-all text-xs font-bold ${
                                         selectedGradeFilter === 'C'
                                             ? 'bg-amber-600 text-white shadow-xs ring-2 ring-amber-500/40'
-                                            : 'bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200'
+                                            : 'bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-950/90 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/40'
                                     }`}
                                 >
                                     <div className={`w-2.5 h-2.5 rounded-full ${selectedGradeFilter === 'C' ? 'bg-white' : 'bg-amber-500'}`}></div>
@@ -741,7 +741,7 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                                     className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full transition-all text-xs font-bold ${
                                         selectedGradeFilter === 'D'
                                             ? 'bg-rose-600 text-white shadow-xs ring-2 ring-rose-500/40'
-                                            : 'bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200'
+                                            : 'bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 dark:hover:bg-rose-950/90 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800/40'
                                     }`}
                                 >
                                     <div className={`w-2.5 h-2.5 rounded-full ${selectedGradeFilter === 'D' ? 'bg-white' : 'bg-rose-500'}`}></div>
@@ -750,42 +750,42 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                             </div>
                         </div>
                     ) : (
-                        <div className="overflow-x-auto bg-white">
+                        <div className="overflow-x-auto bg-white dark:bg-[#111A17]">
                             <Table className="w-full text-left">
                                 <TableHeader>
-                                    <TableRow className="bg-slate-50/80 border-b border-slate-200/80 hover:bg-slate-50/80">
-                                        <TableHead className="py-4 px-8 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Roll No</TableHead>
-                                        <TableHead className="py-4 px-8 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Student Name</TableHead>
+                                    <TableRow className="bg-slate-50/80 dark:bg-white/5 border-b border-slate-200/80 dark:border-white/10 hover:bg-slate-50/80 dark:hover:bg-white/5">
+                                        <TableHead className="py-4 px-8 text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest">Roll No</TableHead>
+                                        <TableHead className="py-4 px-8 text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest">Student Name</TableHead>
                                         {activeTab === 'roster' ? (
                                             <>
-                                                {isAdmin && <TableHead className="py-4 px-8 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Admin Action</TableHead>}
+                                                {isAdmin && <TableHead className="py-4 px-8 text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest text-right">Admin Action</TableHead>}
                                             </>
                                         ) : (
                                             <>
-                                                <TableHead className="py-4 px-8 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Status</TableHead>
-                                                <TableHead className="py-4 px-8 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Daily Score</TableHead>
-                                                {!isAdmin && <TableHead className="py-4 px-8 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Evaluate</TableHead>}
+                                                <TableHead className="py-4 px-8 text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest text-center">Status</TableHead>
+                                                <TableHead className="py-4 px-8 text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest text-center">Daily Score</TableHead>
+                                                {!isAdmin && <TableHead className="py-4 px-8 text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest text-right">Evaluate</TableHead>}
                                             </>
                                         )}
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {displayedStudents.map((s) => (
-                                        <TableRow key={s.student_id} className="hover:bg-emerald-50/20 transition-colors border-b border-slate-100 group">
-                                            <TableCell className="py-4 px-8 text-slate-500 font-mono font-bold text-xs">{s.roll_no}</TableCell>
+                                        <TableRow key={s.student_id} className="hover:bg-emerald-50/20 dark:hover:bg-white/5 transition-colors border-b border-slate-100 dark:border-white/5 group">
+                                            <TableCell className="py-4 px-8 text-slate-500 dark:text-slate-400 font-mono font-bold text-xs">{s.roll_no}</TableCell>
                                             <TableCell className="py-4 px-8">
                                                 <div className="flex items-center gap-3">
                                                     <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shadow-xs shrink-0 ${getAvatarColor(s.name)}`}>
                                                         {getInitials(s.name)}
                                                     </div>
-                                                    <span className="font-bold text-[#11221F]">{s.name}</span>
+                                                    <span className="font-bold text-[#11221F] dark:text-white">{s.name}</span>
                                                 </div>
                                             </TableCell>
                                             {activeTab === 'roster' ? (
                                                 <>
                                                     {isAdmin && (
                                                         <TableCell className="py-4 px-8 text-right">
-                                                            <Button variant="ghost" size="icon" onClick={() => setEnrollmentToDelete(s.enrollment_id)} className="text-slate-400 hover:text-rose-600 transition-colors rounded-full hover:bg-rose-50" title="Remove Student">
+                                                            <Button variant="ghost" size="icon" onClick={() => setEnrollmentToDelete(s.enrollment_id)} className="text-slate-400 hover:text-rose-600 transition-colors rounded-full hover:bg-rose-50 dark:hover:bg-rose-950/40" title="Remove Student">
                                                                 <Trash2 size={16} />
                                                             </Button>
                                                         </TableCell>
@@ -799,23 +799,23 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                                                         
                                                         return (
                                                             <>
-                                                                <TableCell className="py-4 px-8 text-center font-bold text-slate-500">
-                                                                    {evForDate ? <div className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full text-xs font-bold border border-emerald-200"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Graded</div> : <div className="text-amber-600 text-xs font-semibold">Pending</div>}
+                                                                <TableCell className="py-4 px-8 text-center font-bold text-slate-500 dark:text-slate-400">
+                                                                    {evForDate ? <div className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1 rounded-full text-xs font-bold border border-emerald-200 dark:border-emerald-800/40"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> Graded</div> : <div className="text-amber-600 dark:text-amber-400 text-xs font-semibold">Pending</div>}
                                                                 </TableCell>
                                                                 <TableCell className="py-4 px-8 text-center">
-                                                                    <span className="font-black text-xl text-emerald-700">{dateTotal !== null ? dateTotal : '--'}</span>
+                                                                    <span className="font-black text-xl text-emerald-700 dark:text-emerald-400">{dateTotal !== null ? dateTotal : '--'}</span>
                                                                 </TableCell>
                                                                 {!isAdmin && (
                                                                     <TableCell className="py-4 px-8 text-right">
                                                                         {isInvalidDate ? (
-                                                                            <span className="text-[10px] font-bold text-amber-600 uppercase tracking-widest bg-amber-50 px-3 py-1.5 rounded-full inline-flex items-center gap-1 border border-amber-200">
+                                                                            <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest bg-amber-50 dark:bg-amber-950/60 px-3 py-1.5 rounded-full inline-flex items-center gap-1 border border-amber-200 dark:border-amber-800/40">
                                                                                 <CalendarIcon size={12}/> {isFutureDate() ? 'Future Locked' : 'Weekend Locked'}
                                                                             </span>
                                                                         ) : (
                                                                             <Button
                                                                                 size="sm"
                                                                                 onClick={() => { setEvalStudent(s); setShowEvalModal(true); }}
-                                                                                className={evForDate ? "text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors rounded-full font-bold shadow-xs inline-flex items-center gap-1 px-4 text-xs" : "text-white bg-emerald-600 hover:bg-emerald-700 transition-all rounded-full font-bold shadow-sm shadow-emerald-600/20 inline-flex items-center gap-1 px-4 text-xs"}
+                                                                                className={evForDate ? "text-slate-700 dark:text-slate-200 bg-white dark:bg-[#111A17] border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors rounded-full font-bold shadow-xs inline-flex items-center gap-1 px-4 text-xs" : "text-white bg-emerald-600 hover:bg-emerald-700 transition-all rounded-full font-bold shadow-sm shadow-emerald-600/20 inline-flex items-center gap-1 px-4 text-xs"}
                                                                             >
                                                                                 <Plus size={15} /> {evForDate ? 'Edit Eval' : 'Add Eval'}
                                                                             </Button>
@@ -837,22 +837,22 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
             </div>
 
             <Dialog open={showEvalModal} onOpenChange={(open) => { if (!open) { setShowEvalModal(false); setEvalStudent(null); } }}>
-                <DialogContent className="sm:max-w-sm rounded-3xl p-8 border border-slate-100 shadow-2xl bg-white relative">
+                <DialogContent className="sm:max-w-sm rounded-3xl p-8 border border-slate-100 dark:border-white/10 shadow-2xl bg-white dark:bg-[#111A17] text-slate-900 dark:text-white relative">
                     <div className="absolute top-0 left-0 bg-emerald-700 text-white px-5 py-2.5 rounded-br-2xl font-bold flex items-center gap-2 shadow-xs text-xs uppercase tracking-wider">
                         Evaluation
                     </div>
-                    <DialogHeader className="mb-2 mt-6 border-b border-slate-100 pb-4">
-                        <DialogTitle className="text-2xl font-extrabold text-[#11221F]">Score Evaluation</DialogTitle>
+                    <DialogHeader className="mb-2 mt-6 border-b border-slate-100 dark:border-white/10 pb-4">
+                        <DialogTitle className="text-2xl font-extrabold text-[#11221F] dark:text-white">Score Evaluation</DialogTitle>
                     </DialogHeader>
 
                     {evalStudent && (
-                        <div className="mb-1 bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center gap-4">
+                        <div className="mb-1 bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-slate-100 dark:border-white/10 flex items-center gap-4">
                             <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shadow-xs ${getAvatarColor(evalStudent.name)}`}>
                                 {getInitials(evalStudent.name)}
                             </div>
                             <div>
-                                <p className="font-bold text-[#11221F] line-clamp-1">{evalStudent.name}</p>
-                                <span className="text-xs uppercase font-bold text-slate-400 tracking-widest">{evalStudent.roll_no}</span>
+                                <p className="font-bold text-[#11221F] dark:text-white line-clamp-1">{evalStudent.name}</p>
+                                <span className="text-xs uppercase font-bold text-slate-400 dark:text-slate-400 tracking-widest">{evalStudent.roll_no}</span>
                             </div>
                         </div>
                     )}
@@ -863,34 +863,34 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                             return (
                                 <>
                                     <div className="space-y-1.5">
-                                        <label className="text-xs font-bold text-[#11221F] uppercase tracking-wider ml-1">Evaluation Title</label>
-                                        <Input required name="eval_name" defaultValue={currentEval?.eval_name || ''} placeholder={`e.g. Daily Evaluation - ${format(selectedDate, 'MMM d')}`} className="h-11 rounded-full bg-slate-50 border border-slate-200 shadow-xs focus-visible:ring-2 focus-visible:ring-emerald-500 font-semibold px-4 text-xs" />
+                                        <label className="text-xs font-bold text-[#11221F] dark:text-slate-200 uppercase tracking-wider ml-1">Evaluation Title</label>
+                                        <Input required name="eval_name" defaultValue={currentEval?.eval_name || ''} placeholder={`e.g. Daily Evaluation - ${format(selectedDate, 'MMM d')}`} className="h-11 rounded-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white shadow-xs focus-visible:ring-2 focus-visible:ring-emerald-500 font-semibold px-4 text-xs" />
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-3">
                                         <div className="space-y-1.5 focus-within:text-emerald-700 transition-colors">
-                                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest line-clamp-1 ml-1" title="Fundamental Knowledge">Fundamental</label>
-                                            <Input required name="fundamental_knowledge" defaultValue={currentEval?.fundamental_knowledge ?? ''} type="number" step="0.5" max="10" min="0" placeholder="0-10" className="h-12 text-lg font-black bg-slate-50 border border-slate-200 shadow-xs rounded-2xl focus-visible:ring-2 focus-visible:ring-emerald-500 text-center" />
+                                            <label className="block text-[9px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-widest line-clamp-1 ml-1" title="Fundamental Knowledge">Fundamental</label>
+                                            <Input required name="fundamental_knowledge" defaultValue={currentEval?.fundamental_knowledge ?? ''} type="number" step="0.5" max="10" min="0" placeholder="0-10" className="h-12 text-lg font-black bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white shadow-xs rounded-2xl focus-visible:ring-2 focus-visible:ring-emerald-500 text-center" />
                                         </div>
                                         <div className="space-y-1.5 focus-within:text-emerald-700 transition-colors">
-                                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest line-clamp-1 ml-1" title="Core/Technical Skills">Core Skills</label>
-                                            <Input required name="core_skills" defaultValue={currentEval?.core_skills ?? ''} type="number" step="0.5" max="10" min="0" placeholder="0-10" className="h-12 text-lg font-black bg-slate-50 border border-slate-200 shadow-xs rounded-2xl focus-visible:ring-2 focus-visible:ring-emerald-500 text-center" />
+                                            <label className="block text-[9px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-widest line-clamp-1 ml-1" title="Core/Technical Skills">Core Skills</label>
+                                            <Input required name="core_skills" defaultValue={currentEval?.core_skills ?? ''} type="number" step="0.5" max="10" min="0" placeholder="0-10" className="h-12 text-lg font-black bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white shadow-xs rounded-2xl focus-visible:ring-2 focus-visible:ring-emerald-500 text-center" />
                                         </div>
                                         <div className="space-y-1.5 focus-within:text-emerald-700 transition-colors">
-                                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest line-clamp-1 ml-1" title="Communication Skills">Communication</label>
-                                            <Input required name="communication_skills" defaultValue={currentEval?.communication_skills ?? ''} type="number" step="0.5" max="10" min="0" placeholder="0-10" className="h-12 text-lg font-black bg-slate-50 border border-slate-200 shadow-xs rounded-2xl focus-visible:ring-2 focus-visible:ring-emerald-500 text-center" />
+                                            <label className="block text-[9px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-widest line-clamp-1 ml-1" title="Communication Skills">Communication</label>
+                                            <Input required name="communication_skills" defaultValue={currentEval?.communication_skills ?? ''} type="number" step="0.5" max="10" min="0" placeholder="0-10" className="h-12 text-lg font-black bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white shadow-xs rounded-2xl focus-visible:ring-2 focus-visible:ring-emerald-500 text-center" />
                                         </div>
                                         <div className="space-y-1.5 focus-within:text-emerald-700 transition-colors">
-                                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest line-clamp-1 ml-1" title="Soft and Life Skills">Soft Skills</label>
-                                            <Input required name="soft_skills" defaultValue={currentEval?.soft_skills ?? ''} type="number" step="0.5" max="10" min="0" placeholder="0-10" className="h-12 text-lg font-black bg-slate-50 border border-slate-200 shadow-xs rounded-2xl focus-visible:ring-2 focus-visible:ring-emerald-500 text-center" />
+                                            <label className="block text-[9px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-widest line-clamp-1 ml-1" title="Soft and Life Skills">Soft Skills</label>
+                                            <Input required name="soft_skills" defaultValue={currentEval?.soft_skills ?? ''} type="number" step="0.5" max="10" min="0" placeholder="0-10" className="h-12 text-lg font-black bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-800 dark:text-white shadow-xs rounded-2xl focus-visible:ring-2 focus-visible:ring-emerald-500 text-center" />
                                         </div>
                                     </div>
                                 </>
                             );
                         })()}
 
-                        <DialogFooter className="pt-6 sm:justify-end gap-3 mt-4 border-t border-slate-100">
-                            <Button type="button" variant="ghost" onClick={() => { setShowEvalModal(false); setEvalStudent(null); }} className="rounded-full h-11 px-6 text-slate-600 font-bold hover:bg-slate-100 shadow-xs text-xs">
+                        <DialogFooter className="pt-6 sm:justify-end gap-3 mt-4 border-t border-slate-100 dark:border-white/10">
+                            <Button type="button" variant="ghost" onClick={() => { setShowEvalModal(false); setEvalStudent(null); }} className="rounded-full h-11 px-6 text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-100 dark:hover:bg-white/5 shadow-xs text-xs">
                                 Cancel
                             </Button>
                             <Button type="submit" disabled={loading} className="rounded-full h-11 px-8 bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-md shadow-emerald-600/20 transition-all text-xs">
@@ -904,50 +904,50 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
 
             {/* Excel Export Configuration Modal */}
             <Dialog open={showExportModal} onOpenChange={setShowExportModal}>
-                <DialogContent className="sm:max-w-md rounded-3xl p-8 border border-slate-100 shadow-2xl bg-white">
+                <DialogContent className="sm:max-w-md rounded-3xl p-8 border border-slate-100 dark:border-white/10 shadow-2xl bg-white dark:bg-[#111A17] text-slate-900 dark:text-white">
                     <DialogHeader className="mb-4">
-                        <DialogTitle className="text-2xl font-extrabold text-[#11221F]">Export Data to Excel</DialogTitle>
-                        <DialogDescription className="font-bold text-slate-400 mt-1 uppercase tracking-widest text-[10px]">Generate localized .XLSX spreadsheets</DialogDescription>
+                        <DialogTitle className="text-2xl font-extrabold text-[#11221F] dark:text-white">Export Data to Excel</DialogTitle>
+                        <DialogDescription className="font-bold text-slate-400 dark:text-slate-400 mt-1 uppercase tracking-widest text-[10px]">Generate localized .XLSX spreadsheets</DialogDescription>
                     </DialogHeader>
 
                     <div className="space-y-6">
                         <div className="space-y-3">
-                            <label className="text-xs font-bold text-[#11221F] uppercase tracking-wider">Export Format Mode</label>
+                            <label className="text-xs font-bold text-[#11221F] dark:text-slate-200 uppercase tracking-wider">Export Format Mode</label>
                             <div className="flex gap-4">
-                                <label className={`flex-1 border p-4 rounded-2xl cursor-pointer transition-all ${exportMode === 'all' ? 'border-emerald-500 bg-emerald-50/60 shadow-xs ring-1 ring-emerald-400/40' : 'border-slate-200 hover:bg-slate-50'}`}>
+                                <label className={`flex-1 border p-4 rounded-2xl cursor-pointer transition-all ${exportMode === 'all' ? 'border-emerald-500 bg-emerald-50/60 dark:bg-emerald-950/50 shadow-xs ring-1 ring-emerald-400/40' : 'border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5'}`}>
                                     <div className="flex items-center gap-2 mb-1">
                                         <input type="radio" value="all" checked={exportMode === 'all'} onChange={() => setExportMode('all')} className="accent-emerald-600" />
-                                        <span className="font-bold text-[#11221F] text-sm">Full Matrix</span>
+                                        <span className="font-bold text-[#11221F] dark:text-white text-sm">Full Matrix</span>
                                     </div>
-                                    <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider leading-tight ml-5">Every daily evaluation individually parsed.</p>
+                                    <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider leading-tight ml-5">Every daily evaluation individually parsed.</p>
                                 </label>
-                                <label className={`flex-1 border p-4 rounded-2xl cursor-pointer transition-all ${exportMode === 'average' ? 'border-emerald-500 bg-emerald-50/60 shadow-xs ring-1 ring-emerald-400/40' : 'border-slate-200 hover:bg-slate-50'}`}>
+                                <label className={`flex-1 border p-4 rounded-2xl cursor-pointer transition-all ${exportMode === 'average' ? 'border-emerald-500 bg-emerald-50/60 dark:bg-emerald-950/50 shadow-xs ring-1 ring-emerald-400/40' : 'border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5'}`}>
                                     <div className="flex items-center gap-2 mb-1">
                                         <input type="radio" value="average" checked={exportMode === 'average'} onChange={() => setExportMode('average')} className="accent-emerald-600" />
-                                        <span className="font-bold text-[#11221F] text-sm">Top-N Average</span>
+                                        <span className="font-bold text-[#11221F] dark:text-white text-sm">Top-N Average</span>
                                     </div>
-                                    <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider leading-tight ml-5">Averages specific highest scoring entries.</p>
+                                    <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider leading-tight ml-5">Averages specific highest scoring entries.</p>
                                 </label>
                             </div>
                         </div>
 
                         {exportMode === 'average' && (
-                            <div className="space-y-2 animate-in fade-in slide-in-from-top-2 bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                                <label className="text-center text-[10px] font-black tracking-widest text-slate-500 uppercase block mb-2">Extract Highest 'N' Outcomes</label>
+                            <div className="space-y-2 animate-in fade-in slide-in-from-top-2 bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-slate-200 dark:border-white/10">
+                                <label className="text-center text-[10px] font-black tracking-widest text-slate-500 dark:text-slate-400 uppercase block mb-2">Extract Highest 'N' Outcomes</label>
                                 <Input 
                                     type="number" 
                                     min="1" 
                                     value={exportTopN} 
                                     onChange={(e) => setExportTopN(parseInt(e.target.value) || 1)} 
-                                    className="h-12 rounded-xl bg-white border-slate-200 shadow-xs font-black text-center text-xl focus-visible:ring-2 focus-visible:ring-emerald-500 transition-all"
+                                    className="h-12 rounded-xl bg-white dark:bg-[#0B1110] text-slate-800 dark:text-white border-slate-200 dark:border-white/10 shadow-xs font-black text-center text-xl focus-visible:ring-2 focus-visible:ring-emerald-500 transition-all"
                                 />
-                                <p className="text-center text-[10px] font-bold text-slate-400 mt-2">Will structurally sort and average the {exportTopN || 1} highest evaluations per student.</p>
+                                <p className="text-center text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-2">Will structurally sort and average the {exportTopN || 1} highest evaluations per student.</p>
                             </div>
                         )}
                     </div>
                     
-                    <DialogFooter className="mt-8 pt-5 border-t border-slate-100 gap-3">
-                        <Button variant="ghost" onClick={() => setShowExportModal(false)} className="rounded-full h-11 px-6 font-bold text-slate-600 hover:bg-slate-50 transition-colors text-xs">Cancel</Button>
+                    <DialogFooter className="mt-8 pt-5 border-t border-slate-100 dark:border-white/10 gap-3">
+                        <Button variant="ghost" onClick={() => setShowExportModal(false)} className="rounded-full h-11 px-6 font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-xs">Cancel</Button>
                         <Button onClick={handleExport} className="rounded-full h-11 px-8 bg-emerald-600 text-white hover:bg-emerald-700 font-bold shadow-md shadow-emerald-600/20 flex items-center gap-2 transition-all hover:scale-[1.02] text-xs">
                             <Download size={15} /> Generate .XLSX
                         </Button>
@@ -956,68 +956,68 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
             </Dialog>
 
             <Dialog open={!!evalHistoryStudent} onOpenChange={(open) => { if (!open) setEvalHistoryStudent(null) }}>
-                <DialogContent className="sm:max-w-2xl rounded-3xl p-8 border border-slate-100 shadow-2xl overflow-hidden max-h-[85vh] flex flex-col bg-white relative">
+                <DialogContent className="sm:max-w-2xl rounded-3xl p-8 border border-slate-100 dark:border-white/10 shadow-2xl overflow-hidden max-h-[85vh] flex flex-col bg-white dark:bg-[#111A17] text-slate-900 dark:text-white relative">
                     <div className="absolute top-0 right-0 bg-emerald-700 text-white px-5 py-2.5 rounded-bl-2xl font-bold flex items-center gap-2 shadow-xs text-xs uppercase tracking-wider">
                         History
                     </div>
                     {evalHistoryStudent && (
                         <>
-                            <DialogHeader className="flex flex-row justify-between items-start mb-2 shrink-0 border-b border-slate-100 pb-6 mt-4">
+                            <DialogHeader className="flex flex-row justify-between items-start mb-2 shrink-0 border-b border-slate-100 dark:border-white/10 pb-6 mt-4">
                                 <div className="flex items-center gap-5">
                                     <div className={`w-14 h-14 rounded-full flex items-center justify-center font-bold text-xl shadow-xs ${getAvatarColor(evalHistoryStudent.name)}`}>
                                         {getInitials(evalHistoryStudent.name)}
                                     </div>
                                     <div>
                                         <div className="flex items-center gap-3 flex-wrap">
-                                            <DialogTitle className="text-2xl sm:text-3xl font-extrabold text-[#11221F] leading-none">{evalHistoryStudent.name}</DialogTitle>
-                                            <Badge variant="secondary" className="font-mono bg-slate-100 text-slate-600 rounded-md py-0 shadow-xs border border-slate-200">{evalHistoryStudent.roll_no}</Badge>
+                                            <DialogTitle className="text-2xl sm:text-3xl font-extrabold text-[#11221F] dark:text-white leading-none">{evalHistoryStudent.name}</DialogTitle>
+                                            <Badge variant="secondary" className="font-mono bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 rounded-md py-0 shadow-xs border border-slate-200 dark:border-white/10">{evalHistoryStudent.roll_no}</Badge>
                                             {evalHistoryStudent.averageMarks !== null && (
-                                                <Badge variant="secondary" className="bg-emerald-50 text-emerald-800 font-bold border border-emerald-200 px-2.5 py-0.5">
+                                                <Badge variant="secondary" className="bg-emerald-50 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 font-bold border border-emerald-200 dark:border-emerald-800/40 px-2.5 py-0.5">
                                                     Grade {getGrade(evalHistoryStudent.averageMarks)} ({evalHistoryStudent.averageMarks} Avg)
                                                 </Badge>
                                             )}
                                         </div>
-                                        <DialogDescription className="font-bold text-slate-400 mt-1.5 uppercase tracking-widest text-[10px]">Performance History</DialogDescription>
+                                        <DialogDescription className="font-bold text-slate-400 dark:text-slate-400 mt-1.5 uppercase tracking-widest text-[10px]">Performance History</DialogDescription>
                                     </div>
                                 </div>
                             </DialogHeader>
 
                             <div className="overflow-y-auto pr-2 space-y-4 flex-1 mt-4">
                                 {!evalHistoryStudent.evaluations || evalHistoryStudent.evaluations.length === 0 ? (
-                                    <div className="py-12 text-center text-slate-400 font-bold bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                                    <div className="py-12 text-center text-slate-400 dark:text-slate-500 font-bold bg-slate-50 dark:bg-white/5 rounded-2xl border border-dashed border-slate-200 dark:border-white/10">
                                         No evaluations recorded for this student yet.
                                     </div>
                                 ) : (
                                     evalHistoryStudent.evaluations.map((ev, i) => {
                                         const total = (ev.fundamental_knowledge || 0) + (ev.core_skills || 0) + (ev.communication_skills || 0) + (ev.soft_skills || 0);
                                         return (
-                                            <Card key={ev.id || i} className="border border-slate-200/80 bg-slate-50/50 rounded-2xl shadow-xs hover:shadow-md transition-all py-2 px-1">
-                                                <CardHeader className="flex flex-row justify-between items-center pb-3 border-b border-slate-100">
-                                                    <CardTitle className="text-base font-extrabold text-[#11221F] flex items-center gap-3 m-0 p-0">
+                                            <Card key={ev.id || i} className="border border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-white/5 rounded-2xl shadow-xs hover:shadow-md transition-all py-2 px-1 text-slate-900 dark:text-white">
+                                                <CardHeader className="flex flex-row justify-between items-center pb-3 border-b border-slate-100 dark:border-white/10">
+                                                    <CardTitle className="text-base font-extrabold text-[#11221F] dark:text-white flex items-center gap-3 m-0 p-0">
                                                         <span className="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
                                                         {ev.eval_name}
                                                     </CardTitle>
-                                                    <div className="flex items-baseline gap-1 text-[#11221F] bg-white px-3 py-1 rounded-full border border-slate-200 shadow-xs">
-                                                        <span className="font-extrabold text-lg text-emerald-700">{total.toFixed(1)}</span>
+                                                    <div className="flex items-baseline gap-1 text-[#11221F] dark:text-white bg-white dark:bg-[#111A17] px-3 py-1 rounded-full border border-slate-200 dark:border-white/10 shadow-xs">
+                                                        <span className="font-extrabold text-lg text-emerald-700 dark:text-emerald-400">{total.toFixed(1)}</span>
                                                         <span className="text-xs font-bold text-slate-400">/ 40</span>
                                                     </div>
                                                 </CardHeader>
                                                 <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-4 pb-2">
-                                                    <div className="bg-white rounded-xl p-3 border border-slate-100 shadow-xs">
-                                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Fundamental</p>
-                                                        <p className="font-black text-base text-[#11221F]">{ev.fundamental_knowledge || 0} <span className="text-slate-400 font-bold text-xs">/ 10</span></p>
+                                                    <div className="bg-white dark:bg-[#111A17] rounded-xl p-3 border border-slate-100 dark:border-white/10 shadow-xs">
+                                                        <p className="text-[9px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-widest mb-1.5">Fundamental</p>
+                                                        <p className="font-black text-base text-[#11221F] dark:text-white">{ev.fundamental_knowledge || 0} <span className="text-slate-400 font-bold text-xs">/ 10</span></p>
                                                     </div>
-                                                    <div className="bg-white rounded-xl p-3 border border-slate-100 shadow-xs">
-                                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Core Skills</p>
-                                                        <p className="font-black text-base text-[#11221F]">{ev.core_skills || 0} <span className="text-slate-400 font-bold text-xs">/ 10</span></p>
+                                                    <div className="bg-white dark:bg-[#111A17] rounded-xl p-3 border border-slate-100 dark:border-white/10 shadow-xs">
+                                                        <p className="text-[9px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-widest mb-1.5">Core Skills</p>
+                                                        <p className="font-black text-base text-[#11221F] dark:text-white">{ev.core_skills || 0} <span className="text-slate-400 font-bold text-xs">/ 10</span></p>
                                                     </div>
-                                                    <div className="bg-white rounded-xl p-3 border border-slate-100 shadow-xs">
-                                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Communication</p>
-                                                        <p className="font-black text-base text-[#11221F]">{ev.communication_skills || 0} <span className="text-slate-400 font-bold text-xs">/ 10</span></p>
+                                                    <div className="bg-white dark:bg-[#111A17] rounded-xl p-3 border border-slate-100 dark:border-white/10 shadow-xs">
+                                                        <p className="text-[9px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-widest mb-1.5">Communication</p>
+                                                        <p className="font-black text-base text-[#11221F] dark:text-white">{ev.communication_skills || 0} <span className="text-slate-400 font-bold text-xs">/ 10</span></p>
                                                     </div>
-                                                    <div className="bg-white rounded-xl p-3 border border-slate-100 shadow-xs">
-                                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Soft Skills</p>
-                                                        <p className="font-black text-base text-[#11221F]">{ev.soft_skills || 0} <span className="text-slate-400 font-bold text-xs">/ 10</span></p>
+                                                    <div className="bg-white dark:bg-[#111A17] rounded-xl p-3 border border-slate-100 dark:border-white/10 shadow-xs">
+                                                        <p className="text-[9px] font-black text-slate-400 dark:text-slate-400 uppercase tracking-widest mb-1.5">Soft Skills</p>
+                                                        <p className="font-black text-base text-[#11221F] dark:text-white">{ev.soft_skills || 0} <span className="text-slate-400 font-bold text-xs">/ 10</span></p>
                                                     </div>
                                                 </CardContent>
                                             </Card>
@@ -1033,35 +1033,35 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                 setShowEnrollModal(open);
                 if (!open) setSelectedStudentIds([]);
             }}>
-                <DialogContent className="sm:max-w-xl rounded-3xl p-8 md:p-10 border border-slate-100 shadow-2xl bg-white relative">
+                <DialogContent className="sm:max-w-xl rounded-3xl p-8 md:p-10 border border-slate-100 dark:border-white/10 shadow-2xl bg-white dark:bg-[#111A17] text-slate-900 dark:text-white relative">
                     <div className="absolute top-0 left-0 bg-emerald-700 text-white px-5 py-2.5 rounded-br-2xl font-bold flex items-center gap-2 shadow-xs text-xs uppercase tracking-wider">
                         Enrollment
                     </div>
-                    <DialogHeader className="mt-6 border-b border-slate-100 pb-4">
-                        <DialogTitle className="text-2xl sm:text-3xl font-extrabold text-[#11221F] flex items-center gap-3">
-                            <Users size={26} className="text-emerald-600" />
+                    <DialogHeader className="mt-6 border-b border-slate-100 dark:border-white/10 pb-4">
+                        <DialogTitle className="text-2xl sm:text-3xl font-extrabold text-[#11221F] dark:text-white flex items-center gap-3">
+                            <Users size={26} className="text-emerald-600 dark:text-emerald-400" />
                             Batch Enroll
                         </DialogTitle>
-                        <DialogDescription className="pt-1.5 text-slate-500 font-semibold text-xs">
+                        <DialogDescription className="pt-1.5 text-slate-500 dark:text-slate-400 font-semibold text-xs">
                             Administer student roster for Section {classroom?.section}.
                         </DialogDescription>
                     </DialogHeader>
 
                     <form onSubmit={handleEnrollSubmit} className="space-y-6 mt-4">
                         <div className="space-y-2">
-                            <label className="text-xs font-bold text-[#11221F] uppercase tracking-widest ml-1">1. Target Enrollment Group</label>
-                            <div className="flex bg-slate-100 p-1.5 rounded-full w-full shadow-xs border border-slate-200">
+                            <label className="text-xs font-bold text-[#11221F] dark:text-slate-200 uppercase tracking-widest ml-1">1. Target Enrollment Group</label>
+                            <div className="flex bg-slate-100 dark:bg-white/10 p-1.5 rounded-full w-full shadow-xs border border-slate-200 dark:border-white/10">
                                 <button
                                     type="button"
                                     onClick={() => setBatchGroup('A')}
-                                    className={`flex-1 py-2.5 rounded-full text-sm font-bold transition-all ${batchGroup === 'A' ? 'bg-emerald-700 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+                                    className={`flex-1 py-2.5 rounded-full text-sm font-bold transition-all ${batchGroup === 'A' ? 'bg-emerald-700 text-white shadow-sm' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}
                                 >
                                     Group A
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setBatchGroup('B')}
-                                    className={`flex-1 py-2.5 rounded-full text-sm font-bold transition-all ${batchGroup === 'B' ? 'bg-emerald-700 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+                                    className={`flex-1 py-2.5 rounded-full text-sm font-bold transition-all ${batchGroup === 'B' ? 'bg-emerald-700 text-white shadow-sm' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'}`}
                                 >
                                     Group B
                                 </button>
@@ -1069,13 +1069,13 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-xs font-bold text-[#11221F] uppercase tracking-widest ml-1 flex justify-between">
+                            <label className="text-xs font-bold text-[#11221F] dark:text-slate-200 uppercase tracking-widest ml-1 flex justify-between">
                                 2. Select Students
-                                <span className="text-[10px] opacity-60 text-slate-500 font-bold">{eligibleStudents.length} available</span>
+                                <span className="text-[10px] opacity-60 text-slate-500 dark:text-slate-400 font-bold">{eligibleStudents.length} available</span>
                             </label>
-                            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 max-h-[300px] overflow-y-auto shadow-xs">
+                            <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 max-h-[300px] overflow-y-auto shadow-xs">
                                 {eligibleStudents.length === 0 ? (
-                                    <p className="text-slate-400 text-sm text-center py-4 italic">No eligible students found in the system for this course and semester.</p>
+                                    <p className="text-slate-400 dark:text-slate-500 text-sm text-center py-4 italic">No eligible students found in the system for this course and semester.</p>
                                 ) : (
                                     <div className="space-y-2.5">
                                         {eligibleStudents.map((student) => {
@@ -1083,15 +1083,15 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                                             const isAssigned = !!existingEnrollment;
 
                                             const containerClasses = isAssigned
-                                                ? "bg-emerald-50/80 border-emerald-200"
-                                                : "bg-white border-slate-200 hover:border-emerald-400";
+                                                ? "bg-emerald-50/80 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800/40"
+                                                : "bg-white dark:bg-[#111A17] border-slate-200 dark:border-white/10 hover:border-emerald-400 dark:hover:border-emerald-500/50";
 
                                             return (
                                                 <div key={student.id} className={`flex justify-between items-center p-3 rounded-2xl shadow-xs border transition-colors ${containerClasses}`}>
                                                     <div className="flex items-center gap-3">
                                                         <input
                                                             type="checkbox"
-                                                            className="w-4 h-4 rounded text-emerald-600 border-slate-300 focus:ring-emerald-500 cursor-pointer"
+                                                            className="w-4 h-4 rounded text-emerald-600 border-slate-300 dark:border-white/20 focus:ring-emerald-500 cursor-pointer"
                                                             checked={selectedStudentIds.includes(student.id)}
                                                             onChange={(e) => {
                                                                 if (e.target.checked) setSelectedStudentIds(prev => [...prev, student.id]);
@@ -1099,12 +1099,12 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                                                             }}
                                                         />
                                                         <div>
-                                                            <p className={`font-bold text-sm ${isAssigned ? 'text-emerald-900' : 'text-slate-800'}`}>{student.name}</p>
-                                                            <p className={`text-xs ${isAssigned ? 'text-emerald-700' : 'text-slate-500'}`}>{student.roll_no}</p>
+                                                            <p className={`font-bold text-sm ${isAssigned ? 'text-emerald-900 dark:text-emerald-200' : 'text-slate-800 dark:text-white'}`}>{student.name}</p>
+                                                            <p className={`text-xs ${isAssigned ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>{student.roll_no}</p>
                                                         </div>
                                                     </div>
                                                     {isAssigned && (
-                                                        <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 border border-emerald-200 font-bold shadow-xs text-[10px]">
+                                                        <Badge variant="secondary" className="bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-800/40 font-bold shadow-xs text-[10px]">
                                                             Currently: Group {existingEnrollment.group_label}
                                                         </Badge>
                                                     )}
@@ -1116,8 +1116,8 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                             </div>
                         </div>
 
-                        <DialogFooter className="gap-3 sm:justify-end pt-6 mt-4 border-t border-slate-100">
-                            <Button type="button" variant="ghost" className="rounded-full h-11 px-6 text-slate-600 font-bold hover:bg-slate-100 shadow-xs text-xs" onClick={() => setShowEnrollModal(false)}>
+                        <DialogFooter className="gap-3 sm:justify-end pt-6 mt-4 border-t border-slate-100 dark:border-white/10">
+                            <Button type="button" variant="ghost" className="rounded-full h-11 px-6 text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-100 dark:hover:bg-white/5 shadow-xs text-xs" onClick={() => setShowEnrollModal(false)}>
                                 Cancel
                             </Button>
                             <Button type="submit" disabled={loading || selectedStudentIds.length === 0} className="rounded-full h-11 px-8 bg-emerald-600 text-white font-bold hover:bg-emerald-700 shadow-md shadow-emerald-600/20 transition-all text-xs">
@@ -1129,19 +1129,19 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                 </DialogContent>
             </Dialog>
             <Dialog open={!!enrollmentToDelete} onOpenChange={(open) => !open && setEnrollmentToDelete(null)}>
-                <DialogContent className="sm:max-w-md rounded-3xl p-6 text-center border border-slate-100 shadow-2xl bg-white">
+                <DialogContent className="sm:max-w-md rounded-3xl p-6 text-center border border-slate-100 dark:border-white/10 shadow-2xl bg-white dark:bg-[#111A17] text-slate-900 dark:text-white">
                     <DialogHeader>
-                        <div className="mx-auto w-14 h-14 bg-rose-50 text-rose-600 rounded-full flex items-center justify-center mb-4 shadow-xs border border-rose-100">
+                        <div className="mx-auto w-14 h-14 bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 rounded-full flex items-center justify-center mb-4 shadow-xs border border-rose-100 dark:border-rose-900/40">
                             <Trash2 size={24} />
                         </div>
-                        <DialogTitle className="text-2xl font-extrabold text-[#11221F]">Remove Student?</DialogTitle>
-                        <DialogDescription className="pt-2 text-slate-600 font-medium pb-4 text-xs">
+                        <DialogTitle className="text-2xl font-extrabold text-[#11221F] dark:text-white">Remove Student?</DialogTitle>
+                        <DialogDescription className="pt-2 text-slate-600 dark:text-slate-400 font-medium pb-4 text-xs">
                             Are you sure you want to remove this student from the classroom? <br /><br />
-                            <span className="text-rose-600 font-bold bg-rose-50 px-3 py-1.5 rounded-xl border border-rose-100 inline-block">All recorded marks and evaluation history will be permanently lost!</span>
+                            <span className="text-rose-600 dark:text-rose-300 font-bold bg-rose-50 dark:bg-rose-950/40 px-3 py-1.5 rounded-xl border border-rose-100 dark:border-rose-900/40 inline-block">All recorded marks and evaluation history will be permanently lost!</span>
                         </DialogDescription>
                     </DialogHeader>
-                    <DialogFooter className="flex sm:justify-center gap-3 border-t border-slate-100 pt-5">
-                        <Button type="button" variant="ghost" className="rounded-full px-6 h-11 font-bold hover:bg-slate-50 text-slate-600 text-xs" onClick={() => setEnrollmentToDelete(null)}>
+                    <DialogFooter className="flex sm:justify-center gap-3 border-t border-slate-100 dark:border-white/10 pt-5">
+                        <Button type="button" variant="ghost" className="rounded-full px-6 h-11 font-bold hover:bg-slate-50 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400 text-xs" onClick={() => setEnrollmentToDelete(null)}>
                             Cancel
                         </Button>
                         <Button
