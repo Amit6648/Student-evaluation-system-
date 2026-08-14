@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Home, Plus, ChevronRight, Loader2, BookOpen, Trash2, Users } from "lucide-react";
+import { Home, Plus, ChevronRight, Loader2, BookOpen, Trash2, Users, Search, X, Calendar, GraduationCap } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
     Dialog,
@@ -71,6 +72,7 @@ interface VirtualClass {
     id: string;
     name: string;
     course_id: string;
+    semester_number?: number;
     course?: {
       id: string;
       name: string;
@@ -112,6 +114,7 @@ export default function DashboardPageClient({ currentUser }: { currentUser: Curr
     // Filter Bar States
     const [filterTeacher, setFilterTeacher] = useState("ALL");
     const [filterSubject, setFilterSubject] = useState("ALL");
+    const [searchClassQuery, setSearchClassQuery] = useState("");
 
     useEffect(() => {
         if (!currentUser) return;
@@ -202,7 +205,13 @@ export default function DashboardPageClient({ currentUser }: { currentUser: Curr
     const displayedClasses = classes.filter(c => {
         const matchTeacher = filterTeacher === "ALL" || c.teacher_id === filterTeacher;
         const matchSubject = filterSubject === "ALL" || c.subject_id === filterSubject;
-        return matchTeacher && matchSubject;
+        const q = searchClassQuery.toLowerCase().trim();
+        const matchSearch = !q ||
+            (c.subject?.name && c.subject.name.toLowerCase().includes(q)) ||
+            (c.subject?.course?.name && c.subject.course.name.toLowerCase().includes(q)) ||
+            (c.teacher?.name && c.teacher.name.toLowerCase().includes(q)) ||
+            (c.section && c.section.toLowerCase().includes(q));
+        return matchTeacher && matchSubject && matchSearch;
     });
 
     async function executeDeleteClass(classId: string) {
@@ -398,31 +407,55 @@ export default function DashboardPageClient({ currentUser }: { currentUser: Curr
                     )}
                 </header>
 
-                {isAdmin && classes.length > 0 && (
-                    <div className="mb-8 flex flex-wrap gap-4 items-center bg-[#E8EEF4] p-4 rounded-xl shadow-sm border border-[#111827]/5">
-                        <span className="text-sm font-bold text-[#111827] uppercase tracking-wider pl-2">Filters:</span>
-                        <Select value={filterTeacher} onValueChange={setFilterTeacher}>
-                            <SelectTrigger className="w-[200px] h-10 rounded-full bg-[#767472] text-white border-none focus:ring-2 focus:ring-[#0088FF] shadow-sm font-medium [&>svg]:text-white">
-                                <SelectValue placeholder="All Teachers" />
-                            </SelectTrigger>
-                            <SelectContent className="rounded-xl border-none shadow-xl bg-white">
-                                <SelectItem value="ALL" className="font-bold focus:bg-[#E8EEF4] focus:text-[#111827]">All Teachers</SelectItem>
-                                {uniqueClassTeachers.map(t => (
-                                    t ? <SelectItem key={t.id} value={t.id} className="focus:bg-[#E8EEF4] focus:text-[#111827] font-medium">{t.name}</SelectItem> : null
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <Select value={filterSubject} onValueChange={setFilterSubject}>
-                            <SelectTrigger className="w-[240px] h-10 rounded-full bg-[#767472] text-white border-none focus:ring-2 focus:ring-[#0088FF] shadow-sm font-medium [&>svg]:text-white">
-                                <SelectValue placeholder="All Subjects" />
-                            </SelectTrigger>
-                            <SelectContent className="rounded-xl border-none shadow-xl bg-white">
-                                <SelectItem value="ALL" className="font-bold focus:bg-[#E8EEF4] focus:text-[#111827]">All Subjects</SelectItem>
-                                {uniqueClassSubjects.map(s => (
-                                    s ? <SelectItem key={s.id} value={s.id} className="focus:bg-[#E8EEF4] focus:text-[#111827] font-medium">{s.name || s.id}</SelectItem> : null
-                                ))}
-                            </SelectContent>
-                        </Select>
+                {classes.length > 0 && (
+                    <div className="mb-8 flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between bg-[#E8EEF4] p-4 rounded-2xl shadow-sm border border-[#111827]/5">
+                        <div className="relative flex-1 max-w-md">
+                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#111827]/40" />
+                            <Input
+                                type="text"
+                                placeholder="Search classrooms, courses, teachers..."
+                                value={searchClassQuery}
+                                onChange={(e) => setSearchClassQuery(e.target.value)}
+                                className="h-10 pl-9 pr-8 bg-white border border-[#111827]/10 rounded-full text-xs font-semibold placeholder:text-[#111827]/40 focus-visible:ring-1 focus-visible:ring-[#0088FF] shadow-none w-full"
+                            />
+                            {searchClassQuery && (
+                                <button
+                                    onClick={() => setSearchClassQuery("")}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#111827]/40 hover:text-[#111827]"
+                                    aria-label="Clear search"
+                                >
+                                    <X className="w-3.5 h-3.5" />
+                                </button>
+                            )}
+                        </div>
+
+                        {isAdmin && (
+                            <div className="flex flex-wrap gap-3 items-center">
+                                <Select value={filterTeacher} onValueChange={setFilterTeacher}>
+                                    <SelectTrigger className="w-[180px] h-10 rounded-full bg-[#767472] text-white border-none focus:ring-2 focus:ring-[#0088FF] shadow-sm font-medium text-xs [&>svg]:text-white">
+                                        <SelectValue placeholder="All Teachers" />
+                                    </SelectTrigger>
+                                    <SelectContent className="rounded-xl border-none shadow-xl bg-white">
+                                        <SelectItem value="ALL" className="font-bold focus:bg-[#E8EEF4] focus:text-[#111827]">All Teachers</SelectItem>
+                                        {uniqueClassTeachers.map(t => (
+                                            t ? <SelectItem key={t.id} value={t.id} className="focus:bg-[#E8EEF4] focus:text-[#111827] font-medium text-xs">{t.name}</SelectItem> : null
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+
+                                <Select value={filterSubject} onValueChange={setFilterSubject}>
+                                    <SelectTrigger className="w-[200px] h-10 rounded-full bg-[#767472] text-white border-none focus:ring-2 focus:ring-[#0088FF] shadow-sm font-medium text-xs [&>svg]:text-white">
+                                        <SelectValue placeholder="All Subjects" />
+                                    </SelectTrigger>
+                                    <SelectContent className="rounded-xl border-none shadow-xl bg-white">
+                                        <SelectItem value="ALL" className="font-bold focus:bg-[#E8EEF4] focus:text-[#111827]">All Subjects</SelectItem>
+                                        {uniqueClassSubjects.map(s => (
+                                            s ? <SelectItem key={s.id} value={s.id} className="focus:bg-[#E8EEF4] focus:text-[#111827] font-medium text-xs">{s.name || s.id}</SelectItem> : null
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -430,22 +463,40 @@ export default function DashboardPageClient({ currentUser }: { currentUser: Curr
                     {isAdmin && (
                         <Card
                             onClick={() => setShowModal(true)}
-                            className="bg-[#E8EEF4]/50 border-2 border-dashed border-[#111827]/20 rounded-xl p-2 flex flex-col items-center justify-center text-center transition-all hover:bg-[#E8EEF4] hover:border-[#0088FF] aspect-[1.1] group cursor-pointer shadow-none h-full"
+                            className="bg-[#E8EEF4]/50 border-2 border-dashed border-[#111827]/20 rounded-2xl p-2 flex flex-col items-center justify-center text-center transition-all hover:bg-[#E8EEF4] hover:border-[#0088FF] aspect-[1.1] group cursor-pointer shadow-none h-full"
                         >
                             <CardContent className="flex flex-col items-center justify-center h-full p-6">
                                 <div className="w-16 h-16 bg-[#767472] rounded-full shadow-sm flex items-center justify-center mb-4 text-white group-hover:bg-[#0088FF] transition-all duration-300">
                                     <Plus size={32} strokeWidth={2.5} />
                                 </div>
                                 <CardTitle className="text-xl font-bold text-[#111827]">Create Class</CardTitle>
+                                <p className="text-xs text-[#111827]/50 font-semibold mt-1">Add a new virtual classroom</p>
                             </CardContent>
                         </Card>
                     )}
 
-                    {classes.length === 0 ? (
-                        <div className="col-span-full py-20 text-center bg-[#E8EEF4] rounded-xl border border-[#111827]/5">
+                    {displayedClasses.length === 0 ? (
+                        <div className="col-span-full py-20 text-center bg-[#E8EEF4] rounded-2xl border border-[#111827]/5">
                             <BookOpen className="w-12 h-12 text-[#111827]/20 mx-auto mb-4" />
-                            <p className="text-[#111827]/70 font-medium mb-4">{isAdmin ? "No classrooms created yet" : "No classrooms have been assigned to you yet."}</p>
-                            {isAdmin && (
+                            <p className="text-[#111827]/70 font-semibold mb-2">
+                                {classes.length === 0
+                                    ? (isAdmin ? "No classrooms created yet" : "No classrooms have been assigned to you yet.")
+                                    : "No classrooms match your search or filter criteria."}
+                            </p>
+                            {classes.length > 0 ? (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                        setSearchClassQuery("");
+                                        setFilterTeacher("ALL");
+                                        setFilterSubject("ALL");
+                                    }}
+                                    className="rounded-full font-bold mt-2 text-xs"
+                                >
+                                    Reset Filters
+                                </Button>
+                            ) : isAdmin && (
                                 <Button variant="link" onClick={() => setShowModal(true)} className="text-[#0088FF] font-bold text-md h-auto p-0 hover:underline">
                                     Create your first class
                                 </Button>
@@ -458,7 +509,7 @@ export default function DashboardPageClient({ currentUser }: { currentUser: Curr
                                 key={c.id}
                                 className="group relative block"
                             >
-                                <Card className="bg-[#E8EEF4] border-l-[4px] border-l-transparent hover:border-l-[#0088FF] border border-[#111827]/5 rounded-xl p-2 transition-all hover:shadow-xl hover:shadow-[#111827]/5 flex flex-col justify-between aspect-[1.1] overflow-hidden shadow-sm h-full relative">
+                                <Card className="bg-[#E8EEF4] border-l-[4px] border-l-transparent hover:border-l-[#0088FF] border border-[#111827]/5 rounded-2xl p-2 transition-all hover:shadow-xl hover:shadow-[#111827]/5 flex flex-col justify-between aspect-[1.1] overflow-hidden shadow-sm h-full relative">
                                     
                                     {isAdmin && (
                                         <button
@@ -475,12 +526,19 @@ export default function DashboardPageClient({ currentUser }: { currentUser: Curr
                                     )}
 
                                     <CardHeader className="relative z-10 p-5 pb-2">
-                                        <div className="flex justify-between items-start mb-3">
-                                            <Badge variant="secondary" className="bg-[#111827]/5 text-[#111827] font-bold uppercase tracking-wider text-[10px] px-2.5 py-1 rounded-sm border-none max-w-[150px] truncate">
-                                                {c.subject?.course?.name || 'Unknown Course'}
-                                            </Badge>
-                                            <Badge variant="outline" className="bg-white text-[#111827] font-bold flex gap-1.5 px-2.5 py-1 rounded-sm border border-[#111827]/10 shadow-sm text-xs">
-                                                <Users size={14} className="text-[#0088FF]" />
+                                        <div className="flex justify-between items-start mb-3 gap-2">
+                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                                <Badge variant="secondary" className="bg-[#111827]/5 text-[#111827] font-bold uppercase tracking-wider text-[10px] px-2.5 py-1 rounded-sm border-none max-w-[150px] truncate">
+                                                    {c.subject?.course?.name || 'Unknown Course'}
+                                                </Badge>
+                                                {c.subject?.semester_number && (
+                                                    <Badge variant="secondary" className="bg-white/80 text-[#111827]/70 font-bold text-[10px] px-2 py-0.5 rounded-sm border border-[#111827]/5">
+                                                        Sem {c.subject.semester_number}
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                            <Badge variant="outline" className="bg-white text-[#111827] font-bold flex gap-1.5 px-2.5 py-1 rounded-full border border-[#111827]/10 shadow-xs text-xs shrink-0">
+                                                <Users size={13} className="text-[#0088FF]" />
                                                 {c._count?.enrollments || 0}
                                             </Badge>
                                         </div>
@@ -488,14 +546,22 @@ export default function DashboardPageClient({ currentUser }: { currentUser: Curr
                                             {c.subject?.name || 'Unknown Subject'}
                                         </CardTitle>
                                         <CardDescription className="font-semibold text-xs text-[#111827]/70 flex flex-col gap-1.5 mt-3">
-                                            {isAdmin && <span className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-[#5D685C] block"></span> Teacher: {c.teacher?.name}</span>}
-                                            <span className="flex items-center gap-2 opacity-80"><span className="w-1.5 h-1.5 rounded-full bg-[#767472] block"></span> Section: {c.section || 'N/A'}</span>
+                                            {isAdmin && (
+                                                <span className="flex items-center gap-2">
+                                                    <span className="w-2 h-2 rounded-full bg-[#5D685C] block"></span>
+                                                    Teacher: {c.teacher?.name || 'Unassigned'}
+                                                </span>
+                                            )}
+                                            <span className="flex items-center gap-2 opacity-80">
+                                                <span className="w-2 h-2 rounded-full bg-[#767472] block"></span>
+                                                Section {c.section || 'N/A'} • {c.academic_year}
+                                            </span>
                                         </CardDescription>
                                     </CardHeader>
 
                                     <CardFooter className="relative z-10 p-5 pt-0 mt-auto flex items-center justify-between text-[#111827] font-bold">
-                                        <span className="text-sm tracking-wide text-[#0088FF]">Enter Classroom</span>
-                                        <div className="w-10 h-10 rounded-full bg-white border border-[#0088FF]/20 flex items-center justify-center text-[#0088FF] group-hover:bg-[#0088FF] group-hover:text-white transition-colors shadow-sm">
+                                        <span className="text-sm tracking-wide text-[#0088FF] group-hover:underline">Enter Classroom</span>
+                                        <div className="w-10 h-10 rounded-full bg-white border border-[#0088FF]/20 flex items-center justify-center text-[#0088FF] group-hover:bg-[#0088FF] group-hover:text-white transition-all shadow-xs">
                                             <ChevronRight size={18} />
                                         </div>
                                     </CardFooter>

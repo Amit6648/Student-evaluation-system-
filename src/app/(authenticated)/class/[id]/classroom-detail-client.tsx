@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ChevronLeft, Plus, Users, BookOpen, Trash2, CheckCircle2, BarChart, Loader2, UserPlus, Calendar as CalendarIcon, Download } from "lucide-react";
+import { ChevronLeft, Plus, Users, BookOpen, Trash2, CheckCircle2, BarChart, Loader2, UserPlus, Calendar as CalendarIcon, Download, Search, X, TrendingUp, TrendingDown, Minus, Filter } from "lucide-react";
 import { format } from "date-fns";
 import * as XLSX from 'xlsx';
 import { Calendar } from "@/components/ui/calendar";
@@ -44,6 +44,20 @@ function getGrade(score: number | null | undefined): string {
     if (score >= 24) return "B";
     if (score >= 16) return "C";
     return "D";
+}
+
+// Helper to calculate student performance trajectory (latest vs previous eval)
+function getPerformanceTrend(evaluations: Evaluation[]) {
+    if (!evaluations || evaluations.length < 2) return null;
+    const sorted = [...evaluations].sort((a, b) => new Date(a.evaluation_date).getTime() - new Date(b.evaluation_date).getTime());
+    const latest = sorted[sorted.length - 1];
+    const prev = sorted[sorted.length - 2];
+    const latestTotal = (latest.fundamental_knowledge || 0) + (latest.core_skills || 0) + (latest.communication_skills || 0) + (latest.soft_skills || 0);
+    const prevTotal = (prev.fundamental_knowledge || 0) + (prev.core_skills || 0) + (prev.communication_skills || 0) + (prev.soft_skills || 0);
+    const diff = latestTotal - prevTotal;
+    if (diff > 0) return { direction: 'up' as const, diff: diff.toFixed(1) };
+    if (diff < 0) return { direction: 'down' as const, diff: Math.abs(diff).toFixed(1) };
+    return { direction: 'same' as const, diff: '0' };
 }
 
 // Helper to get a consistent color based on name string
@@ -129,6 +143,8 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
     // Filter state
     const [activeGroup, setActiveGroup] = useState('A');
     const [activeTab, setActiveTab] = useState("roster");
+    const [searchQuery, setSearchQuery] = useState("");
+    const [selectedGradeFilter, setSelectedGradeFilter] = useState<'ALL' | 'A' | 'B' | 'C' | 'D'>('ALL');
     const [selectedDate, setSelectedDate] = useState<Date>(() => {
         const td = new Date();
         if (td.getDay() === 0) return new Date(td.getTime() - 86400000 * 2); // Force to Friday if Sunday
@@ -398,7 +414,14 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
     }
 
     const isAdmin = currentUser?.role === 'ADMIN';
-    const displayedStudents = students.filter(s => s.group_label === activeGroup);
+    const groupStudents = students.filter(s => s.group_label === activeGroup);
+    const displayedStudents = groupStudents.filter(s => {
+        const matchesSearch = !searchQuery.trim() ||
+            s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (s.roll_no && s.roll_no.toLowerCase().includes(searchQuery.toLowerCase()));
+        const matchesGrade = activeTab !== 'heatmap' || selectedGradeFilter === 'ALL' || getGrade(s.averageMarks) === selectedGradeFilter;
+        return matchesSearch && matchesGrade;
+    });
 
     return (
         <div className="min-h-screen p-8 max-w-7xl mx-auto relative pl-12 border-l-[4px] border-[#0088FF] shadow-[inset_1px_0_0_rgba(0,0,0,0.05)]">
@@ -511,37 +534,61 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
             </div >
 
             <div className="bg-[#E8EEF4] border border-[#111827]/5 rounded-2xl shadow-sm flex flex-col mb-12 overflow-hidden">
-                {/* Tabs */}
-                <div className="flex justify-between items-center border-b border-[#111827]/5 px-6 pt-4 bg-[#F0F4F8]/30 overflow-x-auto">
-                    <div className="flex shrink-0">
+                {/* Tabs & Search Header */}
+                <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center border-b border-[#111827]/5 px-6 py-3 bg-[#F0F4F8]/30 gap-4">
+                    <div className="flex shrink-0 overflow-x-auto">
                         <button
                             onClick={() => setActiveTab('roster')}
-                            className={`px-6 py-4 font-bold text-sm tracking-wide flex items-center gap-2 border-b-[3px] transition-all ${activeTab === 'roster' ? 'border-[#0088FF] text-[#0088FF]' : 'border-transparent text-[#111827]/50 hover:text-[#111827]'}`}
+                            className={`px-5 py-3 font-bold text-sm tracking-wide flex items-center gap-2 border-b-[3px] transition-all ${activeTab === 'roster' ? 'border-[#0088FF] text-[#0088FF]' : 'border-transparent text-[#111827]/50 hover:text-[#111827]'}`}
                         >
                             <Users size={18} className={activeTab === 'roster' ? 'text-[#0088FF]' : ''} />
                             Student Roster
                         </button>
                         <button
                             onClick={() => setActiveTab('gradebook')}
-                            className={`px-6 py-4 font-bold text-sm tracking-wide flex items-center gap-2 border-b-[3px] transition-all ${activeTab === 'gradebook' ? 'border-[#0088FF] text-[#0088FF]' : 'border-transparent text-[#111827]/50 hover:text-[#111827]'}`}
+                            className={`px-5 py-3 font-bold text-sm tracking-wide flex items-center gap-2 border-b-[3px] transition-all ${activeTab === 'gradebook' ? 'border-[#0088FF] text-[#0088FF]' : 'border-transparent text-[#111827]/50 hover:text-[#111827]'}`}
                         >
                             <BookOpen size={18} className={activeTab === 'gradebook' ? 'text-[#0088FF]' : ''} />
                             Gradebook
                         </button>
                         <button
                             onClick={() => setActiveTab('heatmap')}
-                            className={`px-6 py-4 font-bold text-sm tracking-wide flex items-center gap-2 border-b-[3px] transition-all ${activeTab === 'heatmap' ? 'border-[#0088FF] text-[#0088FF]' : 'border-transparent text-[#111827]/50 hover:text-[#111827]'}`}
+                            className={`px-5 py-3 font-bold text-sm tracking-wide flex items-center gap-2 border-b-[3px] transition-all ${activeTab === 'heatmap' ? 'border-[#0088FF] text-[#0088FF]' : 'border-transparent text-[#111827]/50 hover:text-[#111827]'}`}
                         >
                             <BarChart size={18} className={activeTab === 'heatmap' ? 'text-[#0088FF]' : ''} />
                             Performance Heatmap
                         </button>
                     </div>
-                    {/* Excel Export Button Integration */}
-                    {activeTab !== 'heatmap' && (
-                        <Button onClick={() => setShowExportModal(true)} variant="outline" className="h-9 rounded-full font-bold shadow-sm flex items-center gap-2 text-emerald-600 border-emerald-500/30 hover:bg-emerald-50 shrink-0 ml-4">
-                            <Download size={16} /> Export to Excel
-                        </Button>
-                    )}
+
+                    <div className="flex items-center gap-3">
+                        {/* Live Search Input */}
+                        <div className="relative flex-1 sm:w-64">
+                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#111827]/40" />
+                            <Input
+                                type="text"
+                                placeholder="Search by name or roll..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="h-9 pl-9 pr-8 bg-white border border-[#111827]/10 rounded-full text-xs font-semibold placeholder:text-[#111827]/40 focus-visible:ring-1 focus-visible:ring-[#0088FF] shadow-none w-full"
+                            />
+                            {searchQuery && (
+                                <button
+                                    onClick={() => setSearchQuery("")}
+                                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#111827]/40 hover:text-[#111827]"
+                                    aria-label="Clear search"
+                                >
+                                    <X className="w-3.5 h-3.5" />
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Excel Export Button Integration */}
+                        {activeTab !== 'heatmap' && (
+                            <Button onClick={() => setShowExportModal(true)} variant="outline" className="h-9 rounded-full font-bold shadow-sm flex items-center gap-2 text-emerald-600 border-emerald-500/30 hover:bg-emerald-50 shrink-0">
+                                <Download size={15} /> Export
+                            </Button>
+                        )}
+                    </div>
                 </div>
 
                 {/* Content */}
@@ -551,7 +598,24 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                             <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm">
                                 <Users size={24} className="text-[#111827]/30" />
                             </div>
-                            <p className="text-[#111827]/60 font-bold mb-4">No students enrolled in Group {activeGroup} yet.</p>
+                            <p className="text-[#111827]/80 font-bold mb-2">
+                                {searchQuery || (activeTab === 'heatmap' && selectedGradeFilter !== 'ALL')
+                                    ? "No students match your search or filter criteria."
+                                    : `No students enrolled in Group ${activeGroup} yet.`}
+                            </p>
+                            {(searchQuery || (activeTab === 'heatmap' && selectedGradeFilter !== 'ALL')) && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                        setSearchQuery("");
+                                        setSelectedGradeFilter("ALL");
+                                    }}
+                                    className="rounded-full font-bold mt-2 text-xs"
+                                >
+                                    Reset Filters
+                                </Button>
+                            )}
                         </div>
                     ) : activeTab === 'heatmap' ? (
                         <div className="p-8">
@@ -566,6 +630,9 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                                         else colorClass = "bg-red-100 text-red-800 border-red-200";
                                     }
 
+                                    const evalCount = s.evaluations?.length || 0;
+                                    const trend = getPerformanceTrend(s.evaluations);
+
                                     return (
                                         <div
                                             key={s.student_id}
@@ -573,33 +640,113 @@ export default function ClassroomDetailPageClient({ currentUser, classId }: { cu
                                             className={`p-5 rounded-3xl border ${colorClass} flex flex-col justify-between aspect-square transition-all duration-300 hover:scale-[1.03] hover:-translate-y-1 shadow-sm hover:shadow-xl cursor-pointer`}
                                         >
                                             <div className="flex justify-between items-start">
-                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${getAvatarColor(s.name)}`}>
+                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${getAvatarColor(s.name)} shadow-xs`}>
                                                     {getInitials(s.name)}
                                                 </div>
-                                                <span className="text-xs font-bold opacity-70 bg-white/50 px-2 py-1 rounded-md backdrop-blur-sm">{s.roll_no}</span>
+                                                <div className="flex flex-col items-end gap-1">
+                                                    <span className="text-xs font-bold opacity-70 bg-white/60 px-2 py-0.5 rounded-md backdrop-blur-xs font-mono">{s.roll_no}</span>
+                                                    <div className="flex items-center gap-1 text-[9px] font-bold opacity-60 bg-white/40 px-1.5 py-0.5 rounded">
+                                                        <span>{evalCount} {evalCount === 1 ? 'eval' : 'evals'}</span>
+                                                        {trend && trend.direction === 'up' && (
+                                                            <span title={`Recent eval increased by +${trend.diff}`}>
+                                                                <TrendingUp className="w-3 h-3 text-emerald-700" />
+                                                            </span>
+                                                        )}
+                                                        {trend && trend.direction === 'down' && (
+                                                            <span title={`Recent eval decreased by -${trend.diff}`}>
+                                                                <TrendingDown className="w-3 h-3 text-rose-700" />
+                                                            </span>
+                                                        )}
+                                                        {trend && trend.direction === 'same' && (
+                                                            <span title="Performance steady">
+                                                                <Minus className="w-3 h-3 text-slate-600" />
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div className="mt-4">
-                                                <h3 className="font-bold leading-tight line-clamp-2 text-[#111827]">{s.name}</h3>
+                                            <div className="mt-2">
+                                                <h3 className="font-bold leading-tight line-clamp-2 text-[#111827] text-[15px]">{s.name}</h3>
                                             </div>
                                             <div className="flex justify-between items-end mt-2 pt-2 border-t border-black/5">
                                                 <div className="flex flex-col items-start text-[#111827]">
                                                     <span className="text-2xl sm:text-3xl font-black leading-none">{getGrade(s.averageMarks)}</span>
-                                                    <span className="text-[10px] uppercase tracking-widest font-bold opacity-50 mt-1">Grade</span>
+                                                    <span className="text-[9px] uppercase tracking-widest font-bold opacity-50 mt-1">Grade</span>
                                                 </div>
                                                 <div className="text-2xl sm:text-3xl font-black flex flex-col items-end text-[#111827]">
                                                     <span className="leading-none">{s.averageMarks !== null ? s.averageMarks : '--'}</span>
-                                                    <span className="text-[10px] uppercase tracking-widest font-bold opacity-50 mt-1">Avg Score</span>
+                                                    <span className="text-[9px] uppercase tracking-widest font-bold opacity-50 mt-1">Avg Score</span>
                                                 </div>
                                             </div>
                                         </div>
                                     );
                                 })}
                             </div>
-                            <div className="mt-8 flex flex-wrap gap-4 md:gap-6 text-xs font-bold text-[#111827]/60 items-center justify-center bg-[#F0F4F8]/80 py-3 px-6 rounded-full border border-[#111827]/5">
-                                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-emerald-100 border border-emerald-200"></div> Grade A: &ge; 32 (High)</div>
-                                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-amber-100 border border-amber-200"></div> Grade B: 24 - 31 (Average)</div>
-                                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-orange-100 border border-orange-200"></div> Grade C: 16 - 23 (Low)</div>
-                                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-red-100 border border-red-200"></div> Grade D: &lt; 16 (Critical)</div>
+
+                            {/* Clickable Interactive Legend Filters */}
+                            <div className="mt-8 flex flex-wrap gap-2 sm:gap-3 text-xs font-bold text-[#111827]/70 items-center justify-center bg-[#F0F4F8]/80 py-3 px-6 rounded-full border border-[#111827]/5">
+                                <span className="text-[10px] uppercase tracking-wider font-extrabold text-[#111827]/40 mr-1 flex items-center gap-1">
+                                    <Filter size={12} /> Filter:
+                                </span>
+                                
+                                <button
+                                    onClick={() => setSelectedGradeFilter('ALL')}
+                                    className={`px-3 py-1.5 rounded-full transition-all text-xs font-bold ${
+                                        selectedGradeFilter === 'ALL'
+                                            ? 'bg-[#111827] text-white shadow-sm'
+                                            : 'bg-white/80 hover:bg-white text-[#111827]/70 border border-[#111827]/10'
+                                    }`}
+                                >
+                                    All ({groupStudents.length})
+                                </button>
+
+                                <button
+                                    onClick={() => setSelectedGradeFilter(selectedGradeFilter === 'A' ? 'ALL' : 'A')}
+                                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-all text-xs font-bold ${
+                                        selectedGradeFilter === 'A'
+                                            ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-500/50'
+                                            : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                    }`}
+                                >
+                                    <div className={`w-2.5 h-2.5 rounded-full ${selectedGradeFilter === 'A' ? 'bg-white' : 'bg-emerald-500'}`}></div>
+                                    Grade A: &ge; 32 (High)
+                                </button>
+
+                                <button
+                                    onClick={() => setSelectedGradeFilter(selectedGradeFilter === 'B' ? 'ALL' : 'B')}
+                                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-all text-xs font-bold ${
+                                        selectedGradeFilter === 'B'
+                                            ? 'bg-amber-600 text-white shadow-sm ring-2 ring-amber-500/50'
+                                            : 'bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200'
+                                    }`}
+                                >
+                                    <div className={`w-2.5 h-2.5 rounded-full ${selectedGradeFilter === 'B' ? 'bg-white' : 'bg-amber-500'}`}></div>
+                                    Grade B: 24 - 31 (Avg)
+                                </button>
+
+                                <button
+                                    onClick={() => setSelectedGradeFilter(selectedGradeFilter === 'C' ? 'ALL' : 'C')}
+                                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-all text-xs font-bold ${
+                                        selectedGradeFilter === 'C'
+                                            ? 'bg-orange-600 text-white shadow-sm ring-2 ring-orange-500/50'
+                                            : 'bg-orange-50 hover:bg-orange-100 text-orange-800 border border-orange-200'
+                                    }`}
+                                >
+                                    <div className={`w-2.5 h-2.5 rounded-full ${selectedGradeFilter === 'C' ? 'bg-white' : 'bg-orange-500'}`}></div>
+                                    Grade C: 16 - 23 (Low)
+                                </button>
+
+                                <button
+                                    onClick={() => setSelectedGradeFilter(selectedGradeFilter === 'D' ? 'ALL' : 'D')}
+                                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-all text-xs font-bold ${
+                                        selectedGradeFilter === 'D'
+                                            ? 'bg-red-600 text-white shadow-sm ring-2 ring-red-500/50'
+                                            : 'bg-red-50 hover:bg-red-100 text-red-800 border border-red-200'
+                                    }`}
+                                >
+                                    <div className={`w-2.5 h-2.5 rounded-full ${selectedGradeFilter === 'D' ? 'bg-white' : 'bg-red-500'}`}></div>
+                                    Grade D: &lt; 16 (Critical)
+                                </button>
                             </div>
                         </div>
                     ) : (
